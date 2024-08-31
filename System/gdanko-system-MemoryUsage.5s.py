@@ -14,6 +14,13 @@ import os
 def pad_float(number):
     return '{:.2f}'.format(float(number))
 
+def get_defaults():
+    valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
+    unit = os.getenv('VAR_MEM_USAGE_UNIT', 'Gi') 
+    if not unit in valid_units:
+        unit = 'Gi'
+    return unit
+
 def byte_converter(bytes, unit):
     suffix = 'B'
     prefix = unit[0]
@@ -29,15 +36,7 @@ def main():
     try:
         from psutil import virtual_memory
 
-        valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
-        default_unit = 'Gi'
-        unit = os.getenv('VAR_MEM_USAGE_UNIT', default_unit)
-        
-        if unit != '':
-            if not unit in valid_units:
-                unit = default_unit
-        else:
-            unit = default_unit
+        unit = get_defaults()
 
         mem = virtual_memory()
         used = byte_converter(mem.used, unit)

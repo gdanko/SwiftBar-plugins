@@ -17,6 +17,10 @@ import time
 def pad_float(number):
     return '{:.2f}'.format(float(number))
 
+def get_defaults():
+    interface = os.getenv('VAR_NET_THROUGHPUT_INTERFACE', 'en0') 
+    return interface
+
 def get_io_counter_tuple(interface=None, bytes_sent=0, bytes_recv=0, packets_sent=0, packets_recv=0, errin=0, errout=0, dropin=0, dropout=0):
     net_io = namedtuple('net_io', 'interface bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')
     return net_io(interface=interface, bytes_sent=bytes_sent, bytes_recv=bytes_recv, packets_sent=packets_sent, packets_recv=packets_recv, errin=errin, errout=errout, dropin=dropin, dropout=dropout)
@@ -65,11 +69,7 @@ def get_data(interface=None):
         print('Fix copied to clipboard. Paste on terminal and run.')
 
 def main():
-    default_interface = 'en0'
-    interface = os.getenv('VAR_NET_THROUGHPUT_INTERFACE', default_interface)
-    
-    if interface != '':
-        interface = default_interface
+    interface = get_defaults()
 
     firstSample = get_data(interface=interface)
     time.sleep(1)

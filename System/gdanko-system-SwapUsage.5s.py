@@ -9,8 +9,17 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-SwapUsage.5s.py</xbar.abouturl>
 # <xbar.var>string(VAR_SWAP_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 
+import os
+
 def pad_float(number):
     return '{:.2f}'.format(float(number))
+
+def get_defaults():
+    valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
+    unit = os.getenv('VAR_SWAP_USAGE_UNIT', 'Gi') 
+    if not unit in valid_units:
+        unit = 'Gi'
+    return unit
 
 def byte_converter(bytes, unit):
     suffix = 'B'
@@ -27,15 +36,7 @@ def main():
     try:
         from psutil import swap_memory
 
-        valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
-        default_unit = 'Gi'
-        unit = os.getenv('VAR_SWAP_USAGE_UNIT', default_unit)
-        
-        if unit != '':
-            if not unit in valid_units:
-                unit = default_unit
-        else:
-            unit = default_unit
+        unit = get_defaults()
 
         mem = swap_memory()
         used = byte_converter(mem.used, unit)
