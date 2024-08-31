@@ -14,6 +14,9 @@ from pprint import pprint
 import os
 import time
 
+def pad_float(number):
+    return '{:.2f}'.format(float(number))
+
 def get_io_counter_tuple(interface=None, bytes_sent=0, bytes_recv=0, packets_sent=0, packets_recv=0, errin=0, errout=0, dropin=0, dropout=0):
     net_io = namedtuple('net_io', 'interface bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')
     return net_io(interface=interface, bytes_sent=bytes_sent, bytes_recv=bytes_recv, packets_sent=packets_sent, packets_recv=packets_recv, errin=errin, errout=errout, dropin=dropin, dropout=dropout)
@@ -28,7 +31,7 @@ def process_bytes(num):
         if abs(num) < 1024.0:
             return f'{round(num, 2)} {unit}{suffix}/s'
         num = num / 1024
-    return f'{round(num, 1)} Yi{suffix}'
+    return f'{pad_float(num)} Yi{suffix}'
 
 def get_data(interface=None):
     try:

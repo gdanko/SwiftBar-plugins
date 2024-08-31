@@ -9,6 +9,9 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-SwapUsage.5s.py</xbar.abouturl>
 # <xbar.var>string(VAR_SWAP_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 
+def pad_float(number):
+    return '{:.2f}'.format(float(number))
+
 def byte_converter(bytes, unit):
     suffix = 'B'
     prefix = unit[0]
@@ -18,10 +21,7 @@ def byte_converter(bytes, unit):
         divisor = 1024
 
     prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
-    if prefix in prefix_map:
-        return f'{round(bytes / (divisor ** prefix_map[prefix]), 2)}{unit}{suffix}'
-    else:
-        return f'{round(bytes, 2)}{suffix}'
+    return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
 def main():
     try:

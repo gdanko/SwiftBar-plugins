@@ -11,6 +11,9 @@
 
 import os
 
+def pad_float(number):
+    return '{:.2f}'.format(float(number))
+
 def byte_converter(bytes, unit):
     suffix = 'B'
     prefix = unit[0]
@@ -20,7 +23,7 @@ def byte_converter(bytes, unit):
         divisor = 1024
 
     prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
-    return f'{round(bytes / (divisor ** prefix_map[prefix]), 2)} {unit}{suffix}'
+    return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
 def main():
     try:

@@ -12,6 +12,9 @@ from collections import namedtuple
 from math import ceil
 import time
 
+def pad_float(number):
+    return '{:.2f}'.format(float(number))
+
 def get_percent_stats_tuple(cpu='cpu-total', user=0.0, system=0.0, idle=0.0, nice=0.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guestnice=0.0):
     cpu_percent = namedtuple('cpu_percent', 'cpu user system idle nice iowait irq softirq steal guest guestnice')
     return cpu_percent(cpu=cpu, user=user, system=system, idle=idle, nice=nice, iowait=iowait, irq=irq, softirq=softirq, steal=steal, guest=guest, guestnice=guestnice)
@@ -88,7 +91,7 @@ def main(percpu=False):
             list_t2.append(get_time_stats_tuple(user=last_per_cpu_times2.user, system=last_per_cpu_times2.system, nice=last_per_cpu_times2.nice, idle=last_per_cpu_times2.idle))
 
             output.append(calculate(list_t1[0], list_t2[0]))
-            print(f'CPU: user {output[0].user}%, sys {output[0].system}%, idle {output[0].idle}%')
+            print(f'CPU: user {pad_float(output[0].user)}%, sys {pad_float(output[0].system)}%, idle {pad_float(output[0].idle)}%')
         else:
             if blocking:
                 t1 = cpu_times(percpu=True)
