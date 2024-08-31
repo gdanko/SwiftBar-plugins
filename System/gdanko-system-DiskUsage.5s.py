@@ -7,7 +7,7 @@
 # <xbar.desc>This plugin shows disk usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-MemoryUsage.5s.py</xbar.abouturl>
-# <xbar.var>string(VAR_MEM_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
+# <xbar.var>string(VAR_DISK_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 # <xbar.var>string(VAR_DISK_MOUNT_POINTS=/): A comma-delimited list of mount points</xbar.var>
 
 import os
@@ -22,7 +22,7 @@ def get_defaults():
     mount_points_list = re.split(r'\s*,\s*', mount_points)
 
     valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
-    unit = os.getenv('VAR_MEM_USAGE_UNIT', 'Gi')
+    unit = os.getenv('VAR_DISK_USAGE_UNIT', 'Gi')
     if not unit in valid_units:
         unit = 'Gi'
     return mount_points_list, unit
