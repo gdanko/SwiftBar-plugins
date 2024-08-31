@@ -11,6 +11,7 @@
 import subprocess
 
 def main():
+    updates = 0
     p = subprocess.Popen(
         ['softwareupdate', '--list'],
         stdout=subprocess.PIPE,
@@ -19,12 +20,11 @@ def main():
     )
     stdout, stderr = p.communicate()
     if p.returncode == 0:
-        updates = 0
         lines = stdout.split('\n')
         for line in lines:
             if '* Label' in line:
                 updates += 1
-    
+
     print(f'Updates: {updates}')
     
 if __name__ == '__main__':
