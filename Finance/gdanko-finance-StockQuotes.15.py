@@ -11,7 +11,6 @@
 
 import os
 import re
-from pprint import pprint
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
@@ -24,7 +23,7 @@ def main():
         default_symbols = 'AAPL'
         symbols = os.getenv('VAR_STOCK_SYMBOLS', default_symbols)
 
-        if symbols != '':
+        if symbols == '':
             symbols = default_symbols
         symbols_list = re.split(r'\s*,\s*', symbols)
 
