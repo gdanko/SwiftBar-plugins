@@ -58,7 +58,11 @@ def main():
             total = byte_converter(total, unit)
             used = byte_converter(used, unit)
             output.append(f'"{mount_point}" {used} / {total}')
-    print(f'Disk: {"; ".join(output)}')
+
+    if len(output) > 0:
+        print(f'Disk: {"; ".join(output)}')
+    else:
+        print('Disk: Not found')
 
 if __name__ == '__main__':
     main()
