@@ -4,7 +4,7 @@
 # <xbar.version>v0.1.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
-# <xbar.desc>This plugin shows memery usage in the format used/total</xbar.desc>
+# <xbar.desc>This plugin shows disk usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-MemoryUsage.5s.py</xbar.abouturl>
 # <xbar.var>string(VAR_MEM_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
@@ -18,23 +18,13 @@ def pad_float(number):
    return '{:.2f}'.format(float(number))
 
 def get_defaults():
-    default_mount_points = '/'
-    mount_points = os.getenv('VAR_DISK_MOUNT_POINTS', default_mount_points)
-    
-    if mount_points == '':
-        mount_points = default_mount_points
+    mount_points = os.getenv('VAR_DISK_MOUNT_POINTS', '/')
     mount_points_list = re.split(r'\s*,\s*', mount_points)
 
     valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
-    default_unit = 'Gi'
-    unit = os.getenv('VAR_MEM_USAGE_UNIT', default_unit)
-    
-    if unit != '':
-        if not unit in valid_units:
-            unit = default_unit
-    else:
-        unit = default_unit
-    
+    unit = os.getenv('VAR_MEM_USAGE_UNIT', 'Gi')
+    if not unit in valid_units:
+        unit = 'Gi'
     return mount_points_list, unit
 
 def byte_converter(bytes, unit):
