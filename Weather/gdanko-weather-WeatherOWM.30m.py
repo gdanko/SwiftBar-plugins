@@ -13,6 +13,7 @@
 
 import json
 import os
+import time
 from pprint import pprint
 
 def pad_float(number):
@@ -26,6 +27,24 @@ def get_defaults():
     if not units in valid_units:
         units = 'F'
     return location, api_key, units
+
+def fetch_data(url=None):
+    import requests
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        try:
+            data = json.loads(response.content)
+            return data, None
+        except Exception as e:
+            return None, e
+    else:
+        try:
+            error_data = json.loads(response.content)
+            error_message = error_data['message']
+        except:
+            error_message = 'no further detail'    
+        return None, f'Non-200 status code {response.status_code}: {error_message}'
 
 def main():
     try:
@@ -49,11 +68,23 @@ def main():
             print('---')
             print('Missing API key')
         else:
-            url = f'https://api.openweathermap.org/data/2.5/weather?q={location}&appid={api_key}&units={units_map[units]["unit"]}'
-            response = requests.get(url)
-            if response.status_code == 200:
-                try:
-                    weather_data = json.loads(response.content)
+            url = f'http://api.openweathermap.org/geo/1.0/direct?q={location}&appid={api_key}'
+            location_data, err = fetch_data(url)
+            if err:
+                print('Failed to fetch the weather')
+                print('---')
+                print(f'Failed to fetch location data: {err}')
+            else:
+                lat = location_data[0]['lat']
+                lon = location_data[0]['lon']
+                url = f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units={units_map[units]["unit"]}'
+                
+                weather_data, err = fetch_data(url=url)
+                if err:
+                    print('Failed to fetch the weather')
+                    print('---')
+                    print(f'Failed to fetch weather data: {err}')
+                else:
                     print(f'{location} {pad_float(weather_data["main"]["temp"])}°{units}')
                     print('---')
                     print(f'Low/High: {pad_float(weather_data["main"]["temp_min"])}°{units} / {pad_float(weather_data["main"]["temp_max"])}°{units}')
@@ -61,15 +92,23 @@ def main():
                     print(f'Humidity: {pad_float(weather_data["main"]["humidity"])}%')
                     print(f'Condition: {weather_data["weather"][0]["description"].title()}')
                     print(f'Wind: {weather_data["wind"]["deg"]}° @ {pad_float(weather_data["wind"]["speed"])} {units_map[units]["speed"]}')
-
-                except:
-                    print('Failed to fetch the weather')
-                    print('---')
-                    print('Failed to parse the JSON data')
-            else:
-                print('Failed to fetch the weather')
-                print('---')
-                print(f'Non-200 status code: {response.status_code}')
+                    # Forecast requires subscription???
+                    # cnt = 4
+                    # url = f'https://api.openweathermap.org/data/2.5/forecast/daily?lat={lat}&lon={lon}&cnt={cnt}&appid={api_key}&units={units_map[units]["unit"]}'
+                    # forecast_data, err = fetch_data(url=url)
+                    # if err:
+                    #     print('Failed to fetch the weather')
+                    #     print('---')
+                    #     print(f'Failed to fetch forecast data: {err}')
+                    # else:
+                    #     print('---')
+                    #     print(f'{location} {pad_float(weather_data["main"]["temp"])}°{units}')
+                    #     print('---')
+                    #     print(f'Low/High: {pad_float(weather_data["main"]["temp_min"])}°{units} / {pad_float(weather_data["main"]["temp_max"])}°{units}')
+                    #     print(f'Feels Like: {pad_float(weather_data["main"]["feels_like"])}°{units}')
+                    #     print(f'Humidity: {pad_float(weather_data["main"]["humidity"])}%')
+                    #     print(f'Condition: {weather_data["weather"][0]["description"].title()}')
+                    #     print(f'Wind: {weather_data["wind"]["deg"]}° @ {pad_float(weather_data["wind"]["speed"])} {units_map[units]["speed"]}')
 
     except ModuleNotFoundError:
         print('Error: missing "requests" library.')
