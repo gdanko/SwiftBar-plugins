@@ -92,6 +92,7 @@ def main():
                     print(f'Humidity: {pad_float(weather_data["main"]["humidity"])}%')
                     print(f'Condition: {weather_data["weather"][0]["description"].title()}')
                     print(f'Wind: {weather_data["wind"]["deg"]}° @ {pad_float(weather_data["wind"]["speed"])} {units_map[units]["speed"]}')
+                    print('Refresh weather data | refresh=true')
                     # Forecast requires subscription???
                     # cnt = 4
                     # url = f'https://api.openweathermap.org/data/2.5/forecast/daily?lat={lat}&lon={lon}&cnt={cnt}&appid={api_key}&units={units_map[units]["unit"]}'
