@@ -4,7 +4,7 @@
 # <xbar.version>v0.1.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
-# <xbar.desc>This plugin displays the weather using wttr.in]</xbar.desc>
+# <xbar.desc>Display the weather using wttr.in]</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/Weather/gdanko-weather-WeatherWttr.15m.py</xbar.abouturl>
 # <xbar.var>string(VAR_WEATHER_WTTR_LOCATION="San Diego, CA, US"): The location to use</xbar.var>

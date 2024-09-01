@@ -43,6 +43,8 @@ def main():
             if iface:
                 spairport_signal_noise = my_interface['spairport_current_network_information']['spairport_signal_noise']
                 ssid = iface['spairport_current_network_information']['_name']
+                channel = iface['spairport_current_network_information']['spairport_network_channel']
+                mode = iface['spairport_current_network_information']['spairport_network_phymode']
                 pattern = re.compile(r'(-[\d]+)')
                 result = pattern.findall(spairport_signal_noise)
                 if result:
@@ -69,9 +71,11 @@ def main():
 
                         print(f'WiFI: {ssid} - {rating}')
                         print('---')
-                        print(f'Signal:   {signal} dBm ({rating})')
-                        print(f'Noise:    {noise} dBm')
-                        print(f'Quality:  {quality}% ({snr} dBm SNR)')
+                        print(f'Channel: {channel}')
+                        print(f'Mode: {mode}')
+                        print(f'Signal: {signal} dBm ({rating})')
+                        print(f'Noise: {noise} dBm')
+                        print(f'Quality: {quality}% ({snr} dBm SNR)')
                 else:
                     print('WiFi status: N/A')
                     print('---')
@@ -84,7 +88,7 @@ def main():
             print(e)
             print('WiFi status: N/A')
             print('---')
-            print('Failed to parse the JSOn from system_profiler')
+            print('Failed to parse the JSON from system_profiler')
     else:
         print('WiFi status: N/A')
         print('---')

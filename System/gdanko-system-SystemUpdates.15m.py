@@ -4,7 +4,7 @@
 # <xbar.version>v0.1.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
-# <xbar.desc>This plugin displays the number of available system updates</xbar.desc>
+# <xbar.desc>Display the number of available system updates</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-SystemUpdates.15m.py</xbar.abouturl>
 
