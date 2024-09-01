@@ -130,7 +130,7 @@ def gather_cpu_info():
         print('Fix copied to clipboard. Paste on terminal and run.')
 
 def main():
-    output_combined = gather_cpu_info()
+    output_combined, output_individual = gather_cpu_info()
 
     print(f'CPU: user {pad_float(output_combined[0].user)}%, sys {pad_float(output_combined[0].system)}%, idle {pad_float(output_combined[0].idle)}%')
     print('---')
