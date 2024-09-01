@@ -76,6 +76,7 @@ def main():
                         print(f'Signal: {signal} dBm ({rating})')
                         print(f'Noise: {noise} dBm')
                         print(f'Quality: {quality}% ({snr} dBm SNR)')
+                        print('Refresh WiFi data | refresh=true')
                 else:
                     print('WiFi status: N/A')
                     print('---')
