@@ -12,6 +12,7 @@
 import datetime
 import os
 import re
+import sys
 import json
 from pprint import pprint
 
@@ -27,8 +28,12 @@ def add_commas(number):
 def unix_to_human(timestamp):
     return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
 
+def float_to_pct(number):
+    return f'{number:.2%}'
+
 def main():
     try:
+        from numerize import numerize
         import yfinance
 
         output = []
@@ -62,7 +67,10 @@ def main():
                 updown_amount = f'-{pad_float((float(last - price)))}'
                 pct_change = f'-{pad_float((last - price) / last * 100)}'
             
-            output.append(f'{symbol} ${pad_float(price)} {updown} {updown_amount} ({pct_change}%)')
+            output.append(f'{symbol} {pad_float(price)} {updown} {updown_amount} ({pct_change}%)')
+        # print(json.dumps(info_dict['AAPL'], indent=4))
+        # print(json.dumps(metadata_dict['AAPL'], indent=4))
+        # exit()
         print('; '.join(output))
         print('---')
         for i in range (len(symbols_list)):
@@ -71,46 +79,49 @@ def main():
             symbol_metadata = metadata_dict[symbol]
 
             print(symbol)
-            print(f'--{symbol_metadata["longName"]}')
-            print(f'--{symbol_info["website"]} | href={symbol_info["website"]} | color=blue')
-            print(f'--Location: {symbol_info["address1"]}, {symbol_info["city"]}, {symbol_info["state"]}, {symbol_info["zip"]}')
-            print(f'--Phone: {symbol_info["phone"]}')
-            print(f'--FT Employees: {add_commas(symbol_info["fullTimeEmployees"])}')
-            print(f'--Currency: {symbol_info["currency"]}')
-            print(f'--Open: ${pad_float(symbol_info["open"])}')
-            print(f'--Previous Close: ${pad_float(symbol_info["previousClose"])}')
-            print(f'--Daily Low: ${pad_float(symbol_info["dayLow"])}')
-            print(f'--Daily High: ${pad_float(symbol_info["dayHigh"])}')
-            print(f'--52 Week Low: ${pad_float(symbol_metadata["fiftyTwoWeekLow"])}')
-            print(f'--52 Week High: ${pad_float(symbol_metadata["fiftyTwoWeekHigh"])}')
-            print(f'--Regular Market Volume: {add_commas(symbol_info["regularMarketVolume"])}')
-            print(f'--Average Daily Volume: {add_commas(symbol_info["averageVolume"])}')
-            print(f'--10 Day Average Volume: {add_commas(symbol_info["averageVolume10days"])}')
-            print(f'--10 Day Average Daily Volume: {add_commas(symbol_info["averageDailyVolume10Day"])}')
-            print(f'--50 Day Average: {to_dollar(symbol_info["fiftyDayAverage"])}')
-            print(f'--200 Day Average: {to_dollar(symbol_info["twoHundredDayAverage"])}')
-            print(f'--Market Recommendation: {symbol_info["recommendationKey"].title()}')
-            print(f'--Shares Outstanding: {add_commas(symbol_info["sharesOutstanding"])}')
-            print(f'--Shares Short: {add_commas(symbol_info["sharesShort"])}')
-            print(f'--Shares Short Prior Month: {add_commas(symbol_info["sharesShortPriorMonth"])}')
-            print(f'--Shares Short Previous Month Date: {add_commas(symbol_info["sharesShortPreviousMonthDate"])}')
-            print(f'--Last Fiscal Year End: {unix_to_human(symbol_info["lastFiscalYearEnd"])}')
-            print(f'--Next Fiscal Year End: {unix_to_human(symbol_info["nextFiscalYearEnd"])}')
-            print(f'--Most Recent Quarter: {unix_to_human(symbol_info["mostRecentQuarter"])}')
-            print(f'--Last Dividend Date: {unix_to_human(symbol_info["lastDividendDate"])}')
-            print(f'--First Trade Date: {unix_to_human(symbol_info["firstTradeDateEpochUtc"])}')
-            print(f'--Last Split: {symbol_info["lastSplitFactor"]} on {unix_to_human(symbol_info["lastSplitDate"])}')
-            print(f'--Market Cap: {to_dollar(symbol_info["marketCap"])}')
-            print('--Officers')
-            for officer in symbol_info["companyOfficers"]:
-                print(f'----{officer["title"]}')
-                print(f'------Name: {officer["name"]}')
-                if 'yearBorn' in officer:
-                    print(f'------Year Born: {officer["yearBorn"]}')
-                if 'age' in officer:
-                    print(f'------Age: {officer["age"]}')
-                if 'totalPay' in officer:
-                    print(f'------Total Pay: {to_dollar(officer["totalPay"])}')
+            print('--Company Info')
+            print(f'----{symbol_metadata["longName"]}')
+            print(f'----{symbol_info["website"]} | href={symbol_info["website"]} | color=blue')
+            print(f'----Location: {symbol_info["address1"]}, {symbol_info["city"]}, {symbol_info["state"]}, {symbol_info["zip"]}')
+            print(f'----Phone: {symbol_info["phone"]}')
+            print(f'----FT Employees: {add_commas(symbol_info["fullTimeEmployees"])}')
+            print(f'----Currency: {symbol_info["currency"]}')
+            print('--Key Stats')
+            print(f'----Open: {to_dollar(symbol_info["open"])}')
+            print(f'----Daily High: {to_dollar(symbol_info["dayHigh"])}')
+            print(f'----Daily Low: {to_dollar(symbol_info["dayLow"])}')
+            print(f'----Previous Close: {to_dollar(symbol_info["previousClose"])}')
+            print(f'----10 Day Average Volume: {numerize.numerize(symbol_info["averageVolume10days"], 3)}')
+            print(f'----52 Week High: {to_dollar(symbol_metadata["fiftyTwoWeekHigh"])}')
+            print(f'----52 Week Low: {to_dollar(symbol_metadata["fiftyTwoWeekLow"])}')
+            print(f'----Beta: {numerize.numerize(symbol_info["beta"])}')
+            print(f'----Market Cap: ${numerize.numerize(symbol_info["marketCap"], 3)}')
+            print(f'----Shares Outstanding: {numerize.numerize(symbol_info["sharesOutstanding"], 3)}')
+            print(f'----Public Float: {numerize.numerize(symbol_info["floatShares"], 3)}')
+            print(f'----Dividend Rate: {add_commas(symbol_info["dividendRate"])}')
+            print(f'----Dividend Yield: {float_to_pct(symbol_info["dividendYield"])}')
+            print(f'----Dividend: ${to_dollar(symbol_info["lastDividendValue"])}')
+            print(f'----Revenue: {numerize.numerize(symbol_info["totalRevenue"])}')
+            print(f'----Revenue Per Employee: ${numerize.numerize((symbol_info["totalRevenue"] / symbol_info["fullTimeEmployees"]), 3)}')
+            print('--Ratios/Profitability')
+            print(f'----EPS (TTM): {to_dollar(symbol_info["trailingEps"])}')
+            print(f'----P/E (TTM): {pad_float(symbol_info["trailingPE"])}')
+            print(f'----Fwd P/E (NTM): {pad_float(symbol_info["forwardPE"])}')
+            print(f'----Revenue: {numerize.numerize(symbol_info["totalRevenue"], 3)}')
+            print(f'----Revenue Per Share: {to_dollar(symbol_info["revenuePerShare"])}')
+            print(f'----ROE (TTM): {float_to_pct(symbol_info["returnOnEquity"])}')
+            print(f'----EBITDA (TTM): {numerize.numerize(symbol_info["ebitda"], 3)}')
+            print(f'----Gross Margin (TTM): {float_to_pct(symbol_info["grossMargins"])}')
+            print(f'----Net Margin (TTM): {float_to_pct(symbol_info["profitMargins"])}')
+            print(f'----Debt To Equity (TTM): {pad_float(symbol_info["debtToEquity"])}%')
+            print('--Events')
+            print(f'----Last Fiscal Year End: {unix_to_human(symbol_info["lastFiscalYearEnd"])}')
+            print(f'----Next Fiscal Year End: {unix_to_human(symbol_info["nextFiscalYearEnd"])}')
+            print(f'----Most Recent Quarter: {unix_to_human(symbol_info["mostRecentQuarter"])}')
+            print(f'----Last Dividend Date: {unix_to_human(symbol_info["lastDividendDate"])}')
+            print(f'----First Trade Date: {unix_to_human(symbol_info["firstTradeDateEpochUtc"])}')
+            print(f'----Last Split: {symbol_info["lastSplitFactor"]} on {unix_to_human(symbol_info["lastSplitDate"])}')
+
         print('Refresh market data | refresh=true')
 
     except ModuleNotFoundError:
@@ -118,8 +129,7 @@ def main():
         print('---')
         import sys
         import subprocess
-        subprocess.run('pbcopy', universal_newlines=True,
-                       input=f'{sys.executable} -m pip install yfinance')
+        subprocess.run('pbcopy', universal_newlines=True, nput=f'{sys.executable} -m pip install numerize yfinance')
         print('Fix copied to clipboard. Paste on terminal and run.')
 
 if __name__ == '__main__':
