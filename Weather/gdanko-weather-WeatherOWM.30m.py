@@ -4,9 +4,9 @@
 # <xbar.version>v0.1.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
-# <xbar.desc>Display the weather using openweathermap.org]</xbar.desc>
+# <xbar.desc>Display the weather using openweathermap.org</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
-# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/Weather/gdanko-weather-WeatherOWM.15m.py</xbar.abouturl>
+# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/Weather/gdanko-weather-WeatherOWM.30m.py</xbar.abouturl>
 # <xbar.var>string(VAR_WEATHER_OWM_LOCATION="San Diego, CA, US"): The location to use</xbar.var>
 # <xbar.var>string(VAR_WEATHER_OWM_API_KEY=""): The OpenWeatherMap API key</xbar.var>
 # <xbar.var>string(VAR_WEATHER_OWM_UNITS="F"): The unit to use: (C)elsius or (F)ahrenheit</xbar.var>
