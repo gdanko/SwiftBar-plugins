@@ -153,7 +153,7 @@ def main():
     if cpu_type is not None:
         print(f'Processor: {cpu_type}')
     for cpu in output_individual:
-        print(f'CPU {cpu.cpu}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
+        print(f'Core {cpu.cpu}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
 
 if __name__ == '__main__':
     main()
