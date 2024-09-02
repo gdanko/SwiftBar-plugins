@@ -13,8 +13,6 @@
 
 import json
 import os
-import time
-from pprint import pprint
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
@@ -41,7 +39,7 @@ def fetch_data(url=None):
     else:
         try:
             error_data = json.loads(response.content)
-            error_message = error_data['message']
+            error_message = error_data['error']['message']
         except:
             error_message = 'no further detail'    
         return None, f'Non-200 status code {response.status_code}: {error_message}'
