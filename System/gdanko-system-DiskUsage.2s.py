@@ -10,12 +10,17 @@
 # <xbar.var>string(VAR_DISK_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 # <xbar.var>string(VAR_DISK_MOUNTPOINTS="/"): A comma-delimited list of mount points</xbar.var>
 
+import datetime
 import os
 import re
 import shutil
+import time
 
 def pad_float(number):
    return '{:.2f}'.format(float(number))
+
+def get_timestamp(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def get_defaults():
     mountpoints = os.getenv('VAR_DISK_MOUNTPOINTS', '/')
@@ -62,6 +67,8 @@ def main():
         if len(output) > 0:
             print(f'Disk: {"; ".join(output)}')
             print('---')
+            print(f'Updated {get_timestamp(int(time.time()))}')
+            print('---')
             for valid_mountpoint in valid_mountpoints:
                 print(valid_mountpoint)
                 print(f'--mountpoint: {partition_data[valid_mountpoint].mountpoint}')
@@ -76,8 +83,7 @@ def main():
         print('---')
         import sys
         import subprocess
-        subprocess.run('pbcopy', universal_newlines=True,
-                       input=f'{sys.executable} -m pip install psutil')
+        subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
         print('Fix copied to clipboard. Paste on terminal and run.')
 if __name__ == '__main__':
     main()

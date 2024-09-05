@@ -9,10 +9,15 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-SwapUsage.2s.py</xbar.abouturl>
 # <xbar.var>string(VAR_SWAP_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 
+import datetime
 import os
+import time
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
+
+def get_timestamp(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def get_defaults():
     valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
@@ -42,6 +47,8 @@ def main():
         used = byte_converter(mem.used, unit)
         total = byte_converter(mem.total, unit)
         print(f'Memory: {used} / {total}')
+        print(f'Updated {get_timestamp(int(time.time()))}')
+        print('---')
 
     except ModuleNotFoundError:
         print('Error: missing "psutil" library.')
