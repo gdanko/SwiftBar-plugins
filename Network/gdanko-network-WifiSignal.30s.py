@@ -9,14 +9,18 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/Network/gdanko-network-WifiSignal.30s.py</xbar.abouturl>
 # <xbar.var>string(VAR_WIFI_STATUS_INTERFACE="en0"): The network interface to measure.</xbar.var>
 
+import datetime
 import json
 import os
 import re
 import subprocess
-from pprint import pprint
+import time
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
+
+def get_timestamp(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def get_defaults():
     interface = os.getenv('VAR_WIFI_STATUS_INTERFACE', 'en0') 
@@ -85,6 +89,8 @@ def main():
                                     else:
                                         rating = 'Unknown'
                                     print(f'WiFI: {ssid} - {rating}')
+                                    print('---')
+                                    print(f'Updated {get_timestamp(int(time.time()))}')
                                     print('---')
                                     print(f'Channel: {channel}')
                                     print(f'Mode: {mode}')

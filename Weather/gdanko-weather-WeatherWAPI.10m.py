@@ -11,11 +11,16 @@
 # <xbar.var>string(VAR_WEATHER_WAPI_API_KEY=""): The OpenWeatherMap API key</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_UNITS="F"): The unit to use: (C)elsius or (F)ahrenheit</xbar.var>
 
+import datetime
 import json
 import os
+import time
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
+
+def get_timestamp(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def get_defaults():
     location = os.getenv('VAR_WEATHER_WAPI_LOCATION', 'San Diego, CA, US')
@@ -24,7 +29,7 @@ def get_defaults():
     units = os.getenv('VAR_WEATHER_WAPI_UNITS', 'F')
     if not units in valid_units:
         units = 'F'
-    return location, api_key, units
+    return location, 'afd95b4af89c45c880320239240209', units
 
 def fetch_data(url=None):
     import requests
@@ -107,6 +112,8 @@ def main():
                     dew_point = weather_data["current"]["dewpoint_f"] if units == 'F' else weather_data["current"]["dewpoint_c"]
                     pressure = f'{pad_float(weather_data["current"]["pressure_in"])} in' if units == 'F' else f'{pad_float(weather_data["current"]["pressure_mb"])} mb'
                     print(f'{location} {pad_float(current_temp)}°{units}')
+                    print('---')
+                    print(f'Updated {get_timestamp(int(time.time()))}')
                     print('---')
                     print('Current Weather')
                     print(f'--Low / High: {pad_float(low_temp)}°{units} / {pad_float(high_temp)}°{units}')

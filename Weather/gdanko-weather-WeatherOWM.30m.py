@@ -11,13 +11,16 @@
 # <xbar.var>string(VAR_WEATHER_OWM_API_KEY=""): The OpenWeatherMap API key</xbar.var>
 # <xbar.var>string(VAR_WEATHER_OWM_UNITS="F"): The unit to use: (C)elsius or (F)ahrenheit</xbar.var>
 
+import datetime
 import json
 import os
 import time
-from pprint import pprint
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
+
+def get_timestamp(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def get_defaults():
     location = os.getenv('VAR_WEATHER_OWM_LOCATION', 'San Diego, CA, US')
@@ -85,7 +88,10 @@ def main():
                     print('---')
                     print(f'Failed to fetch weather data: {err}')
                 else:
+
                     print(f'{location} {pad_float(weather_data["main"]["temp"])}°{units}')
+                    print('---')
+                    print(f'Updated {get_timestamp(int(time.time()))}')
                     print('---')
                     print(f'Low/High: {pad_float(weather_data["main"]["temp_min"])}°{units} / {pad_float(weather_data["main"]["temp_max"])}°{units}')
                     print(f'Feels Like: {pad_float(weather_data["main"]["feels_like"])}°{units}')
