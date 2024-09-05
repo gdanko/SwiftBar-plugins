@@ -8,8 +8,14 @@
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/Finance/gdanko-finance-StockIndexes.15m.py</xbar.abouturl>
 
+import datetime
+import time
+
 def pad_float(number):
     return '{:.2f}'.format(float(number))
+
+def get_timestamp(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def main():
     try:
@@ -41,6 +47,8 @@ def main():
             
             output.append(f'{key} {updown} {pct_change}')
         print('; '.join(output))
+        print(f'Updated {get_timestamp(int(time.time()))}')
+        print('---')
 
     except ModuleNotFoundError:
         print('Error: missing "yfinance" library.')

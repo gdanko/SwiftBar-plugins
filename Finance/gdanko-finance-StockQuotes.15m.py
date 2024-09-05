@@ -12,12 +12,13 @@
 import datetime
 import os
 import re
-import sys
-import json
-from pprint import pprint
+import time
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
+
+def get_timestamp(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def to_dollar(number):
     return '${:,.2f}'.format(number)
@@ -68,10 +69,9 @@ def main():
                 pct_change = f'-{pad_float((last - price) / last * 100)}'
             
             output.append(f'{symbol} {pad_float(price)} {updown} {updown_amount} ({pct_change}%)')
-        # print(json.dumps(info_dict['AAPL'], indent=4))
-        # print(json.dumps(metadata_dict['AAPL'], indent=4))
-        # exit()
         print('; '.join(output))
+        print('---')
+        print(f'Updated {get_timestamp(int(time.time()))}')
         print('---')
         for i in range (len(symbols_list)):
             symbol = symbols_list[i]
