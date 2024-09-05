@@ -9,13 +9,16 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-CpuPercent.2s.py</xbar.abouturl>
 
 from collections import namedtuple
+import datetime
 from math import ceil
 import subprocess
 import time
-from pprint import pprint
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
+
+def get_timestamp(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def get_percent_stats_tuple(cpu='cpu-total', cpu_type=None, user=0.0, system=0.0, idle=0.0, nice=0.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guestnice=0.0):
     cpu_percent = namedtuple('cpu_percent', 'cpu cpu_type user system idle nice iowait irq softirq steal guest guestnice')
@@ -149,6 +152,8 @@ def main():
     output_combined, output_individual, cpu_type = gather_cpu_info()
 
     print(f'CPU: user {pad_float(output_combined[0].user)}%, sys {pad_float(output_combined[0].system)}%, idle {pad_float(output_combined[0].idle)}%')
+    print('---')
+    print(f'Updated {get_timestamp(int(time.time()))}')
     print('---')
     if cpu_type is not None:
         print(f'Processor: {cpu_type}')
