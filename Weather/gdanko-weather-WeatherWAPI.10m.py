@@ -29,7 +29,7 @@ def get_defaults():
     units = os.getenv('VAR_WEATHER_WAPI_UNITS', 'F')
     if not units in valid_units:
         units = 'F'
-    return location, 'afd95b4af89c45c880320239240209', units
+    return location, api_key, units
 
 def fetch_data(url=None):
     import requests
