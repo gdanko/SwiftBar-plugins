@@ -9,12 +9,17 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-MemoryUsage.2s.py</xbar.abouturl>
 # <xbar.var>string(VAR_MEM_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 
+import datetime
 import json
 import os
 import subprocess
+import time
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
+
+def get_timestamp(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def get_defaults():
     valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
@@ -65,6 +70,8 @@ def main():
         total = byte_converter(mem.total, unit)
         print(f'Memory: {used} / {total}')
         print('---')
+        print(f'Updated {get_timestamp(int(time.time()))}')
+        print('---')
         if not err:
             print(f'Memory: {memory_brand} {memory_type}')
         print(f'Total: {byte_converter(mem.total, unit)}')
@@ -80,8 +87,7 @@ def main():
         print('---')
         import sys
         import subprocess
-        subprocess.run('pbcopy', universal_newlines=True,
-                       input=f'{sys.executable} -m pip install psutil')
+        subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
         print('Fix copied to clipboard. Paste on terminal and run.')
 
 if __name__ == '__main__':
