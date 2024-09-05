@@ -39,8 +39,7 @@ def main():
         print('---')
         import sys
         import subprocess
-        subprocess.run('pbcopy', universal_newlines=True,
-                       input=f'{sys.executable} -m pip install requests')
+        subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install requests')
         print('Fix copied to clipboard. Paste on terminal and run.')
 
 if __name__ == '__main__':
