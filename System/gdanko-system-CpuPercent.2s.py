@@ -92,10 +92,14 @@ def combine_stats(cpu_time_stats):
     return get_time_stats_tuple(idle=idle, nice=nice, system=system, user=user)
 
 def gather_cpu_info():
+    cpu_type = None
+    max_cpu_freq = None
+
     try:
-        from psutil import cpu_times
+        from psutil import cpu_freq, cpu_times
 
         cpu_type = get_cpu_type()
+        max_cpu_freq = cpu_freq().max
 
         interval = 1.0
         blocking = False
@@ -138,7 +142,7 @@ def gather_cpu_info():
         for i in range(len(t1)):
             output_individual.append(calculate(list_t1_individual[i], list_t2_individual[i]))
 
-        return output_combined, output_individual, cpu_type
+        return output_combined, output_individual, cpu_type, max_cpu_freq
 
     except ModuleNotFoundError:
         print('Error: missing "psutil" library.')
@@ -149,14 +153,18 @@ def gather_cpu_info():
         print('Fix copied to clipboard. Paste on terminal and run.')
 
 def main():
-    output_combined, output_individual, cpu_type = gather_cpu_info()
+    output_combined, output_individual, cpu_type, max_cpu_freq = gather_cpu_info()
 
     print(f'CPU: user {pad_float(output_combined[0].user)}%, sys {pad_float(output_combined[0].system)}%, idle {pad_float(output_combined[0].idle)}%')
     print('---')
     print(f'Updated {get_timestamp(int(time.time()))}')
     print('---')
     if cpu_type is not None:
-        print(f'Processor: {cpu_type}')
+        processor = cpu_type
+        if max_cpu_freq:
+            processor = processor + f' @ {pad_float(max_cpu_freq / 1000)} GHz'
+        print(f'Processor: {processor}')
+        
     for cpu in output_individual:
         print(f'Core {cpu.cpu}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
 
