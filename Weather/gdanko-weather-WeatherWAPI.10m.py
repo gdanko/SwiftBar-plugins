@@ -14,7 +14,18 @@
 import datetime
 import json
 import os
+import subprocess
+import sys
 import time
+
+try:
+    import requests
+except ModuleNotFoundError:
+    print('Error: missing "requests" library.')
+    print('---')
+    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install requests')
+    print('Fix copied to clipboard. Paste on terminal and run.')
+    exit(1)
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
@@ -61,8 +72,7 @@ def get_uv_index(uv_index):
         return 'Extreme'
 
 def main():
-    try:
-        import requests
+
 
         location, api_key, units = get_defaults()
 
@@ -165,13 +175,7 @@ def main():
 
                     print('Refresh weather data | refresh=true')
 
-    except ModuleNotFoundError:
-        print('Error: missing "requests" library.')
-        print('---')
-        import sys
-        import subprocess
-        subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install requests')
-        print('Fix copied to clipboard. Paste on terminal and run.')
+
 
 if __name__ == '__main__':
     main()
