@@ -10,9 +10,19 @@
 # <xbar.var>string(VAR_NET_THROUGHPUT_INTERFACE="en0"): The network interface to measure.</xbar.var>
 
 from collections import namedtuple
-from pprint import pprint
 import os
+import subprocess
+import sys
 import time
+
+try:
+    from psutil import net_io_counters
+except ModuleNotFoundError:
+    print('Error: missing "psutil" library.')
+    print('---')
+    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
+    print('Fix copied to clipboard. Paste on terminal and run.')
+    exit(1)
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
@@ -38,35 +48,23 @@ def process_bytes(num):
     return f'{pad_float(num)} Yi{suffix}'
 
 def get_data(interface=None):
-    try:
-        from psutil import net_io_counters
-
-        io_counters = net_io_counters(pernic=True)
-        if interface in io_counters:
-            return get_io_counter_tuple(
-                interface    = interface,
-                bytes_sent   = io_counters[interface].bytes_sent,
-                bytes_recv   = io_counters[interface].bytes_recv,
-                packets_sent = io_counters[interface].packets_sent,
-                packets_recv = io_counters[interface].packets_recv,
-                errin        = io_counters[interface].errin,
-                errout       = io_counters[interface].errout,
-                dropin       = io_counters[interface].dropin,
-                dropout      = io_counters[interface].dropout,
-            )
-        else:
-            # DO SOMETHING HERE
-            print('oops! interface not found!')
-            exit(1)
-
-    except ModuleNotFoundError:
-        print('Error: missing "psutil" library.')
-        print('---')
-        import sys
-        import subprocess
-        subprocess.run('pbcopy', universal_newlines=True,
-                       input=f'{sys.executable} -m pip install psutil')
-        print('Fix copied to clipboard. Paste on terminal and run.')
+    io_counters = net_io_counters(pernic=True)
+    if interface in io_counters:
+        return get_io_counter_tuple(
+            interface    = interface,
+            bytes_sent   = io_counters[interface].bytes_sent,
+            bytes_recv   = io_counters[interface].bytes_recv,
+            packets_sent = io_counters[interface].packets_sent,
+            packets_recv = io_counters[interface].packets_recv,
+            errin        = io_counters[interface].errin,
+            errout       = io_counters[interface].errout,
+            dropin       = io_counters[interface].dropin,
+            dropout      = io_counters[interface].dropout,
+        )
+    else:
+        # DO SOMETHING HERE
+        print('oops! interface not found!')
+        exit(1)
 
 def main():
     interface = get_defaults()
