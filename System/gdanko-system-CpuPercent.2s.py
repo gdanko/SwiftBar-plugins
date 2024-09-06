@@ -25,6 +25,47 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
+def get_cpu_family_strings():
+    return {
+        0xcee41549: 'PowerPC G3',
+        0x77c184ae: 'PowerPC G4',
+        0xed76d8aa: 'PowerPC G5',
+        0xaa33392b: 'Intel 6_13',
+        0x78ea4fbc: 'Intel Penryn',
+        0x6b5a4cd2: 'Intel Nehalem',
+        0x573b5eec: 'Intel Westmere',
+        0x5490b78c: 'Intel Sandybridge',
+        0x1f65e835: 'Intel Ivybridge',
+        0x10b282dc: 'Intel Haswell',
+        0x582ed09c: 'Intel Broadwell',
+        0x37fc219f: 'Intel Skylake',
+        0x0f817246: 'Intel Kabylake',
+        0x38435547: 'Intel Icelake',
+        0x1cf8a03e: 'Intel Cometlake',
+        0xe73283ae: 'ARM9',
+        0x8ff620d8: 'ARM11',
+        0x53b005f5: 'ARM XScale',
+        0xbd1b0ae9: 'ARM12',
+        0x0cc90e64: 'ARM13',
+        0x96077ef1: 'ARM14',
+        0xa8511bca: 'ARM15',
+        0x1e2d6381: 'ARM Swift',
+        0x37a09642: 'ARM Cyclone',
+        0x2c91a47e: 'ARM Typhoon',
+        0x92fb37c8: 'ARM Twister',
+        0x67ceee93: 'ARM Hurricane',
+        0xe81e7ef6: 'ARM Monsoon Mistral',
+        0x07d34b9f: 'ARM Vortex Tempest',
+        0x462504d2: 'ARM Lightning Thunder',
+        0x1b588bb3: 'ARM Firestorm Icestorm',
+        0xda33d83d: 'ARM Blizzard Avalanche',
+        0x8765edea: 'ARM Everest Sawtooth',
+        0xfa33415e: 'ARM Ibiza',
+        0x72015832: 'ARM Palma',
+        0x2876f5b5: 'ARM Coll',
+        0x5f4dea93: 'ARM Lobos',
+    }
+
 def pad_float(number):
     return '{:.2f}'.format(float(number))
 
@@ -35,9 +76,9 @@ def get_time_stats_tuple(cpu='cpu-total', cpu_type=None, user=0.0, system=0.0, i
     cpu_times = namedtuple('cpu_times', 'cpu cpu_type user system idle nice iowait irq softirq steal guest guestnice')
     return cpu_times(cpu=cpu, cpu_type=cpu_type, user=user, system=system, idle=idle, nice=nice, iowait=iowait, irq=irq, softirq=softirq, steal=steal, guest=guest, guestnice=guestnice)
 
-def get_cpu_type():
+def get_sysctl(metric):
     p = subprocess.Popen(
-        ['/usr/sbin/sysctl', '-n', 'machdep.cpu.brand_string'],
+        ['/usr/sbin/sysctl', '-n', metric],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -67,23 +108,18 @@ def combine_stats(cpu_time_stats, cpu_type):
         user=(user / len(cpu_time_stats)),
     )
 
-def gather_cpu_info():
-    cpu_type = get_cpu_type()
+def main():
+    cpu_type = get_sysctl('machdep.cpu.brand_string')
+    cpu_family = get_cpu_family_strings().get(int(get_sysctl('hw.cpufamily')), int(get_sysctl('hw.cpufamily')))
     max_cpu_freq = cpu_freq().max if cpu_freq().max is not None else None
     individual_cpu_pct = []
     combined_cpu_pct = []
 
     individual_cpu_percent = cpu_times_percent(interval=1.0, percpu=True)
 
-    # Create more detailed tuples for the cpu_times_percent() output
     for i, cpu_instance in enumerate(individual_cpu_percent):
         individual_cpu_pct.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
     combined_cpu_pct.append(combine_stats(individual_cpu_pct, cpu_type))
-
-    return combined_cpu_pct, individual_cpu_pct, cpu_type, max_cpu_freq
-
-def main():
-    combined_cpu_pct, individual_cpu_pct, cpu_type, max_cpu_freq = gather_cpu_info()
 
     print(f'CPU: user {pad_float(combined_cpu_pct[0].user)}%, sys {pad_float(combined_cpu_pct[0].system)}%, idle {pad_float(combined_cpu_pct[0].idle)}%')
     print('---')
@@ -91,6 +127,8 @@ def main():
     print('---')
     if cpu_type is not None:
         processor = cpu_type
+        if cpu_family:
+            processor = processor + f' ({cpu_family})'
         if max_cpu_freq:
             processor = processor + f' @ {pad_float(max_cpu_freq / 1000)} GHz'
         print(f'Processor: {processor}')
