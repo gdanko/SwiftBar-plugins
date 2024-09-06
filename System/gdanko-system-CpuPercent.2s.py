@@ -14,9 +14,10 @@ import datetime
 import subprocess
 import sys
 import time
+from pprint import pprint
 
 try:
-    from psutil import cpu_freq, cpu_times
+    from psutil import cpu_freq, cpu_times, cpu_times_percent
 except ModuleNotFoundError:
     print('Error: missing "psutil" library.')
     print('---')
@@ -88,7 +89,7 @@ def calculate(t1, t2):
         guestnice   = ceil(min(max(0.0, (times_delta.guestnice * scale)), 100.0) * 100) / 100,
     )
 
-def combine_stats(cpu_time_stats):
+def combine_stats(cpu_time_stats, cpu_type):
     idle      = 0.0
     nice      = 0.0
     system    = 0.0
@@ -99,59 +100,32 @@ def combine_stats(cpu_time_stats):
         nice   += cpu_time_stat.nice
         system += cpu_time_stat.system
         user   += cpu_time_stat.user
-    return get_time_stats_tuple(idle=idle, nice=nice, system=system, user=user)
+    return get_time_stats_tuple(
+        cpu_type=cpu_type,
+        idle=(idle / len(cpu_time_stats)),
+        nice=(nice / len(cpu_time_stats)),
+        system=(system / len(cpu_time_stats)),
+        user=(user / len(cpu_time_stats)),
+    )
 
 def gather_cpu_info():
     cpu_type = get_cpu_type()
     max_cpu_freq = cpu_freq().max if cpu_freq().max is not None else None
-
+    individual_cpu_pct = []
+    combined_cpu_pct = []
     interval = 1.0
-    blocking = False
-    output_individual = []
-    output_combined = []
-    list_t1_individual = []
-    list_t2_individual = []
-    list_t1_combined = []
-    list_t2_combined = []
 
-    last_per_cpu_times = cpu_times(percpu=True)
-    last_per_cpu_times2 = last_per_cpu_times
+    individual_cpu_percent = cpu_times_percent(interval=interval, percpu=True)
+    for i, cpu_instance in enumerate(individual_cpu_percent):
+        individual_cpu_pct.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
+    combined_cpu_pct.append(combine_stats(individual_cpu_pct, cpu_type))
 
-    if interval > 0.0:
-        blocking = True
-
-    if blocking:
-        t1 = cpu_times(percpu=True)
-        time.sleep(int(interval))
-    else:
-        t1 = last_per_cpu_times2
-        if t1 is None:
-            t1 = cpu_times(percpu=True)
-
-    last_per_cpu_times2 = cpu_times(percpu=True)
-
-    combined_t1 = combine_stats(t1)
-    combined_t2 = combine_stats(last_per_cpu_times2)
-
-    # Get the stats for the combined
-    list_t1_combined.append(get_time_stats_tuple(cpu_type=cpu_type, user=combined_t1.user, system=combined_t1.system, nice=combined_t1.nice, idle=combined_t1.idle))
-    list_t2_combined.append(get_time_stats_tuple(cpu_type=cpu_type, user=combined_t2.user, system=combined_t2.system, nice=combined_t2.nice, idle=combined_t2.idle))
-    output_combined.append(calculate(list_t1_combined[0], list_t2_combined[0]))
-
-    # Get the stats for the individual
-    for i, cpu_instance in enumerate(t1):
-        list_t1_individual.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
-    for i, cpu_instance in enumerate(last_per_cpu_times2):
-        list_t2_individual.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
-    for i in range(len(t1)):
-        output_individual.append(calculate(list_t1_individual[i], list_t2_individual[i]))
-
-    return output_combined, output_individual, cpu_type, max_cpu_freq
+    return combined_cpu_pct, individual_cpu_pct, cpu_type, max_cpu_freq
 
 def main():
-    output_combined, output_individual, cpu_type, max_cpu_freq = gather_cpu_info()
+    combined_cpu_pct, individual_cpu_pct, cpu_type, max_cpu_freq = gather_cpu_info()
 
-    print(f'CPU: user {pad_float(output_combined[0].user)}%, sys {pad_float(output_combined[0].system)}%, idle {pad_float(output_combined[0].idle)}%')
+    print(f'CPU: user {pad_float(combined_cpu_pct[0].user)}%, sys {pad_float(combined_cpu_pct[0].system)}%, idle {pad_float(combined_cpu_pct[0].idle)}%')
     print('---')
     print(f'Updated {get_timestamp(int(time.time()))}')
     print('---')
@@ -161,7 +135,7 @@ def main():
             processor = processor + f' @ {pad_float(max_cpu_freq / 1000)} GHz'
         print(f'Processor: {processor}')
         
-    for cpu in output_individual:
+    for cpu in individual_cpu_pct:
         print(f'Core {cpu.cpu}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
 
 if __name__ == '__main__':
