@@ -13,7 +13,17 @@ import datetime
 import json
 import os
 import subprocess
+import sys
 import time
+
+try:
+    from psutil import virtual_memory
+except ModuleNotFoundError:
+    print('Error: missing "psutil" library.')
+    print('---')
+    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
+    print('Fix copied to clipboard. Paste on terminal and run.')
+    exit(1)
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
@@ -58,37 +68,26 @@ def byte_converter(bytes, unit):
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
 def main():
-    try:
-        from psutil import virtual_memory
+    unit = get_defaults()
 
-        unit = get_defaults()
+    memory_type, memory_brand, err = get_memory_details()
 
-        memory_type, memory_brand, err = get_memory_details()
-
-        mem = virtual_memory()
-        used = byte_converter(mem.used, unit)
-        total = byte_converter(mem.total, unit)
-        print(f'Memory: {used} / {total}')
-        print('---')
-        print(f'Updated {get_timestamp(int(time.time()))}')
-        print('---')
-        if not err:
-            print(f'Memory: {memory_brand} {memory_type}')
-        print(f'Total: {byte_converter(mem.total, unit)}')
-        print(f'Available: {byte_converter(mem.available, unit)}')
-        print(f'Used: {byte_converter(mem.used, unit)}')
-        print(f'Free: {byte_converter(mem.free, unit)}')
-        print(f'Active: {byte_converter(mem.active, unit)}')
-        print(f'Inactive: {byte_converter(mem.inactive, unit)}')
-        print(f'Wired: {byte_converter(mem.wired, unit)}')
-
-    except ModuleNotFoundError:
-        print('Error: missing "psutil" library.')
-        print('---')
-        import sys
-        import subprocess
-        subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
-        print('Fix copied to clipboard. Paste on terminal and run.')
+    mem = virtual_memory()
+    used = byte_converter(mem.used, unit)
+    total = byte_converter(mem.total, unit)
+    print(f'Memory: {used} / {total}')
+    print('---')
+    print(f'Updated {get_timestamp(int(time.time()))}')
+    print('---')
+    if not err:
+        print(f'Memory: {memory_brand} {memory_type}')
+    print(f'Total: {byte_converter(mem.total, unit)}')
+    print(f'Available: {byte_converter(mem.available, unit)}')
+    print(f'Used: {byte_converter(mem.used, unit)}')
+    print(f'Free: {byte_converter(mem.free, unit)}')
+    print(f'Active: {byte_converter(mem.active, unit)}')
+    print(f'Inactive: {byte_converter(mem.inactive, unit)}')
+    print(f'Wired: {byte_converter(mem.wired, unit)}')
 
 if __name__ == '__main__':
     main()

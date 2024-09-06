@@ -8,7 +8,12 @@
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-SystemUpdates.15m.py</xbar.abouturl>
 
+import datetime
 import subprocess
+import time
+
+def get_timestamp(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def main():
     updates = 0
@@ -24,8 +29,13 @@ def main():
         for line in lines:
             if '* Label' in line:
                 updates += 1
-
-    print(f'Updates: {updates}')
+        print(f'Updates: {updates}')
+        print('---')
+        print(f'Updated {get_timestamp(int(time.time()))}')
+    else:
+        print('Updates: Unknown')
+        print('---')
+        print(f'Failed to find update count: {stderr}')
     
 if __name__ == '__main__':
     main()

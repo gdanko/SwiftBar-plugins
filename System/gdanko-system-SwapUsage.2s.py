@@ -11,7 +11,18 @@
 
 import datetime
 import os
+import subprocess
+import sys
 import time
+
+try:
+    from psutil import swap_memory
+except ModuleNotFoundError:
+    print('Error: missing "psutil" library.')
+    print('---')
+    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
+    print('Fix copied to clipboard. Paste on terminal and run.')
+    exit(1)
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
@@ -38,26 +49,14 @@ def byte_converter(bytes, unit):
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
 def main():
-    try:
-        from psutil import swap_memory
-
         unit = get_defaults()
 
         mem = swap_memory()
         used = byte_converter(mem.used, unit)
         total = byte_converter(mem.total, unit)
         print(f'Memory: {used} / {total}')
+        print('---')
         print(f'Updated {get_timestamp(int(time.time()))}')
-        print('---')
-
-    except ModuleNotFoundError:
-        print('Error: missing "psutil" library.')
-        print('---')
-        import sys
-        import subprocess
-        subprocess.run('pbcopy', universal_newlines=True,
-                       input=f'{sys.executable} -m pip install psutil')
-        print('Fix copied to clipboard. Paste on terminal and run.')
 
 if __name__ == '__main__':
     main()

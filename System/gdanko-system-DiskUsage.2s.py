@@ -14,7 +14,18 @@ import datetime
 import os
 import re
 import shutil
+import subprocess
+import sys
 import time
+
+try:
+    from psutil import disk_partitions
+except ModuleNotFoundError:
+    print('Error: missing "psutil" library.')
+    print('---')
+    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
+    print('Fix copied to clipboard. Paste on terminal and run.')
+    exit(1)
 
 def pad_float(number):
    return '{:.2f}'.format(float(number))
@@ -44,46 +55,36 @@ def byte_converter(bytes, unit):
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
 def main():
-    try:
-        from psutil import disk_partitions
+    output = []
+    partition_data = {}
+    valid_mountpoints = []
+    mountpoints_list, unit = get_defaults()
 
-        output = []
-        partition_data = {}
-        valid_mountpoints = []
-        mountpoints_list, unit = get_defaults()
+    partitions = disk_partitions()
+    for partition in partitions:
+        partition_data[partition.mountpoint] = partition
 
-        partitions = disk_partitions()
-        for partition in partitions:
-            partition_data[partition.mountpoint] = partition
+    for mountpoint in mountpoints_list:
+        total, used, free = shutil.disk_usage(mountpoint)
+        if total and used:
+            valid_mountpoints.append(mountpoint)
+            total = byte_converter(total, unit)
+            used = byte_converter(used, unit)
+            output.append(f'"{mountpoint}" {used} / {total}')
 
-        for mountpoint in mountpoints_list:
-            total, used, free = shutil.disk_usage(mountpoint)
-            if total and used:
-                valid_mountpoints.append(mountpoint)
-                total = byte_converter(total, unit)
-                used = byte_converter(used, unit)
-                output.append(f'"{mountpoint}" {used} / {total}')
-
-        if len(output) > 0:
-            print(f'Disk: {"; ".join(output)}')
-            print('---')
-            print(f'Updated {get_timestamp(int(time.time()))}')
-            print('---')
-            for valid_mountpoint in valid_mountpoints:
-                print(valid_mountpoint)
-                print(f'--mountpoint: {partition_data[valid_mountpoint].mountpoint}')
-                print(f'--device: {partition_data[valid_mountpoint].device}')
-                print(f'--type: {partition_data[valid_mountpoint].fstype}')
-                print(f'--options: {partition_data[valid_mountpoint].opts}')
-        else:
-            print('Disk: Not found')
-
-    except ModuleNotFoundError:
-        print('Error: missing "psutil" library.')
+    if len(output) > 0:
+        print(f'Disk: {"; ".join(output)}')
         print('---')
-        import sys
-        import subprocess
-        subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
-        print('Fix copied to clipboard. Paste on terminal and run.')
+        print(f'Updated {get_timestamp(int(time.time()))}')
+        print('---')
+        for valid_mountpoint in valid_mountpoints:
+            print(valid_mountpoint)
+            print(f'--mountpoint: {partition_data[valid_mountpoint].mountpoint}')
+            print(f'--device: {partition_data[valid_mountpoint].device}')
+            print(f'--type: {partition_data[valid_mountpoint].fstype}')
+            print(f'--options: {partition_data[valid_mountpoint].opts}')
+    else:
+        print('Disk: Not found')
+
 if __name__ == '__main__':
     main()

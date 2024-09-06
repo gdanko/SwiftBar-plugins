@@ -9,10 +9,20 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-CpuPercent.2s.py</xbar.abouturl>
 
 from collections import namedtuple
-import datetime
 from math import ceil
+import datetime
 import subprocess
+import sys
 import time
+
+try:
+    from psutil import cpu_freq, cpu_times
+except ModuleNotFoundError:
+    print('Error: missing "psutil" library.')
+    print('---')
+    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
+    print('Fix copied to clipboard. Paste on terminal and run.')
+    exit(1)
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
@@ -92,65 +102,51 @@ def combine_stats(cpu_time_stats):
     return get_time_stats_tuple(idle=idle, nice=nice, system=system, user=user)
 
 def gather_cpu_info():
-    cpu_type = None
-    max_cpu_freq = None
+    cpu_type = get_cpu_type()
+    max_cpu_freq = cpu_freq().max if cpu_freq().max is not None else None
 
-    try:
-        from psutil import cpu_freq, cpu_times
+    interval = 1.0
+    blocking = False
+    output_individual = []
+    output_combined = []
+    list_t1_individual = []
+    list_t2_individual = []
+    list_t1_combined = []
+    list_t2_combined = []
 
-        cpu_type = get_cpu_type()
-        max_cpu_freq = cpu_freq().max
+    last_per_cpu_times = cpu_times(percpu=True)
+    last_per_cpu_times2 = last_per_cpu_times
 
-        interval = 1.0
-        blocking = False
-        output_individual = []
-        output_combined = []
-        list_t1_individual = []
-        list_t2_individual = []
-        list_t1_combined = []
-        list_t2_combined = []
+    if interval > 0.0:
+        blocking = True
 
-        last_per_cpu_times = cpu_times(percpu=True)
-        last_per_cpu_times2 = last_per_cpu_times
-
-        if interval > 0.0:
-            blocking = True
-
-        if blocking:
+    if blocking:
+        t1 = cpu_times(percpu=True)
+        time.sleep(int(interval))
+    else:
+        t1 = last_per_cpu_times2
+        if t1 is None:
             t1 = cpu_times(percpu=True)
-            time.sleep(int(interval))
-        else:
-            t1 = last_per_cpu_times2
-            if t1 is None:
-                t1 = cpu_times(percpu=True)
 
-        last_per_cpu_times2 = cpu_times(percpu=True)
+    last_per_cpu_times2 = cpu_times(percpu=True)
 
-        combined_t1 = combine_stats(t1)
-        combined_t2 = combine_stats(last_per_cpu_times2)
+    combined_t1 = combine_stats(t1)
+    combined_t2 = combine_stats(last_per_cpu_times2)
 
-        # Get the stats for the combined
-        list_t1_combined.append(get_time_stats_tuple(cpu_type=cpu_type, user=combined_t1.user, system=combined_t1.system, nice=combined_t1.nice, idle=combined_t1.idle))
-        list_t2_combined.append(get_time_stats_tuple(cpu_type=cpu_type, user=combined_t2.user, system=combined_t2.system, nice=combined_t2.nice, idle=combined_t2.idle))
-        output_combined.append(calculate(list_t1_combined[0], list_t2_combined[0]))
+    # Get the stats for the combined
+    list_t1_combined.append(get_time_stats_tuple(cpu_type=cpu_type, user=combined_t1.user, system=combined_t1.system, nice=combined_t1.nice, idle=combined_t1.idle))
+    list_t2_combined.append(get_time_stats_tuple(cpu_type=cpu_type, user=combined_t2.user, system=combined_t2.system, nice=combined_t2.nice, idle=combined_t2.idle))
+    output_combined.append(calculate(list_t1_combined[0], list_t2_combined[0]))
 
-        # Get the stats for the individual
-        for i, cpu_instance in enumerate(t1):
-            list_t1_individual.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
-        for i, cpu_instance in enumerate(last_per_cpu_times2):
-            list_t2_individual.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
-        for i in range(len(t1)):
-            output_individual.append(calculate(list_t1_individual[i], list_t2_individual[i]))
+    # Get the stats for the individual
+    for i, cpu_instance in enumerate(t1):
+        list_t1_individual.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
+    for i, cpu_instance in enumerate(last_per_cpu_times2):
+        list_t2_individual.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
+    for i in range(len(t1)):
+        output_individual.append(calculate(list_t1_individual[i], list_t2_individual[i]))
 
-        return output_combined, output_individual, cpu_type, max_cpu_freq
-
-    except ModuleNotFoundError:
-        print('Error: missing "psutil" library.')
-        print('---')
-        import sys
-        import subprocess
-        subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
-        print('Fix copied to clipboard. Paste on terminal and run.')
+    return output_combined, output_individual, cpu_type, max_cpu_freq
 
 def main():
     output_combined, output_individual, cpu_type, max_cpu_freq = gather_cpu_info()
