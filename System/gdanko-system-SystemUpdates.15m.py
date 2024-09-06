@@ -32,6 +32,8 @@ def main():
         print(f'Updates: {updates}')
         print('---')
         print(f'Updated {get_timestamp(int(time.time()))}')
+        print('---')
+        print('Refresh system update data | refresh=true')
     else:
         print('Updates: Unknown')
         print('---')
