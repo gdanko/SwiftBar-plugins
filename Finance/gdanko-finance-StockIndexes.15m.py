@@ -9,7 +9,19 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/Finance/gdanko-finance-StockIndexes.15m.py</xbar.abouturl>
 
 import datetime
+import subprocess
+import sys
 import time
+
+try:
+    import yfinance
+except ModuleNotFoundError:
+    print('Error: missing "yfinance" library.')
+    print('---')
+
+    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install yfinance')
+    print('Fix copied to clipboard. Paste on terminal and run.')
+    exit(1)
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
@@ -18,45 +30,34 @@ def get_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def main():
-    try:
-        import yfinance
+    output = []
+    symbol_map = {
+        'Dow': '^DJI',
+        'Nasdaq': '^IXIC',
+        'S&P500': '^GSPC',
+    }
 
-        output = []
-        symbol_map = {
-            'Dow': '^DJI',
-            'Nasdaq': '^IXIC',
-            'S&P500': '^GSPC',
-        }
+    tickers = yfinance.Tickers('^DJI ^IXIC ^GSPC')
 
-        tickers = yfinance.Tickers('^DJI ^IXIC ^GSPC')
+    for key, value in symbol_map.items():
+        info = tickers.tickers[value].info
+        tickers.tickers[value].history(period="1d")
+        metadata= tickers.tickers[value].history_metadata
 
-        for key, value in symbol_map.items():
-            info = tickers.tickers[value].info
-            tickers.tickers[value].history(period="1d")
-            metadata= tickers.tickers[value].history_metadata
+        price = metadata['regularMarketPrice']
+        last = info['previousClose']
 
-            price = metadata['regularMarketPrice']
-            last = info['previousClose']
+        if price > last:
+            updown = u'\u2191'
+            pct_change = f'{pad_float((price - last) / last * 100)}%'
+        else:
+            updown = u'\u2193'
+            pct_change = f'{pad_float((last - price) / last * 100)}%'
 
-            if price > last:
-                updown = u'\u2191'
-                pct_change = f'{pad_float((price - last) / last * 100)}%'
-            else:
-                updown = u'\u2193'
-                pct_change = f'{pad_float((last - price) / last * 100)}%'
-            
-            output.append(f'{key} {updown} {pct_change}')
-        print('; '.join(output))
-        print(f'Updated {get_timestamp(int(time.time()))}')
-        print('---')
-
-    except ModuleNotFoundError:
-        print('Error: missing "yfinance" library.')
-        print('---')
-        import sys
-        import subprocess
-        subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install yfinance')
-        print('Fix copied to clipboard. Paste on terminal and run.')
+        output.append(f'{key} {updown} {pct_change}')
+    print('; '.join(output))
+    print('---')
+    print(f'Updated {get_timestamp(int(time.time()))}')
 
 if __name__ == '__main__':
     main()
