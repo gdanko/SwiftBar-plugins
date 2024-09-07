@@ -22,9 +22,6 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
-def pad_float(number):
-    return '{:.2f}'.format(float(number))
-
 def get_defaults():
     location = os.getenv('VAR_WEATHER_OWM_LOCATION', 'San Diego, CA, US')
     return location
