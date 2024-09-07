@@ -16,9 +16,6 @@ import re
 import subprocess
 import time
 
-def pad_float(number):
-    return '{:.2f}'.format(float(number))
-
 def get_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
