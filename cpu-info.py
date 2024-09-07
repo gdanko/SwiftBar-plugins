@@ -80,41 +80,7 @@ def cpu_info():
                 output[metric] = int(stdout)
             else:
                 output[metric] = stdout
-    output['current_frequency'] = cpu_freq().current if cpu_freq().current is not None else 0
-    output['min_frequency'] = cpu_freq().min if cpu_freq().min is not None else 0
-    output['max_frequency'] = cpu_freq().max if cpu_freq().max is not None else 0
+    output['frequency'] = cpu_freq().current if cpu_freq().current is not None else 0
     return output
 
-foo = cpu_info()
-pprint(foo)
-
-
-# def get_bin_info1(platform_arch, bin_file, family):
-#     m = MachO(bin_file)
-#     for header in m.headers:
-#         print(header.header.cputype)
-#         if header.MH_MAGIC == MH_MAGIC_64 or header.MH_MAGIC == MH_CIGAM_64:
-#             sz = '64-bit'
-#         else:
-#             sz = '32-bit'
-#         arch = CPU_TYPE_NAMES2.get(header.header.cputype, header.header.cputype).lower()
-#         subarch = get_cpu_subtype(header.header.cputype, header.header.cpusubtype)
-#         cpu_family = CPU_FAMILY_NAMES.get(family, family)
-#         if arch == platform_arch:
-            
-#             return {'endian': header.endian,
-#                     'family': cpu_family,
-#                     'bit': sz,
-#                     'arch': arch,
-#                     'subarch': subarch}
-#     return None
-
-# family = 458787763
-# # hex_family = hex(family)
-# # print(hex_family)
-# # print(CPU_FAMILY_NAMES[hex_family])
-# # exit()
-# platform_arch = 'arm64'
-# path = '/usr/bin/grep'
-# bin_info = get_bin_info1(platform_arch, path, family)
-# pprint(bin_info)
+pprint(cpu_info())
