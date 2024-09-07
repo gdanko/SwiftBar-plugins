@@ -27,9 +27,6 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
-def pad_float(number):
-    return '{:.2f}'.format(float(number))
-
 def get_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
@@ -43,8 +40,6 @@ def get_defaults():
     return location, api_key, units
 
 def fetch_data(url=None):
-    import requests
-
     response = requests.get(url)
     if response.status_code == 200:
         try:
@@ -72,21 +67,7 @@ def get_uv_index(uv_index):
         return 'Extreme'
 
 def main():
-
-
         location, api_key, units = get_defaults()
-
-        units_map = {
-            'C': {
-                'unit': 'metric',
-                'speed': 'kmh',
-            },
-            'F': {
-                'unit': 'imperial',
-                'speed': 'mph',
-            }
-        }
-
         if api_key == '':
             print('Failed to fetch the weather')
             print('---')
@@ -114,29 +95,30 @@ def main():
                     high_temp = today["day"]["maxtemp_f"] if units == 'F' else today["day"]["maxtemp_c"]
                     current_temp = weather_data["current"]["temp_f"] if units == 'F' else weather_data["current"]["temp_c"]
                     feels_like = weather_data["current"]["feelslike_f"] if units == 'F' else weather_data["current"]["feelslike_c"]
-                    precipitation = f'{pad_float(weather_data["current"]["precip_in"])} in' if units == 'F' else f'{pad_float(weather_data["current"]["precip_in"])} mm'
+                    precipitation = f'{round(weather_data["current"]["precip_in"])} in' if units == 'F' else f'{round(weather_data["current"]["precip_in"])} mm'
                     visibility = f'{float(weather_data["current"]["vis_miles"])} miles' if units == 'F' else f'{float(weather_data["current"]["vis_km"])} km'
-                    wind_speed = f'{pad_float(weather_data["current"]["wind_mph"])} mph' if units == 'F' else f'{pad_float(weather_data["current"]["wind_kph"])} kph'
+                    wind_speed = f'{round(weather_data["current"]["wind_mph"])} mph' if units == 'F' else f'{round(weather_data["current"]["wind_kph"])} kph'
                     wind_chill = weather_data["current"]["windchill_f"] if units == 'F' else weather_data["current"]["windchill_c"]
                     heat_index = weather_data["current"]["heatindex_f"] if units == 'F' else weather_data["current"]["heatindex_c"]
                     dew_point = weather_data["current"]["dewpoint_f"] if units == 'F' else weather_data["current"]["dewpoint_c"]
-                    pressure = f'{pad_float(weather_data["current"]["pressure_in"])} in' if units == 'F' else f'{pad_float(weather_data["current"]["pressure_mb"])} mb'
-                    print(f'{location} {pad_float(current_temp)}°{units}')
+                    pressure = f'{round(weather_data["current"]["pressure_in"])} in' if units == 'F' else f'{round(weather_data["current"]["pressure_mb"])} mb'
+                    current_temp = 88.00
+                    print(f'{location} {round(current_temp)}°{units}')
                     print('---')
                     print(f'Updated {get_timestamp(int(time.time()))}')
                     print('---')
                     print('Current Weather')
-                    print(f'--Low / High: {pad_float(low_temp)}°{units} / {pad_float(high_temp)}°{units}')
-                    print(f'--Feels Like: {pad_float(feels_like)}°{units}')
+                    print(f'--Low / High: {round(low_temp)}°{units} / {round(high_temp)}°{units}')
+                    print(f'--Feels Like: {round(feels_like)}°{units}')
                     print(f'--Pressure: {pressure}')
                     print(f'--Visibility: {visibility}')
                     print(f'--Condition: {weather_data["current"]["condition"]["text"].title()}')
-                    print(f'--Dew Point: {pad_float(dew_point)}°{units}')
-                    print(f'--Humidity: {pad_float(weather_data["current"]["humidity"])}%')
+                    print(f'--Dew Point: {round(dew_point)}°{units}')
+                    print(f'--Humidity: {round(weather_data["current"]["humidity"])}%')
                     print(f'--Precipitation: {precipitation}')
                     print(f'--Wind: {weather_data["current"]["wind_dir"]} {wind_speed}')
-                    print(f'--Wind Chill: {pad_float(wind_chill)}°{units}')
-                    print(f'--Heat Index: {pad_float(heat_index)}°{units}')
+                    print(f'--Wind Chill: {round(wind_chill)}°{units}')
+                    print(f'--Heat Index: {round(heat_index)}°{units}')
                     print(f'--UV Index: {get_uv_index(weather_data["current"]["uv"])} - {weather_data["current"]["uv"]}')
                     print(f'--Sunrise: {today["astro"]["sunrise"]}')
                     print(f'--Sunset: {today["astro"]["sunset"]}')
@@ -151,14 +133,14 @@ def main():
                         daily_average = daily["day"]["avgtemp_f"] if units == 'F' else daily["day"]["avgtemp_c"]
                         daily_will_it_rain = "Yes" if daily["day"]["daily_will_it_rain"] == 1 else "No"
                         daily_will_it_snow = "Yes" if daily["day"]["daily_will_it_snow"] == 1 else "No"
-                        total_precipitation = f'{pad_float(daily["day"]["totalprecip_in"])} in' if units == 'F' else f'{pad_float(daily["day"]["totalprecip_mm"])} mm'
+                        total_precipitation = f'{round(daily["day"]["totalprecip_in"])} in' if units == 'F' else f'{round(daily["day"]["totalprecip_mm"])} mm'
                         avg_visibility = f'{float(daily["day"]["avgvis_miles"])} miles' if units == 'F' else f'{float(daily["day"]["avgvis_km"])} km'
                         print(f'--{daily["date"]}')
-                        print(f'----Low / High: {pad_float(daily_low)}°{units} / {pad_float(daily_high)}°{units}')
-                        print(f'----Average Temperature: {pad_float(daily_average)}°{units}')
+                        print(f'----Low / High: {round(daily_low)}°{units} / {round(daily_high)}°{units}')
+                        print(f'----Average Temperature: {round(daily_average)}°{units}')
                         print(f'----Average Visibility: {avg_visibility}')
                         print(f'----Condition: {daily["day"]["condition"]["text"].title()}')
-                        print(f'----Average Humidity: {pad_float(daily["day"]["avghumidity"])}%')
+                        print(f'----Average Humidity: {round(daily["day"]["avghumidity"])}%')
                         print(f'----Total Precipitation: {total_precipitation}')
                         print(f'----Rain: {daily_will_it_rain}')
                         if daily_will_it_rain == 'Yes':
@@ -174,8 +156,6 @@ def main():
                         print(f'----Moon Phase: {daily["astro"]["moon_phase"]}')
 
                     print('Refresh weather data | refresh=true')
-
-
 
 if __name__ == '__main__':
     main()
