@@ -27,9 +27,6 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
-def pad_float(number):
-    return '{:.2f}'.format(float(number))
-
 def get_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
@@ -95,15 +92,15 @@ def main():
                 print(f'Failed to fetch weather data: {err}')
             else:
 
-                print(f'{location} {pad_float(weather_data["main"]["temp"])}°{units}')
+                print(f'{location} {round(weather_data["main"]["temp"])}°{units}')
                 print('---')
                 print(f'Updated {get_timestamp(int(time.time()))}')
                 print('---')
-                print(f'Low/High: {pad_float(weather_data["main"]["temp_min"])}°{units} / {pad_float(weather_data["main"]["temp_max"])}°{units}')
-                print(f'Feels Like: {pad_float(weather_data["main"]["feels_like"])}°{units}')
-                print(f'Humidity: {pad_float(weather_data["main"]["humidity"])}%')
+                print(f'Low/High: {round(weather_data["main"]["temp_min"])}°{units} / {round(weather_data["main"]["temp_max"])}°{units}')
+                print(f'Feels Like: {round(weather_data["main"]["feels_like"])}°{units}')
+                print(f'Humidity: {round(weather_data["main"]["humidity"])}%')
                 print(f'Condition: {weather_data["weather"][0]["description"].title()}')
-                print(f'Wind: {weather_data["wind"]["deg"]}° @ {pad_float(weather_data["wind"]["speed"])} {units_map[units]["speed"]}')
+                print(f'Wind: {weather_data["wind"]["deg"]}° @ {round(weather_data["wind"]["speed"])} {units_map[units]["speed"]}')
                 print('Refresh weather data | refresh=true')
                 # Forecast requires subscription???
                 # cnt = 4
@@ -115,13 +112,13 @@ def main():
                 #     print(f'Failed to fetch forecast data: {err}')
                 # else:
                 #     print('---')
-                #     print(f'{location} {pad_float(weather_data["main"]["temp"])}°{units}')
+                #     print(f'{location} {round(weather_data["main"]["temp"])}°{units}')
                 #     print('---')
-                #     print(f'Low/High: {pad_float(weather_data["main"]["temp_min"])}°{units} / {pad_float(weather_data["main"]["temp_max"])}°{units}')
-                #     print(f'Feels Like: {pad_float(weather_data["main"]["feels_like"])}°{units}')
-                #     print(f'Humidity: {pad_float(weather_data["main"]["humidity"])}%')
+                #     print(f'Low/High: {round(weather_data["main"]["temp_min"])}°{units} / {round(weather_data["main"]["temp_max"])}°{units}')
+                #     print(f'Feels Like: {round(weather_data["main"]["feels_like"])}°{units}')
+                #     print(f'Humidity: {round(weather_data["main"]["humidity"])}%')
                 #     print(f'Condition: {weather_data["weather"][0]["description"].title()}')
-                #     print(f'Wind: {weather_data["wind"]["deg"]}° @ {pad_float(weather_data["wind"]["speed"])} {units_map[units]["speed"]}')
+                #     print(f'Wind: {weather_data["wind"]["deg"]}° @ {round(weather_data["wind"]["speed"])} {units_map[units]["speed"]}')
 
 
 
