@@ -52,7 +52,7 @@ def main():
         uptime.append(f'{duration.years} {get_plural(duration.years, "year")}')
     if duration.days > 0:
         uptime.append(f'{duration.days} {get_plural(duration.days, "day")}')
-    uptime.append(f'{str(duration.hours).zfill(2)}:{str(duration.minutes).zfill(2)}:{str(duration.seconds).zfill(2)}')
+    uptime.append(f'{str(duration.hours).zfill(2)}:{str(duration.minutes).zfill(2)}')
     print(f'up {" ".join(uptime)}')
 
 if __name__ == '__main__':
