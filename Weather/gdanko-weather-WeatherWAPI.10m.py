@@ -90,6 +90,11 @@ def prettify_timestamp(timestamp, format):
     except Exception as e:
         return timestamp
 
+def pluralize(count, word):
+    if count == 1:
+        return word
+    return f'{word}s'
+
 def main():
         alert_format = '%A, %B %-d, %Y %H:%M:%S'
         forecast_format = '%A, %B %-d, %Y'
@@ -154,8 +159,9 @@ def main():
                     if "alerts" in forecast_data:
                         if "alert" in forecast_data["alerts"]:
                             if len(forecast_data["alerts"]["alert"]) > 0:
-                                print(f'{len(forecast_data["alerts"]["alert"])} Alerts')
-                                for alert in forecast_data["alerts"]["alert"]:
+                                alerts = forecast_data["alerts"]["alert"]
+                                print(f'{len(alerts)} {pluralize(len(alerts), "Alert")}')
+                                for alert in alerts:
                                     desc = process_description(alert["desc"])
                                     print(f'--{alert["event"]}')
                                     print(f'----Category: {alert["category"]}')
