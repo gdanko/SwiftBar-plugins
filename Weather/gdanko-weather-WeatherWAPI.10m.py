@@ -12,8 +12,10 @@
 # <xbar.var>string(VAR_WEATHER_WAPI_UNITS="F"): The unit to use: (C)elsius or (F)ahrenheit</xbar.var>
 
 import datetime
+import dateutil.parser
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -66,7 +68,31 @@ def get_uv_index(uv_index):
     elif uv_index > 11:
         return 'Extreme'
 
+def process_description(desc):
+    output = {}
+    entries = desc.split("\n\n")
+    for x, item in enumerate(entries):
+        entries[x] = entries[x].replace("\n", " ")
+
+    for item in entries:
+        pattern = re.compile(r"^\* ([A-Za-z\s]+)\.\.\.(.*)$")
+        match = re.search(pattern, item)
+        if match:
+            output[match.group(1).title()] = match.group(2)
+    return output
+
+def prettify_timestamp(timestamp, format):
+    try:
+        parsed = dateutil.parser.parse(timestamp)
+        seconds = parsed.timestamp()
+        new_timestamp = datetime.datetime.fromtimestamp(seconds)
+        return new_timestamp.strftime(format)
+    except Exception as e:
+        return timestamp
+
 def main():
+        alert_format = '%A, %B %-d, %Y %H:%M:%S'
+        forecast_format = '%A, %B %-d, %Y'
         location, api_key, units = get_defaults()
         if api_key == '':
             print('Failed to fetch the weather')
@@ -124,6 +150,20 @@ def main():
                     print(f'Moonrise: {today["astro"]["moonrise"]}')
                     print(f'Moonset: {today["astro"]["moonset"]}')
                     print(f'Moon Phase: {today["astro"]["moon_phase"]}')
+
+                    if "alerts" in forecast_data:
+                        if "alert" in forecast_data["alerts"]:
+                            if len(forecast_data["alerts"]["alert"]) > 0:
+                                print(f'{len(forecast_data["alerts"]["alert"])} Alerts')
+                                for alert in forecast_data["alerts"]["alert"]:
+                                    desc = process_description(alert["desc"])
+                                    print(f'--{alert["event"]}')
+                                    print(f'----Category: {alert["category"]}')
+                                    print(f'----Effective: {prettify_timestamp(alert["effective"], alert_format)}')
+                                    print(f'----Expires: {prettify_timestamp(alert["expires"], alert_format)}')
+                                    for k, v in desc.items():
+                                        print(f'----{k}: {v}')
+
                     print(f'{len(forecast) - 1} Day Forecast')
                     for i in range(1, len(forecast)):
                         daily = forecast[i]
@@ -134,7 +174,7 @@ def main():
                         daily_will_it_snow = "Yes" if daily["day"]["daily_will_it_snow"] == 1 else "No"
                         total_precipitation = f'{round(daily["day"]["totalprecip_in"])} in' if units == 'F' else f'{round(daily["day"]["totalprecip_mm"])} mm'
                         avg_visibility = f'{float(daily["day"]["avgvis_miles"])} miles' if units == 'F' else f'{float(daily["day"]["avgvis_km"])} km'
-                        print(f'--{daily["date"]}')
+                        print(f'--{prettify_timestamp(daily["date"], forecast_format)}')
                         print(f'----Low / High: {round(daily_low)}°{units} / {round(daily_high)}°{units}')
                         print(f'----Average Temperature: {round(daily_average)}°{units}')
                         print(f'----Average Visibility: {avg_visibility}')
