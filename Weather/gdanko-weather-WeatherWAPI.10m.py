@@ -10,6 +10,7 @@
 # <xbar.var>string(VAR_WEATHER_WAPI_LOCATION="San Diego, CA, US"): The location to use</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_API_KEY=""): The OpenWeatherMap API key</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_UNITS="F"): The unit to use: (C)elsius or (F)ahrenheit</xbar.var>
+# <xbar.var>string(VAR_WEATHER_WAPI_SHOW_FORECAST="true"): Show the forecast in the drop down menut</xbar.var>
 
 import datetime
 import dateutil.parser
@@ -33,13 +34,14 @@ def get_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def get_defaults():
+    valid_units = ['C', 'F']
     location = os.getenv('VAR_WEATHER_WAPI_LOCATION', 'San Diego, CA, US')
     api_key = os.getenv('VAR_WEATHER_WAPI_API_KEY', '')
-    valid_units = ['C', 'F']
     units = os.getenv('VAR_WEATHER_WAPI_UNITS', 'F')
+    show_forecast = os.getenv('VAR_WEATHER_WAPI_SHOW_FORECAST', 'true')
     if not units in valid_units:
         units = 'F'
-    return location, api_key, units
+    return location, api_key, units, True if show_forecast == 'true' else False
 
 def fetch_data(url=None):
     response = requests.get(url)
@@ -98,7 +100,7 @@ def pluralize(count, word):
 def main():
         alert_format = '%a, %B %-d, %Y %H:%M:%S'
         forecast_format = '%a, %B %-d, %Y'
-        location, api_key, units = get_defaults()
+        location, api_key, units, show_forecast = get_defaults()
         if api_key == '':
             print('Failed to fetch the weather')
             print('---')
@@ -169,35 +171,36 @@ def main():
                                     for k, v in desc.items():
                                         print(f'----{k}: {v}')
 
-                    print(f'{len(forecast) - 1} Day Forecast')
-                    for i in range(1, len(forecast)):
-                        daily = forecast[i]
-                        daily_low = daily["day"]["mintemp_f"] if units == 'F' else daily["day"]["mintemp_c"]
-                        daily_high = daily["day"]["maxtemp_f"] if units == 'F' else daily["day"]["maxtemp_c"]
-                        daily_average = daily["day"]["avgtemp_f"] if units == 'F' else daily["day"]["avgtemp_c"]
-                        daily_will_it_rain = "Yes" if daily["day"]["daily_will_it_rain"] == 1 else "No"
-                        daily_will_it_snow = "Yes" if daily["day"]["daily_will_it_snow"] == 1 else "No"
-                        total_precipitation = f'{round(daily["day"]["totalprecip_in"])} in' if units == 'F' else f'{round(daily["day"]["totalprecip_mm"])} mm'
-                        avg_visibility = f'{float(daily["day"]["avgvis_miles"])} miles' if units == 'F' else f'{float(daily["day"]["avgvis_km"])} km'
-                        print(f'--{prettify_timestamp(daily["date"], forecast_format)}')
-                        print(f'----Low / High: {round(daily_low)}°{units} / {round(daily_high)}°{units}')
-                        print(f'----Average Temperature: {round(daily_average)}°{units}')
-                        print(f'----Average Visibility: {avg_visibility}')
-                        print(f'----Condition: {daily["day"]["condition"]["text"].title()}')
-                        print(f'----Average Humidity: {round(daily["day"]["avghumidity"])}%')
-                        print(f'----Total Precipitation: {total_precipitation}')
-                        print(f'----Rain: {daily_will_it_rain}')
-                        if daily_will_it_rain == 'Yes':
-                            print(f'----Chance of Rain: {daily["day"]["daily_chance_of_rain"]}%')
-                        print(f'----Snow: {daily_will_it_snow}')
-                        if daily_will_it_snow == 'Yes':
-                            print(f'----Chance of Snow: {daily["day"]["daily_chance_of_snow"]}%')                        
-                        print(f'----UV Index: {get_uv_index(daily["day"]["uv"])} - {daily["day"]["uv"]}')
-                        print(f'----Sunrise: {daily["astro"]["sunrise"]}')
-                        print(f'----Sunset: {daily["astro"]["sunset"]}')
-                        print(f'----Moonrise: {daily["astro"]["moonrise"]}')
-                        print(f'----Moonset: {daily["astro"]["moonset"]}')
-                        print(f'----Moon Phase: {daily["astro"]["moon_phase"]}')
+                    if show_forecast:
+                        print(f'{len(forecast) - 1} Day Forecast')
+                        for i in range(1, len(forecast)):
+                            daily = forecast[i]
+                            daily_low = daily["day"]["mintemp_f"] if units == 'F' else daily["day"]["mintemp_c"]
+                            daily_high = daily["day"]["maxtemp_f"] if units == 'F' else daily["day"]["maxtemp_c"]
+                            daily_average = daily["day"]["avgtemp_f"] if units == 'F' else daily["day"]["avgtemp_c"]
+                            daily_will_it_rain = "Yes" if daily["day"]["daily_will_it_rain"] == 1 else "No"
+                            daily_will_it_snow = "Yes" if daily["day"]["daily_will_it_snow"] == 1 else "No"
+                            total_precipitation = f'{round(daily["day"]["totalprecip_in"])} in' if units == 'F' else f'{round(daily["day"]["totalprecip_mm"])} mm'
+                            avg_visibility = f'{float(daily["day"]["avgvis_miles"])} miles' if units == 'F' else f'{float(daily["day"]["avgvis_km"])} km'
+                            print(f'--{prettify_timestamp(daily["date"], forecast_format)}')
+                            print(f'----Low / High: {round(daily_low)}°{units} / {round(daily_high)}°{units}')
+                            print(f'----Average Temperature: {round(daily_average)}°{units}')
+                            print(f'----Average Visibility: {avg_visibility}')
+                            print(f'----Condition: {daily["day"]["condition"]["text"].title()}')
+                            print(f'----Average Humidity: {round(daily["day"]["avghumidity"])}%')
+                            print(f'----Total Precipitation: {total_precipitation}')
+                            print(f'----Rain: {daily_will_it_rain}')
+                            if daily_will_it_rain == 'Yes':
+                                print(f'----Chance of Rain: {daily["day"]["daily_chance_of_rain"]}%')
+                            print(f'----Snow: {daily_will_it_snow}')
+                            if daily_will_it_snow == 'Yes':
+                                print(f'----Chance of Snow: {daily["day"]["daily_chance_of_snow"]}%')                        
+                            print(f'----UV Index: {get_uv_index(daily["day"]["uv"])} - {daily["day"]["uv"]}')
+                            print(f'----Sunrise: {daily["astro"]["sunrise"]}')
+                            print(f'----Sunset: {daily["astro"]["sunset"]}')
+                            print(f'----Moonrise: {daily["astro"]["moonrise"]}')
+                            print(f'----Moonset: {daily["astro"]["moonset"]}')
+                            print(f'----Moon Phase: {daily["astro"]["moon_phase"]}')
 
                     print('Refresh weather data | refresh=true')
 
