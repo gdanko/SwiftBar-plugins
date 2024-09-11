@@ -11,6 +11,7 @@
 
 from collections import namedtuple
 import os
+import re
 import subprocess
 import sys
 import time
@@ -39,6 +40,10 @@ def get_percent_stats_tuple(cpu='cpu-total', user=0.0, system=0.0, idle=0.0, nic
     cpu_percent = namedtuple('cpu_percent', 'cpu user system idle nice iowait irq softirq steal guest guestnice')
     return cpu_percent(cpu=cpu, user=user, system=system, idle=idle, nice=nice, iowait=iowait, irq=irq, softirq=softirq, steal=steal, guest=guest, guestnice=guestnice)
 
+def get_interface_data_tuple(interface=None, flags=None, mac=None, inet=None, inet6=None):
+    interface_data = namedtuple('interface_data', 'interface flags mac inet inet6')
+    return interface_data(interface=interface, flags=flags, mac=mac, inet=inet, inet6=inet6)
+
 def process_bytes(num):
     suffix = 'B'
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
@@ -66,8 +71,44 @@ def get_data(interface=None):
         print('oops! interface not found!')
         exit(1)
 
+def external_command(command=[]):
+    p = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    stdout, stderr = p.communicate()
+    return p.returncode, stdout, stderr
+
+def get_interface_data(interface):
+    flags, mac, inet, inet6 = None, None, None, None
+    retcode, stdout, stderr = external_command(['/sbin/ifconfig', interface])
+    if retcode == 0:
+        match = re.findall(r'flags=\d+\<([A-Z0-9,]+)\>', stdout, re.MULTILINE)
+        if match:
+            flags = match[0]
+        match = re.findall(r'^\s+ether ([a-z0-9:]+)$', stdout, re.MULTILINE)
+        if match:
+            mac = match[0]
+        match = re.findall(r'inet\s+(\d+\.\d+\.\d+\.\d+)', stdout, re.MULTILINE)
+        if match:
+            inet = match[0]
+        match = re.findall(r'inet6\s+([a-z0-9:]+)', stdout, re.MULTILINE)
+        if match:
+            inet6 = match[0]
+    return get_interface_data_tuple(interface=interface, flags=flags, mac=mac, inet=inet, inet6=inet6)
+
+def get_public_ip():
+    retcode, stdout, stderr = external_command(['curl', 'https://ifconfig.io'])
+    if retcode == 0:
+        return stdout.strip()
+    return None
+ 
 def main():
     interface = get_defaults()
+    interface_data = get_interface_data(interface)
+    public_ip = get_public_ip()
 
     firstSample = get_data(interface=interface)
     time.sleep(1)
@@ -85,6 +126,18 @@ def main():
         dropout      = secondSample.dropout - firstSample.dropout,
     )
     print(f'{network_throughput.interface} {process_bytes(network_throughput.bytes_recv)} RX / {process_bytes(network_throughput.bytes_sent)} TX')
+    print('---')
+    if interface_data.flags:
+        print(f'Flags: {interface_data.flags}')
+    if interface_data.mac:
+        print(f'Hardware Address: {interface_data.mac}')
+    if interface_data.inet:
+        print(f'IPv4 Address: {interface_data.inet}')
+    if interface_data.mac:
+        print(f'IPv6 Address: {interface_data.inet6}')
+    if public_ip:
+        print(f'Public Address: {public_ip}')
+
 
 if __name__ == '__main__':
     main()
