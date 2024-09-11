@@ -96,8 +96,8 @@ def pluralize(count, word):
     return f'{word}s'
 
 def main():
-        alert_format = '%A, %B %-d, %Y %H:%M:%S'
-        forecast_format = '%A, %B %-d, %Y'
+        alert_format = '%a, %B %-d, %Y %H:%M:%S'
+        forecast_format = '%a, %B %-d, %Y'
         location, api_key, units = get_defaults()
         if api_key == '':
             print('Failed to fetch the weather')
@@ -133,7 +133,6 @@ def main():
                     heat_index = weather_data["current"]["heatindex_f"] if units == 'F' else weather_data["current"]["heatindex_c"]
                     dew_point = weather_data["current"]["dewpoint_f"] if units == 'F' else weather_data["current"]["dewpoint_c"]
                     pressure = f'{round(weather_data["current"]["pressure_in"])} in' if units == 'F' else f'{round(weather_data["current"]["pressure_mb"])} mb'
-                    current_temp = 88.00
                     print(f'{location} {round(current_temp)}°{units}')
                     print('---')
                     print(f'Updated {get_timestamp(int(time.time()))}')
