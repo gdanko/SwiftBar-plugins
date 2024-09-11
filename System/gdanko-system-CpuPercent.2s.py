@@ -26,6 +26,7 @@ except ModuleNotFoundError:
     exit(1)
 
 def get_cpu_family_strings():
+    # We get this information from /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/mach/machine.h
     return {
         0xcee41549: 'PowerPC G3',
         0x77c184ae: 'PowerPC G4',
