@@ -8,6 +8,7 @@
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/Network/gdanko-network-NetworkThroughput.2s.py</xbar.abouturl>
 # <xbar.var>string(VAR_NET_THROUGHPUT_INTERFACE="en0"): The network interface to measure.</xbar.var>
+# <xbar.var>string(VAR_NET_THROUGHPUT_VERBOSE="false"): Show more verbose detail.</xbar.var>
 
 from collections import namedtuple
 import os
@@ -29,8 +30,9 @@ def pad_float(number):
     return '{:.2f}'.format(float(number))
 
 def get_defaults():
-    interface = os.getenv('VAR_NET_THROUGHPUT_INTERFACE', 'en0') 
-    return interface
+    interface = os.getenv('VAR_NET_THROUGHPUT_INTERFACE', 'en0')
+    verbose = os.getenv('VAR_NET_THROUGHPUT_VERBOSE', 'false')
+    return interface, True if verbose == 'true' else False
 
 def get_io_counter_tuple(interface=None, bytes_sent=0, bytes_recv=0, packets_sent=0, packets_recv=0, errin=0, errout=0, dropin=0, dropout=0):
     net_io = namedtuple('net_io', 'interface bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')
@@ -106,24 +108,24 @@ def get_public_ip():
     return None
  
 def main():
-    interface = get_defaults()
+    interface, verbose = get_defaults()
     interface_data = get_interface_data(interface)
     public_ip = get_public_ip()
 
-    firstSample = get_data(interface=interface)
+    first_sample = get_data(interface=interface)
     time.sleep(1)
-    secondSample = get_data(interface=interface)
+    second_sample = get_data(interface=interface)
 
     network_throughput = get_io_counter_tuple(
         interface    = interface,
-        bytes_sent   = secondSample.bytes_sent - firstSample.bytes_sent,
-        bytes_recv   = secondSample.bytes_recv - firstSample.bytes_recv,
-        packets_sent = secondSample.packets_sent - firstSample.packets_sent,
-        packets_recv = secondSample.packets_recv - firstSample.packets_recv,
-        errin        = secondSample.errin - firstSample.errin,
-        errout       = secondSample.errout - firstSample.errout,
-        dropin       = secondSample.dropin - firstSample.dropin,
-        dropout      = secondSample.dropout - firstSample.dropout,
+        bytes_sent   = second_sample.bytes_sent - first_sample.bytes_sent,
+        bytes_recv   = second_sample.bytes_recv - first_sample.bytes_recv,
+        packets_sent = second_sample.packets_sent - first_sample.packets_sent,
+        packets_recv = second_sample.packets_recv - first_sample.packets_recv,
+        errin        = second_sample.errin - first_sample.errin,
+        errout       = second_sample.errout - first_sample.errout,
+        dropin       = second_sample.dropin - first_sample.dropin,
+        dropout      = second_sample.dropout - first_sample.dropout,
     )
     print(f'{network_throughput.interface} {process_bytes(network_throughput.bytes_recv)} RX / {process_bytes(network_throughput.bytes_sent)} TX')
     print('---')
@@ -137,6 +139,23 @@ def main():
         print(f'IPv6 Address: {interface_data.inet6}')
     if public_ip:
         print(f'Public Address: {public_ip}')
+    if verbose:
+        if network_throughput.dropin is not None:
+            print(f'Inbound Packets Dropped/sec: {network_throughput.dropin}')
+        if network_throughput.dropout is not None:
+            print(f'Outbound Packets Dropped/sec: {network_throughput.dropout}')
+        if network_throughput.errin is not None:
+            print(f'Inbound Errors/sec: {network_throughput.errin}')
+        if network_throughput.errout is not None:
+            print(f'Outbound Errors/sec: {network_throughput.errout}')
+        if second_sample.dropin is not None:
+            print(f'Inbound Packets Dropped (total): {second_sample.dropin}')
+        if second_sample.dropout is not None:
+            print(f'Outbound Packets Dropped (total): {second_sample.dropout}')
+        if second_sample.errin is not None:
+            print(f'Inbound Errors (total): {second_sample.errin}')
+        if second_sample.errout is not None:
+            print(f'Outbound Errors (total): {second_sample.errout}')
 
 
 if __name__ == '__main__':
