@@ -124,8 +124,8 @@ def main():
                     forecast = forecast_data['forecast']['forecastday']
                     today = forecast[0]
 
-                    low_temp = today["day"]["mintemp_f"] if units == 'F' else today["day"]["mintemp_c"]
-                    high_temp = today["day"]["maxtemp_f"] if units == 'F' else today["day"]["maxtemp_c"]
+                    # low_temp = today["day"]["mintemp_f"] if units == 'F' else today["day"]["mintemp_c"]
+                    # high_temp = today["day"]["maxtemp_f"] if units == 'F' else today["day"]["maxtemp_c"]
                     current_temp = weather_data["current"]["temp_f"] if units == 'F' else weather_data["current"]["temp_c"]
                     feels_like = weather_data["current"]["feelslike_f"] if units == 'F' else weather_data["current"]["feelslike_c"]
                     precipitation = f'{round(weather_data["current"]["precip_in"])} in' if units == 'F' else f'{round(weather_data["current"]["precip_in"])} mm'
@@ -139,7 +139,7 @@ def main():
                     print('---')
                     print(f'Updated {get_timestamp(int(time.time()))}')
                     print('---')
-                    print(f'Low / High: {round(low_temp)}°{units} / {round(high_temp)}°{units}')
+                    # print(f'Low / High: {round(low_temp)}°{units} / {round(high_temp)}°{units}')
                     print(f'Feels Like: {round(feels_like)}°{units}')
                     print(f'Pressure: {pressure}')
                     print(f'Visibility: {visibility}')
@@ -151,11 +151,11 @@ def main():
                     print(f'Wind Chill: {round(wind_chill)}°{units}')
                     print(f'Heat Index: {round(heat_index)}°{units}')
                     print(f'UV Index: {get_uv_index(weather_data["current"]["uv"])} - {weather_data["current"]["uv"]}')
-                    print(f'Sunrise: {today["astro"]["sunrise"]}')
-                    print(f'Sunset: {today["astro"]["sunset"]}')
-                    print(f'Moonrise: {today["astro"]["moonrise"]}')
-                    print(f'Moonset: {today["astro"]["moonset"]}')
-                    print(f'Moon Phase: {today["astro"]["moon_phase"]}')
+                    # print(f'Sunrise: {today["astro"]["sunrise"]}')
+                    # print(f'Sunset: {today["astro"]["sunset"]}')
+                    # print(f'Moonrise: {today["astro"]["moonrise"]}')
+                    # print(f'Moonset: {today["astro"]["moonset"]}')
+                    # print(f'Moon Phase: {today["astro"]["moon_phase"]}')
 
                     if "alerts" in forecast_data:
                         if "alert" in forecast_data["alerts"]:
@@ -172,9 +172,8 @@ def main():
                                         print(f'----{k}: {v}')
 
                     if show_forecast:
-                        print(f'{len(forecast) - 1} Day Forecast')
-                        for i in range(1, len(forecast)):
-                            daily = forecast[i]
+                        print(f'{len(forecast)} Day Forecast')
+                        for daily in forecast:
                             daily_low = daily["day"]["mintemp_f"] if units == 'F' else daily["day"]["mintemp_c"]
                             daily_high = daily["day"]["maxtemp_f"] if units == 'F' else daily["day"]["maxtemp_c"]
                             daily_average = daily["day"]["avgtemp_f"] if units == 'F' else daily["day"]["avgtemp_c"]
