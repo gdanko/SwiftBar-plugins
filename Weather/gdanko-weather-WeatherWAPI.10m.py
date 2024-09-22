@@ -44,7 +44,12 @@ def get_defaults():
     return location, api_key, units, True if show_forecast == 'true' else False
 
 def fetch_data(url=None):
-    response = requests.get(url)
+    response = None
+    try:
+        response = requests.get(url)
+    except Exception as e:
+        return None, f'Request failed: {e}'
+
     if response.status_code == 200:
         try:
             data = json.loads(response.content)
