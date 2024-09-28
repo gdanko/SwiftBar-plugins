@@ -12,6 +12,7 @@
 import datetime
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -67,7 +68,37 @@ def byte_converter(bytes, unit):
     prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
+def get_top_memory_usage():
+    # This performs the equivalent of `ps -axm -o rss,comm | sort -rn -k 1 | head -n 10``
+    command_length = 125
+    number_of_offenders = 20
+    memory_info = []
+    cmd1 = ['/bin/ps', '-axm', '-o', 'rss,comm']
+    cmd2 = ['sort', '-rn', '-k', '1']
+    cmd3 = ['head', '-n', str(number_of_offenders)]
+
+    p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
+    p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
+    p3 = subprocess.Popen(cmd3, stdin=p2.stdout, stdout=subprocess.PIPE)
+    output = p3.stdout.read().decode()
+    lines = output.strip().split('\n')
+
+    for line in lines:
+        match = re.search(r'^(\d+)\s+(.*)$', line)
+        if match:
+            memory_usage = int(match.group(1)) * 1024
+            command_name = match.group(2)
+            if len(command_name) > command_length:
+                command_name = command_name[0:command_length] + '...'
+
+            memory_info.append({
+                'command': command_name,
+                'memory_usage': byte_converter(memory_usage, 'G'),
+            })
+    return memory_info
+
 def main():
+    get_top_memory_usage()
     unit = get_defaults()
 
     memory_type, memory_brand, err = get_memory_details()
@@ -88,6 +119,12 @@ def main():
     print(f'Active: {byte_converter(mem.active, unit)}')
     print(f'Inactive: {byte_converter(mem.inactive, unit)}')
     print(f'Wired: {byte_converter(mem.wired, unit)}')
+
+    memory_offenders = get_top_memory_usage()
+    if len(memory_offenders) > 0:
+        print('Memory Offenders')
+        for offender in memory_offenders:
+            print(f'--{offender["command"]} - {offender["memory_usage"]}')
 
 if __name__ == '__main__':
     main()
