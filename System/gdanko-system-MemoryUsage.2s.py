@@ -69,7 +69,7 @@ def byte_converter(bytes, unit):
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
 def get_top_memory_usage():
-    # This performs the equivalent of `ps -axm -o rss,comm | sort -rn -k 1 | head -n 10``
+    # This performs the equivalent of `ps -axm -o rss,comm | sort -rn -k 1 | head -n 10`
     command_length = 125
     number_of_offenders = 20
     memory_info = []
