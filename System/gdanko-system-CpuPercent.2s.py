@@ -117,12 +117,10 @@ def get_top_cpu_usage():
     cpu_info = []
     cmd1 = ['/bin/ps', '-axm', '-o', '%cpu,comm']
     cmd2 = ['sort', '-rn', '-k', '1']
-    cmd3 = ['egrep', '-v', '"^top"']
 
     p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
     p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
-    p3 = subprocess.Popen(cmd3, stdin=p2.stdout, stdout=subprocess.PIPE)
-    output = p3.stdout.read().decode()
+    output = p2.stdout.read().decode()
     lines = output.strip().split('\n')
 
     for line in lines:
@@ -133,7 +131,7 @@ def get_top_cpu_usage():
             if len(command_name) > command_length:
                 command_name = command_name[0:command_length] + '...'
 
-            if float(cpu_usage) > 0.0:
+            if float(cpu_usage) > 0.0 and command_name != 'top':
                 cpu_info.append({
                     'command': command_name,
                     'cpu_usage': cpu_usage + '%'
@@ -175,7 +173,7 @@ def main():
     if len(cpu_offenders) > 0:
         print(f'Top {len(cpu_offenders)} CPU Consumers')
         for offender in cpu_offenders:
-            print(f'--{offender["command"]} - {offender["cpu_usage"]}')
+            print(f'--{offender["cpu_usage"]} - {offender["command"]}')
 
 if __name__ == '__main__':
     main()
