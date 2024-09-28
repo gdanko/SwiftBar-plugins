@@ -113,7 +113,7 @@ def combine_stats(cpu_time_stats, cpu_type):
 def get_top_cpu_usage():
     # This performs the equivalent of `ps -axm -o %cpu,comm | egrep -v "^top" | sort -rn -k 1 | head -n 10`
     command_length = 75
-    number_of_offenders = 10
+    number_of_offenders = 20
     cpu_info = []
     cmd1 = ['/bin/ps', '-axm', '-o', '%cpu,comm']
     cmd2 = ['sort', '-rn', '-k', '1']
