@@ -122,7 +122,7 @@ def main():
 
     memory_offenders = get_top_memory_usage()
     if len(memory_offenders) > 0:
-        print('Memory Offenders')
+        print(f'Top {len(memory_offenders)} Memory Consumers')
         for offender in memory_offenders:
             print(f'--{offender["command"]} - {offender["memory_usage"]}')
 
