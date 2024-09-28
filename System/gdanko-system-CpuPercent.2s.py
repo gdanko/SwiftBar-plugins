@@ -111,7 +111,7 @@ def combine_stats(cpu_time_stats, cpu_type):
     )
 
 def get_top_cpu_usage():
-    # This performs the equivalent of `ps -axm -o %cpu,comm | egrep -v "^top" | sort -rn -k 1 | head -n 10`
+    # This performs the equivalent of `ps -axm -o %cpu,comm | sort -rn -k 1 | head -n 10`
     command_length = 100
     number_of_offenders = 20
     cpu_info = []
@@ -131,7 +131,7 @@ def get_top_cpu_usage():
             if len(command_name) > command_length:
                 command_name = command_name[0:command_length] + '...'
 
-            if float(cpu_usage) > 0.0 and command_name != 'top':
+            if float(cpu_usage) > 0.0 and command_name not in ['top', '(top)']:
                 cpu_info.append({
                     'command': command_name,
                     'cpu_usage': cpu_usage + '%'
