@@ -118,13 +118,11 @@ def get_top_cpu_usage():
     cmd1 = ['/bin/ps', '-axm', '-o', '%cpu,comm']
     cmd2 = ['sort', '-rn', '-k', '1']
     cmd3 = ['egrep', '-v', '"^top"']
-    cmd4 = ['head', '-n', str(number_of_offenders)]
 
     p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
     p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
     p3 = subprocess.Popen(cmd3, stdin=p2.stdout, stdout=subprocess.PIPE)
-    p4 = subprocess.Popen(cmd4, stdin=p3.stdout, stdout=subprocess.PIPE)
-    output = p4.stdout.read().decode()
+    output = p3.stdout.read().decode()
     lines = output.strip().split('\n')
 
     for line in lines:
@@ -135,11 +133,15 @@ def get_top_cpu_usage():
             if len(command_name) > command_length:
                 command_name = command_name[0:command_length] + '...'
 
-            cpu_info.append({
-                'command': command_name,
-                'cpu_usage': cpu_usage + '%'
-            })
-    return cpu_info
+            if float(cpu_usage) > 0.0:
+                cpu_info.append({
+                    'command': command_name,
+                    'cpu_usage': cpu_usage + '%'
+                })
+    if len(cpu_info) > number_of_offenders:
+        return cpu_info[0:number_of_offenders]
+    else:
+        return cpu_info
 
 def main():
     cpu_type = get_sysctl('machdep.cpu.brand_string')
