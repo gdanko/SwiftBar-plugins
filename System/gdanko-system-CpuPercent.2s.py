@@ -11,6 +11,7 @@
 from collections import namedtuple
 from math import ceil
 import datetime
+import re
 import subprocess
 import sys
 import time
@@ -109,6 +110,37 @@ def combine_stats(cpu_time_stats, cpu_type):
         user=(user / len(cpu_time_stats)),
     )
 
+def get_top_cpu_usage():
+    # This performs the equivalent of `ps -axm -o %cpu,comm | egrep -v "^top" | sort -rn -k 1 | head -n 10`
+    command_length = 75
+    number_of_offenders = 10
+    cpu_info = []
+    cmd1 = ['/bin/ps', '-axm', '-o', '%cpu,comm']
+    cmd2 = ['sort', '-rn', '-k', '1']
+    cmd3 = ['egrep', '-v', '"^top"']
+    cmd4 = ['head', '-n', str(number_of_offenders)]
+
+    p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
+    p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
+    p3 = subprocess.Popen(cmd3, stdin=p2.stdout, stdout=subprocess.PIPE)
+    p4 = subprocess.Popen(cmd4, stdin=p3.stdout, stdout=subprocess.PIPE)
+    output = p4.stdout.read().decode()
+    lines = output.strip().split('\n')
+
+    for line in lines:
+        match = re.search(r'^\s*(\d+\.\d+)\s+(.*)$', line)
+        if match:
+            cpu_usage = match.group(1)
+            command_name = match.group(2)
+            if len(command_name) > command_length:
+                command_name = command_name[0:command_length] + '...'
+
+            cpu_info.append({
+                'command': command_name,
+                'cpu_usage': cpu_usage + '%'
+            })
+    return cpu_info
+
 def main():
     cpu_type = get_sysctl('machdep.cpu.brand_string')
     cpu_family = get_cpu_family_strings().get(int(get_sysctl('hw.cpufamily')), int(get_sysctl('hw.cpufamily')))
@@ -136,6 +168,12 @@ def main():
         
     for cpu in individual_cpu_pct:
         print(f'Core {cpu.cpu}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
+
+    cpu_offenders = get_top_cpu_usage()
+    if len(cpu_offenders) > 0:
+        print(f'Top {len(cpu_offenders)} CPU Consumers')
+        for offender in cpu_offenders:
+            print(f'--{offender["command"]} - {offender["cpu_usage"]}')
 
 if __name__ == '__main__':
     main()
