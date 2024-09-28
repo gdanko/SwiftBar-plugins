@@ -66,6 +66,9 @@ def get_cpu_family_strings():
         0x72015832: 'ARM Palma',
         0x2876f5b5: 'ARM Coll',
         0x5f4dea93: 'ARM Lobos',
+        0x6f5129ac: 'ARM Donan',
+        0x75d4acb9: 'ARM Tahiti',
+        0x204526d0: 'ARM Tupai',
     }
 
 def pad_float(number):
