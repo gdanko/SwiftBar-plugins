@@ -87,49 +87,99 @@ def main():
         symbol_info = info_dict[symbol]
         symbol_metadata = metadata_dict[symbol]
 
-        print(symbol)
-        print('--Company Info')
-        print(f'----{symbol_metadata["longName"]}')
-        print(f'----{symbol_info["website"]} | href={symbol_info["website"]} | color=blue')
-        print(f'----Location: {symbol_info["address1"]}, {symbol_info["city"]}, {symbol_info["state"]}, {symbol_info["zip"]}')
-        print(f'----Phone: {symbol_info["phone"]}')
-        print(f'----FT Employees: {add_commas(symbol_info["fullTimeEmployees"])}')
-        print(f'----Currency: {symbol_info["currency"]}')
-        print('--Key Stats')
-        print(f'----Open: {to_dollar(symbol_info["open"])}')
-        print(f'----Daily High: {to_dollar(symbol_info["dayHigh"])}')
-        print(f'----Daily Low: {to_dollar(symbol_info["dayLow"])}')
-        print(f'----Previous Close: {to_dollar(symbol_info["previousClose"])}')
-        print(f'----10 Day Average Volume: {numerize.numerize(symbol_info["averageVolume10days"], 3)}')
-        print(f'----52 Week High: {to_dollar(symbol_metadata["fiftyTwoWeekHigh"])}')
-        print(f'----52 Week Low: {to_dollar(symbol_metadata["fiftyTwoWeekLow"])}')
-        print(f'----Beta: {numerize.numerize(symbol_info["beta"])}')
-        print(f'----Market Cap: ${numerize.numerize(symbol_info["marketCap"], 3)}')
-        print(f'----Shares Outstanding: {numerize.numerize(symbol_info["sharesOutstanding"], 3)}')
-        print(f'----Public Float: {numerize.numerize(symbol_info["floatShares"], 3)}')
-        print(f'----Dividend Rate: {add_commas(symbol_info["dividendRate"])}')
-        print(f'----Dividend Yield: {float_to_pct(symbol_info["dividendYield"])}')
-        print(f'----Dividend: ${to_dollar(symbol_info["lastDividendValue"])}')
-        print(f'----Revenue: {numerize.numerize(symbol_info["totalRevenue"])}')
-        print(f'----Revenue Per Employee: ${numerize.numerize((symbol_info["totalRevenue"] / symbol_info["fullTimeEmployees"]), 3)}')
-        print('--Ratios/Profitability')
-        print(f'----EPS (TTM): {to_dollar(symbol_info["trailingEps"])}')
-        print(f'----P/E (TTM): {pad_float(symbol_info["trailingPE"])}')
-        print(f'----Fwd P/E (NTM): {pad_float(symbol_info["forwardPE"])}')
-        print(f'----Revenue: {numerize.numerize(symbol_info["totalRevenue"], 3)}')
-        print(f'----Revenue Per Share: {to_dollar(symbol_info["revenuePerShare"])}')
-        print(f'----ROE (TTM): {float_to_pct(symbol_info["returnOnEquity"])}')
-        print(f'----EBITDA (TTM): {numerize.numerize(symbol_info["ebitda"], 3)}')
-        print(f'----Gross Margin (TTM): {float_to_pct(symbol_info["grossMargins"])}')
-        print(f'----Net Margin (TTM): {float_to_pct(symbol_info["profitMargins"])}')
-        print(f'----Debt To Equity (TTM): {pad_float(symbol_info["debtToEquity"])}%')
-        print('--Events')
-        print(f'----Last Fiscal Year End: {unix_to_human(symbol_info["lastFiscalYearEnd"])}')
-        print(f'----Next Fiscal Year End: {unix_to_human(symbol_info["nextFiscalYearEnd"])}')
-        print(f'----Most Recent Quarter: {unix_to_human(symbol_info["mostRecentQuarter"])}')
-        print(f'----Last Dividend Date: {unix_to_human(symbol_info["lastDividendDate"])}')
-        print(f'----First Trade Date: {unix_to_human(symbol_info["firstTradeDateEpochUtc"])}')
-        print(f'----Last Split: {symbol_info["lastSplitFactor"]} on {unix_to_human(symbol_info["lastSplitDate"])}')
+        plugin_output = []
+
+        company_info = ['--Company Info']
+        if 'longName' in symbol_info:
+            company_info.append(f'----{symbol_info["longName"]}')
+        if 'website' in symbol_info:
+            company_info.append('----{symbol_info["website"]} | href={symbol_info["website"]} | color=blue')
+        if 'address1' in symbol_info and 'city' in symbol_info and 'state' in symbol_info and 'zip' in symbol_info:
+            company_info.append(f'----Location: {symbol_info["address1"]}, {symbol_info["city"]}, {symbol_info["state"]}, {symbol_info["zip"]}')
+        if 'phone' in symbol_info:
+            company_info.append(f'----Phone: {symbol_info["phone"]}')
+        if 'fullTimeEmployees' in symbol_info:
+            company_info.append(f'----FT Employees: {add_commas(symbol_info["fullTimeEmployees"])}')
+        if 'currency' in symbol_info:
+            company_info.append(f'----Currency: {symbol_info["currency"]}')
+
+        key_stats = ['--Key Stats']
+        if 'open' in symbol_info:
+            key_stats.append(f'----Open: {to_dollar(symbol_info["open"])}')
+        if 'dayHigh' in symbol_info:
+            key_stats.append(f'----Daily High: {to_dollar(symbol_info["dayHigh"])}')
+        if 'dayLow' in symbol_info:
+            key_stats.append(f'----Daily Low: {to_dollar(symbol_info["dayLow"])}')
+        if 'previousClose' in symbol_info:
+            key_stats.append(f'----Previous Close: {to_dollar(symbol_info["previousClose"])}')
+        if 'averageVolume10days' in symbol_info:
+            key_stats.append(f'----10 Day Average Volume: {numerize.numerize(symbol_info["averageVolume10days"], 3)}')
+        if 'fiftyTwoWeekHigh' in symbol_info:
+            key_stats.append(f'----52 Week High: {to_dollar(symbol_metadata["fiftyTwoWeekHigh"])}')
+        if 'fiftyTwoWeekLow' in symbol_info:
+            key_stats.append(f'----52 Week Low: {to_dollar(symbol_metadata["fiftyTwoWeekLow"])}')
+        if 'beta' in symbol_info:
+            key_stats.append(f'----Beta: {numerize.numerize(symbol_info["beta"])}')
+        if 'marketCap' in symbol_info:
+            key_stats.append(f'----Market Cap: ${numerize.numerize(symbol_info["marketCap"], 3)}')
+        if 'sharesOutstanding' in symbol_info:
+            key_stats.append(f'----Shares Outstanding: {numerize.numerize(symbol_info["sharesOutstanding"], 3)}')
+        if 'floatShares' in symbol_info:
+            key_stats.append(f'----Public Float: {numerize.numerize(symbol_info["floatShares"], 3)}')
+        if 'dividendRate' in symbol_info:
+            key_stats.append(f'----Dividend Rate: {add_commas(symbol_info["dividendRate"])}')
+        if 'dividendYield' in symbol_info:
+            key_stats.append(f'----Dividend Yield: {float_to_pct(symbol_info["dividendYield"])}')
+        if 'lastDividendValue' in symbol_info:
+            key_stats.append(f'----Dividend: ${to_dollar(symbol_info["lastDividendValue"])}')
+        if 'totalRevenue' in symbol_info:
+            key_stats.append(f'----Revenue: {numerize.numerize(symbol_info["totalRevenue"])}')
+        if 'totalRevenue' in symbol_info and 'fullTimeEmployees' in symbol_info:
+            key_stats.append(f'----Revenue Per Employee: ${numerize.numerize((symbol_info["totalRevenue"] / symbol_info["fullTimeEmployees"]), 3)}')
+
+        ratios_and_protiability = ['--Ratios/Profitability']
+        if 'trailingEps' in symbol_info:
+            ratios_and_protiability.append(f'----EPS (TTM): {to_dollar(symbol_info["trailingEps"])}')
+        if 'trailingPE' in symbol_info:
+            ratios_and_protiability.append(f'----P/E (TTM): {pad_float(symbol_info["trailingPE"])}')
+        if 'forwardPE' in symbol_info:
+            ratios_and_protiability.append(f'----Fwd P/E (NTM): {pad_float(symbol_info["forwardPE"])}')
+        if 'totalRevenue' in symbol_info:
+            ratios_and_protiability.append(f'----Revenue: {numerize.numerize(symbol_info["totalRevenue"], 3)}')
+        if 'revenuePerShare' in symbol_info:
+            ratios_and_protiability.append(f'----Revenue Per Share: {to_dollar(symbol_info["revenuePerShare"])}')
+        if 'returnOnEquity' in symbol_info:
+            ratios_and_protiability.append(f'----ROE (TTM): {float_to_pct(symbol_info["returnOnEquity"])}')
+        if 'ebitda' in symbol_info:
+            ratios_and_protiability.append(f'----EBITDA (TTM): {numerize.numerize(symbol_info["ebitda"], 3)}')
+        if 'grossMargins' in symbol_info:
+            ratios_and_protiability.append(f'----Gross Margin (TTM): {float_to_pct(symbol_info["grossMargins"])}')
+        if 'profitMargins' in symbol_info:
+            ratios_and_protiability.append(f'----Net Margin (TTM): {float_to_pct(symbol_info["profitMargins"])}')
+        if 'debtToEquity' in symbol_info:
+            ratios_and_protiability.append(f'----Debt To Equity (TTM): {pad_float(symbol_info["debtToEquity"])}%')
+
+        events = ['--Events']
+        if 'lastFiscalYearEnd' in symbol_info:
+            events.append(f'----Last Fiscal Year End: {unix_to_human(symbol_info["lastFiscalYearEnd"])}')
+        if 'nextFiscalYearEnd' in symbol_info:
+            events.append(f'----Next Fiscal Year End: {unix_to_human(symbol_info["nextFiscalYearEnd"])}')
+        if 'mostRecentQuarter' in symbol_info:
+            events.append(f'----Most Recent Quarter: {unix_to_human(symbol_info["mostRecentQuarter"])}')
+        if 'lastDividendDate' in symbol_info:
+            events.append(f'----Last Dividend Date: {unix_to_human(symbol_info["lastDividendDate"])}')
+        if 'firstTradeDateEpochUtc' in symbol_info:
+            events.append(f'----First Trade Date: {unix_to_human(symbol_info["firstTradeDateEpochUtc"])}')
+        if 'lastSplitFactor' in symbol_info and 'lastSplitDate' in symbol_info:
+            events.append(f'----Last Split: {symbol_info["lastSplitFactor"]} on {unix_to_human(symbol_info["lastSplitDate"])}')
+
+        for item in [company_info, key_stats, ratios_and_protiability, events]:
+            if len(item) > 1:
+                plugin_output.append('\n'.join(item))
+
+        if len(plugin_output) > 0:
+            for item in plugin_output:
+                print(item)
 
     print('Refresh market data | refresh=true')
 
