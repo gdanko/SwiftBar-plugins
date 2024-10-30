@@ -93,7 +93,7 @@ def main():
         if 'longName' in symbol_info:
             company_info.append(f'----{symbol_info["longName"]}')
         if 'website' in symbol_info:
-            company_info.append('----{symbol_info["website"]} | href={symbol_info["website"]} | color=blue')
+            company_info.append(f'----{symbol_info["website"]} | href={symbol_info["website"]} | color=blue')
         if 'address1' in symbol_info and 'city' in symbol_info and 'state' in symbol_info and 'zip' in symbol_info:
             company_info.append(f'----Location: {symbol_info["address1"]}, {symbol_info["city"]}, {symbol_info["state"]}, {symbol_info["zip"]}')
         if 'phone' in symbol_info:
