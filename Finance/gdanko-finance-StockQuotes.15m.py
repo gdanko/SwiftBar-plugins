@@ -178,6 +178,7 @@ def main():
                 plugin_output.append('\n'.join(item))
 
         if len(plugin_output) > 0:
+            print(symbol)
             for item in plugin_output:
                 print(item)
 
