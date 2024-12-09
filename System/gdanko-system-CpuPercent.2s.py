@@ -7,10 +7,12 @@
 # <xbar.desc>Display CPU % for user, system, and idle</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-CpuPercent.2s.py</xbar.abouturl>
+# <xbar.var>string(VAR_CPU_USAGE_KILL_PROCESS="false"): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
 
 from collections import namedtuple
 from math import ceil
 import datetime
+import os
 import re
 import subprocess
 import sys
@@ -25,6 +27,10 @@ except ModuleNotFoundError:
     subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
+
+def get_defaults():
+    kill_process = os.getenv('VAR_CPU_USAGE_KILL_PROCESS', "false") 
+    return True if kill_process == 'true' else False
 
 def get_cpu_family_strings():
     # We get this information from /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/mach/machine.h
@@ -115,10 +121,9 @@ def combine_stats(cpu_time_stats, cpu_type):
 
 def get_top_cpu_usage():
     # This performs the equivalent of `ps -axm -o %cpu,comm | sort -rn -k 1 | head -n 10`
-    command_length = 100
     number_of_offenders = 20
     cpu_info = []
-    cmd1 = ['/bin/ps', '-axm', '-o', '%cpu,comm']
+    cmd1 = ['/bin/ps', '-axm', '-o', '%cpu,pid,comm']
     cmd2 = ['sort', '-rn', '-k', '1']
 
     p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
@@ -127,17 +132,16 @@ def get_top_cpu_usage():
     lines = output.strip().split('\n')
 
     for line in lines:
-        match = re.search(r'^\s*(\d+\.\d+)\s+(.*)$', line)
-        if match:
+        match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+(.*)$', line)
+        if match: 
             cpu_usage = match.group(1)
-            command_name = match.group(2)
-            if len(command_name) > command_length:
-                command_name = command_name[0:command_length] + '...'
-
+            pid = match.group(2)
+            command_name = match.group(3)
             if float(cpu_usage) > 0.0 and command_name not in ['top', '(top)']:
                 cpu_info.append({
                     'command': command_name,
-                    'cpu_usage': cpu_usage + '%'
+                    'cpu_usage': cpu_usage + '%',
+                    'pid': pid,
                 })
     if len(cpu_info) > number_of_offenders:
         return cpu_info[0:number_of_offenders]
@@ -145,6 +149,8 @@ def get_top_cpu_usage():
         return cpu_info
 
 def main():
+    kill_process = get_defaults()
+    command_length = 125
     cpu_type = get_sysctl('machdep.cpu.brand_string')
     cpu_family = get_cpu_family_strings().get(int(get_sysctl('hw.cpufamily')), int(get_sysctl('hw.cpufamily')))
     max_cpu_freq = cpu_freq().max if cpu_freq().max is not None else None
@@ -176,7 +182,11 @@ def main():
     if len(cpu_offenders) > 0:
         print(f'Top {len(cpu_offenders)} CPU Consumers')
         for offender in cpu_offenders:
-            print(f'--{offender["cpu_usage"]} - {offender["command"]}')
+            pid = offender["pid"]
+            if kill_process:
+                print(f'--{offender["cpu_usage"]} - {offender["command"]} | length={command_length} | shell=/bin/sh | param1="-c" | param2="kill {pid}"')
+            else:
+                print(f'--{offender["cpu_usage"]} - {offender["command"]} | length={command_length}')
 
 if __name__ == '__main__':
     main()
