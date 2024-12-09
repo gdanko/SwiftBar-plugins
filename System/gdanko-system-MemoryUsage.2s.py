@@ -8,6 +8,7 @@
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-MemoryUsage.2s.py</xbar.abouturl>
 # <xbar.var>string(VAR_MEM_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
+# <xbar.var>string(VAR_MEM_USAGE_KILL_PROCESS="false"): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
 
 import datetime
 import json
@@ -37,7 +38,10 @@ def get_defaults():
     unit = os.getenv('VAR_MEM_USAGE_UNIT', 'Gi') 
     if not unit in valid_units:
         unit = 'Gi'
-    return unit
+
+    kill_process = os.getenv('VAR_MEM_USAGE_KILL_PROCESS', "false") 
+    kill_process = True if kill_process == 'true' else False
+    return unit, kill_process
 
 def get_memory_details():
     p = subprocess.Popen(
@@ -70,10 +74,9 @@ def byte_converter(bytes, unit):
 
 def get_top_memory_usage():
     # This performs the equivalent of `ps -axm -o rss,comm | sort -rn -k 1 | head -n 10`
-    command_length = 125
     number_of_offenders = 20
     memory_info = []
-    cmd1 = ['/bin/ps', '-axm', '-o', 'rss,comm']
+    cmd1 = ['/bin/ps', '-axm', '-o', 'rss,pid,comm']
     cmd2 = ['sort', '-rn', '-k', '1']
 
     p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
@@ -82,24 +85,23 @@ def get_top_memory_usage():
     lines = output.strip().split('\n')
 
     for line in lines:
-        match = re.search(r'^(\d+)\s+(.*)$', line)
+        match = re.search(r'^(\d+)\s+(\d+)\s+(.*)$', line)
         if match:
             memory_usage = int(match.group(1)) * 1024
-            command_name = match.group(2)
-            if len(command_name) > command_length:
-                command_name = command_name[0:command_length] + '...'
-
+            pid = match.group(2)
+            command_name = match.group(3)
             if float(memory_usage) > 0.0:
                 memory_info.append({
                     'command': command_name,
                     'memory_usage': byte_converter(memory_usage, 'G'),
+                    'pid': pid,
                 })
     return memory_info[0:number_of_offenders]
 
 def main():
+    unit, kill_process = get_defaults()
+    command_length = 125
     get_top_memory_usage()
-    unit = get_defaults()
-
     memory_type, memory_brand, err = get_memory_details()
 
     mem = virtual_memory()
@@ -123,7 +125,11 @@ def main():
     if len(memory_offenders) > 0:
         print(f'Top {len(memory_offenders)} Memory Consumers')
         for offender in memory_offenders:
-            print(f'--{offender["memory_usage"]} - {offender["command"]}')
+            pid = offender["pid"]
+            if kill_process:
+                print(f'--{offender["memory_usage"]} - {offender["command"]} | length={command_length} | shell=/bin/sh | param1="-c" | param2="kill {pid}"')
+            else:
+                print(f'--{offender["memory_usage"]} - {offender["command"]} | length={command_length}')
 
 if __name__ == '__main__':
     main()
