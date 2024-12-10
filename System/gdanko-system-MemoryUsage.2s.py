@@ -98,7 +98,7 @@ def get_top_memory_usage():
     # This performs the equivalent of `ps -axm -o rss,comm | sort -rn -k 1 | head -n 10`
     number_of_offenders = 20
     memory_info = []
-    cmd1 = ['/bin/ps', '-axm', '-o', 'rss,pid,comm']
+    cmd1 = ['/bin/ps', '-axm', '-o', 'rss,pid,user,comm']
     cmd2 = ['sort', '-rn', '-k', '1']
 
     p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
@@ -107,18 +107,26 @@ def get_top_memory_usage():
     lines = output.strip().split('\n')
 
     for line in lines:
-        match = re.search(r'^(\d+)\s+(\d+)\s+(.*)$', line)
+        match = re.search(r'^(\d+)\s+(\d+)\s+([A-Za-z0-9\-\.]+)\s+(.*)$', line)
         if match:
             memory_usage = int(match.group(1)) * 1024
             pid = match.group(2)
-            command_name = match.group(3)
+            user = match.group(3)
+            command_name = match.group(4)
             if float(memory_usage) > 0.0:
                 memory_info.append({
-                    'command': command_name,
                     'memory_usage': byte_converter(memory_usage, 'G'),
                     'pid': pid,
+                    'user': user,
+                    'command': command_name,
                 })
     return memory_info[0:number_of_offenders]
+
+def get_disabled_flag(process_owner, kill_process):
+    if kill_process:
+        return 'false' if process_owner == os.getlogin() else 'true'
+    else:
+        return 'true'
 
 def main():
     if len(sys.argv) == 2:
@@ -151,7 +159,7 @@ def main():
         print(f'Top {len(memory_offenders)} Memory Consumers')
         for offender in memory_offenders:
             pid = offender["pid"]
-            print(f'--{":skull: " if kill_process else ""}{offender["memory_usage"]} - {offender["command"]} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={"false" if kill_process else "true"}')
+            print(f'--{":skull: " if kill_process else ""}{offender["memory_usage"]} - {offender["command"]} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(offender["user"], kill_process)}')
     print('---')
     print(f'{"Disable" if kill_process else "Enable"} "Click to Kill" | shell="{plugin}" | param1="{"disable" if kill_process else "enable"}" | terminal=false | refresh=true')
 

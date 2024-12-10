@@ -147,7 +147,7 @@ def get_top_cpu_usage():
     # This performs the equivalent of `ps -axm -o %cpu,comm | sort -rn -k 1 | head -n 10`
     number_of_offenders = 20
     cpu_info = []
-    cmd1 = ['/bin/ps', '-axm', '-o', '%cpu,pid,comm']
+    cmd1 = ['/bin/ps', '-axm', '-o', '%cpu,pid,user,comm']
     cmd2 = ['sort', '-rn', '-k', '1']
 
     p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
@@ -156,21 +156,29 @@ def get_top_cpu_usage():
     lines = output.strip().split('\n')
 
     for line in lines:
-        match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+(.*)$', line)
+        match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.]+)\s+(.*)$', line)
         if match: 
             cpu_usage = match.group(1)
             pid = match.group(2)
-            command_name = match.group(3)
+            user = match.group(3)
+            command_name = match.group(4)
             if float(cpu_usage) > 0.0 and command_name not in ['top', '(top)']:
                 cpu_info.append({
-                    'command': command_name,
                     'cpu_usage': cpu_usage + '%',
                     'pid': pid,
+                    'user': user,
+                    'command': command_name,
                 })
     if len(cpu_info) > number_of_offenders:
         return cpu_info[0:number_of_offenders]
     else:
         return cpu_info
+
+def get_disabled_flag(process_owner, kill_process):
+    if kill_process:
+        return 'false' if process_owner == os.getlogin() else 'true'
+    else:
+        return 'true'
 
 def main():
     if len(sys.argv) == 2:
@@ -194,7 +202,6 @@ def main():
     print(f'CPU: user {pad_float(combined_cpu_pct[0].user)}%, sys {pad_float(combined_cpu_pct[0].system)}%, idle {pad_float(combined_cpu_pct[0].idle)}%')
     print('---')
     print(f'Updated {get_timestamp(int(time.time()))}')
-    print(kill_process)
     print('---')
     if cpu_type is not None:
         processor = cpu_type
@@ -212,7 +219,7 @@ def main():
         print(f'Top {len(cpu_offenders)} CPU Consumers')
         for offender in cpu_offenders:
             pid = offender["pid"]
-            print(f'--{":skull: " if kill_process else ""}{offender["cpu_usage"]} - {offender["command"]} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={"false" if kill_process else "true"}')
+            print(f'--{":skull: " if kill_process else ""}{offender["cpu_usage"]} - {offender["command"]} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(offender["user"], kill_process)}')
     print('---')
     print(f'{"Disable" if kill_process else "Enable"} "Click to Kill" | shell="{plugin}" | param1="{"disable" if kill_process else "enable"}" | terminal=false | refresh=true')
 
