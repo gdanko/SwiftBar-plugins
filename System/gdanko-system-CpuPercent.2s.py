@@ -58,8 +58,10 @@ def get_defaults():
     return kill_process
 
 def get_cpu_family_strings():
-    # We get this information from /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/mach/machine.h
+    # We get this information from /Library/Developer/CommandLineTools/SDKs/MacOSX<version>.sdk/usr/include/mach/machine.h
+    # Current: /Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/mach/machine.h
     return {
+        0:          'Unknown',
         0xcee41549: 'PowerPC G3',
         0x77c184ae: 'PowerPC G4',
         0xed76d8aa: 'PowerPC G5',
@@ -144,36 +146,47 @@ def combine_stats(cpu_time_stats, cpu_type):
         user=(user / len(cpu_time_stats)),
     )
 
+def get_command_output(command):
+    commands = re.split(r'\s*\|\s*', command)
+    previous = None
+    output = None
+    for i, command in enumerate(commands):
+        cmd = re.split(r'\s+', command)
+        if previous:
+            p = subprocess.Popen(cmd, stdin=previous.stdout, stdout=subprocess.PIPE)
+        else:
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            previous = p
+
+        if i == len(commands) - 1:
+            output = p.stdout.read().strip().decode()
+    return output
+
 def get_top_cpu_usage():
-    # This performs the equivalent of `ps -axm -o %cpu,comm | sort -rn -k 1 | head -n 10`
     number_of_offenders = 20
     cpu_info = []
-    cmd1 = ['/bin/ps', '-axm', '-o', '%cpu,pid,user,comm']
-    cmd2 = ['sort', '-rn', '-k', '1']
-
-    p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
-    p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
-    output = p2.stdout.read().decode()
-    lines = output.strip().split('\n')
-
-    for line in lines:
-        match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.]+)\s+(.*)$', line)
-        if match: 
-            cpu_usage = match.group(1)
-            pid = match.group(2)
-            user = match.group(3)
-            command_name = match.group(4)
-            if float(cpu_usage) > 0.0 and command_name not in ['top', '(top)']:
-                cpu_info.append({
-                    'cpu_usage': cpu_usage + '%',
-                    'pid': pid,
-                    'user': user,
-                    'command': command_name,
-                })
-    if len(cpu_info) > number_of_offenders:
-        return cpu_info[0:number_of_offenders]
-    else:
-        return cpu_info
+    command = '/bin/ps -axm -o %cpu,pid,user,comm | tail -n+2 | sort -rn -k 1'
+    output = get_command_output(command)
+    if output:
+        lines = output.strip().split('\n')
+        for line in lines:
+            match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
+            if match:
+                cpu_usage = match.group(1)
+                pid = match.group(2)
+                user = match.group(3)
+                command_name = match.group(4)
+                if float(cpu_usage) > 0.0 and command_name not in ['ps', '(ps)']:
+                    cpu_info.append({
+                        'command': command_name,
+                        'cpu_usage': cpu_usage + '%',
+                        'pid': pid,
+                        'user': user,
+                    })
+        if len(cpu_info) > number_of_offenders:
+            return cpu_info[0:number_of_offenders]
+        else:
+            return cpu_info
 
 def get_disabled_flag(process_owner, kill_process):
     if kill_process:
@@ -219,8 +232,11 @@ def main():
     if len(cpu_offenders) > 0:
         print(f'Top {len(cpu_offenders)} CPU Consumers')
         for offender in cpu_offenders:
-            pid = offender["pid"]
-            print(f'--{":skull: " if kill_process else ""}{offender["cpu_usage"]} - {offender["command"]} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(offender["user"], kill_process)}')
+            command = offender['command']
+            cpu_usage = offender['cpu_usage']
+            pid = offender['pid']
+            user = offender['user']
+            print(f'--{":skull: " if kill_process else ""}{cpu_usage} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(user, kill_process)}')
     print('---')
     print(f'{"Disable" if kill_process else "Enable"} "Click to Kill" | shell="{plugin}" | param1="{"disable" if kill_process else "enable"}" | terminal=false | refresh=true')
 
