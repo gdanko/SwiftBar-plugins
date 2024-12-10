@@ -11,6 +11,7 @@
 # <xbar.var>string(VAR_MEM_USAGE_KILL_PROCESS="false"): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
 
 import datetime
+import getpass
 import json
 import os
 import re
@@ -124,7 +125,7 @@ def get_top_memory_usage():
 
 def get_disabled_flag(process_owner, kill_process):
     if kill_process:
-        return 'false' if process_owner == os.getlogin() else 'true'
+        return 'false' if process_owner == getpass.getuser() else 'true'
     else:
         return 'true'
 

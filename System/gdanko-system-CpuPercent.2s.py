@@ -12,6 +12,7 @@
 from collections import namedtuple
 from math import ceil
 import datetime
+import getpass
 import json
 import os
 import re
@@ -176,7 +177,7 @@ def get_top_cpu_usage():
 
 def get_disabled_flag(process_owner, kill_process):
     if kill_process:
-        return 'false' if process_owner == os.getlogin() else 'true'
+        return 'false' if process_owner == getpass.getuser() else 'true'
     else:
         return 'true'
 
