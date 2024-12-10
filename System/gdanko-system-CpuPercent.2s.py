@@ -162,31 +162,64 @@ def get_command_output(command):
             output = p.stdout.read().strip().decode()
     return output
 
+# def get_top_cpu_usage():
+#     number_of_offenders = 20
+#     cpu_info = []
+#     command = '/bin/ps -axm -o %cpu,pid,user,comm | tail -n+2 | sort -rn -k 1'
+#     output = get_command_output(command)
+#     if output:
+#         lines = output.strip().split('\n')
+#         for line in lines:
+#             match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
+#             if match:
+#                 cpu_usage = match.group(1)
+#                 pid = match.group(2)
+#                 user = match.group(3)
+#                 command_name = match.group(4)
+#                 if float(cpu_usage) > 0.0 and command_name not in ['ps', '(ps)']:
+#                     cpu_info.append({
+#                         'command': command_name,
+#                         'cpu_usage': cpu_usage + '%',
+#                         'pid': pid,
+#                         'user': user,
+#                     })
+#         if len(cpu_info) > number_of_offenders:
+#             return cpu_info[0:number_of_offenders]
+#         else:
+#             return cpu_info
+
 def get_top_cpu_usage():
+    # This performs the equivalent of `ps -axm -o %cpu,pid,user,comm | tail -n+2 | sort -rn -k 1`
     number_of_offenders = 20
     cpu_info = []
-    command = '/bin/ps -axm -o %cpu,pid,user,comm | tail -n+2 | sort -rn -k 1'
-    output = get_command_output(command)
-    if output:
-        lines = output.strip().split('\n')
-        for line in lines:
-            match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
-            if match:
-                cpu_usage = match.group(1)
-                pid = match.group(2)
-                user = match.group(3)
-                command_name = match.group(4)
-                if float(cpu_usage) > 0.0 and command_name not in ['ps', '(ps)']:
-                    cpu_info.append({
-                        'command': command_name,
-                        'cpu_usage': cpu_usage + '%',
-                        'pid': pid,
-                        'user': user,
-                    })
-        if len(cpu_info) > number_of_offenders:
-            return cpu_info[0:number_of_offenders]
-        else:
-            return cpu_info
+    cmd1 = ['/bin/ps', '-axm', '-o', '%cpu,pid,user,comm']
+    cmd2 = ['tail', '-n+2']
+    cmd3 = ['sort', '-rn', '-k', '1']
+
+    p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
+    p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
+    p3 = subprocess.Popen(cmd3, stdin=p2.stdout, stdout=subprocess.PIPE)
+    output = p3.stdout.read().decode()
+    lines = output.strip().split('\n')
+
+    for line in lines:
+        match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
+        if match: 
+            cpu_usage = match.group(1)
+            pid = match.group(2)
+            user = match.group(3)
+            command_name = match.group(4)
+            if float(cpu_usage) > 0.0 and command_name not in ['top', '(top)']:
+                cpu_info.append({
+                    'command': command_name,
+                    'cpu_usage': cpu_usage + '%',
+                    'pid': pid,
+                    'user': user,
+                })
+    if len(cpu_info) > number_of_offenders:
+        return cpu_info[0:number_of_offenders]
+    else:
+        return cpu_info
 
 def get_disabled_flag(process_owner, kill_process):
     if kill_process:

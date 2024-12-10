@@ -111,28 +111,58 @@ def get_command_output(command):
             output = p.stdout.read().strip().decode()
     return output
 
+# def get_top_memory_usage():
+#     number_of_offenders = 20
+#     memory_info = []
+#     command = '/bin/ps -axm -o rss,pid,user,comm | tail -n+2 | sort -rn -k 1'
+#     output = get_command_output(command)
+#     if output:
+#         lines = output.strip().split('\n')
+#         for line in lines:
+#             match = re.search(r'^(\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
+#             if match:
+#                 memory_usage = int(match.group(1)) * 1024
+#                 pid = match.group(2)
+#                 user = match.group(3)
+#                 command_name = match.group(4)
+#                 if float(memory_usage) > 0.0:
+#                     memory_info.append({
+#                         'command': command_name,
+#                         'memory_usage': memory_usage,
+#                         'pid': pid,
+#                         'user': user,
+#                     })
+#         return memory_info[0:number_of_offenders]
+
 def get_top_memory_usage():
+    # This performs the equivalent of `ps -axm -o rss,pid,user,comm | tail -n+2 | sort -rn -k 1`
     number_of_offenders = 20
     memory_info = []
-    command = '/bin/ps -axm -o rss,pid,user,comm | tail -n+2 | sort -rn -k 1'
-    output = get_command_output(command)
-    if output:
-        lines = output.strip().split('\n')
-        for line in lines:
-            match = re.search(r'^(\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
-            if match:
-                memory_usage = int(match.group(1)) * 1024
-                pid = match.group(2)
-                user = match.group(3)
-                command_name = match.group(4)
-                if float(memory_usage) > 0.0:
-                    memory_info.append({
-                        'command': command_name,
-                        'memory_usage': memory_usage,
-                        'pid': pid,
-                        'user': user,
-                    })
-        return memory_info[0:number_of_offenders]
+    cmd1 = ['/bin/ps', '-axm', '-o', 'rss,pid,user,comm']
+    cmd2 = ['tail', '-n+2']
+    cmd3 = ['sort', '-rn', '-k', '1']
+
+    p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
+    p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
+    p3 = subprocess.Popen(cmd3, stdin=p2.stdout, stdout=subprocess.PIPE)
+    output = p3.stdout.read().decode()
+    lines = output.strip().split('\n')
+
+    for line in lines:
+        match = re.search(r'^(\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
+        if match:
+            memory_usage = int(match.group(1)) * 1024
+            pid = match.group(2)
+            user = match.group(3)
+            command_name = match.group(4)
+            if float(memory_usage) > 0.0:
+                memory_info.append({
+                    'command': command_name,
+                    'memory_usage': memory_usage,
+                    'pid': pid,
+                    'user': user,
+                })
+    return memory_info[0:number_of_offenders]
 
 def get_disabled_flag(process_owner, kill_process):
     if kill_process:
