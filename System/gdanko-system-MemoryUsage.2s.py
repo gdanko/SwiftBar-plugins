@@ -125,6 +125,7 @@ def main():
         toggle_kill_process()
     unit, kill_process = get_defaults()
     command_length = 125
+    font_size = 12
     plugin = os.path.abspath(sys.argv[0])
     get_top_memory_usage()
     memory_type, memory_brand, err = get_memory_details()
@@ -151,15 +152,9 @@ def main():
         print(f'Top {len(memory_offenders)} Memory Consumers')
         for offender in memory_offenders:
             pid = offender["pid"]
-            if kill_process:
-                print(f'--{offender["memory_usage"]} - {offender["command"]} | length={command_length} | shell=/bin/sh | param1="-c" | param2="kill {pid}"')
-            else:
-                print(f'--{offender["memory_usage"]} - {offender["command"]} | length={command_length}')
+            print(f'--{offender["memory_usage"]} - {offender["command"]} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={"false" if kill_process else "true"}')
     print('---')
-    if kill_process:
-        print(f'Disable "Click to Kill" | shell="{plugin}" | param1="disable" | terminal=false | refresh=true')
-    else:
-        print(f'Enable "Click to Kill" | shell="{plugin}" | param1="enable" | terminal=false | refresh=true')
+    print(f'{"Disable" if kill_process else "Enable"} "Click to Kill" | shell="{plugin}" | param1="{"disable" if kill_process else "enable"}" | terminal=false | refresh=true')
 
 if __name__ == '__main__':
     main()

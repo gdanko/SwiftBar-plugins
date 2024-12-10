@@ -177,6 +177,7 @@ def main():
         toggle_kill_process()
     kill_process = get_defaults()
     command_length = 125
+    font_size = 12
     plugin = os.path.abspath(sys.argv[0])
     cpu_type = get_sysctl('machdep.cpu.brand_string')
     cpu_family = get_cpu_family_strings().get(int(get_sysctl('hw.cpufamily')), int(get_sysctl('hw.cpufamily')))
@@ -211,15 +212,9 @@ def main():
         print(f'Top {len(cpu_offenders)} CPU Consumers')
         for offender in cpu_offenders:
             pid = offender["pid"]
-            if kill_process:
-                print(f'--{offender["cpu_usage"]} - {offender["command"]} | length={command_length} | shell=/bin/sh | param1="-c" | param2="kill {pid}"') # | disabled=true
-            else:
-                print(f'--{offender["cpu_usage"]} - {offender["command"]} | length={command_length}')
+            print(f'--{offender["cpu_usage"]} - {offender["command"]} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={"false" if kill_process else "true"}')
     print('---')
-    if kill_process:
-        print(f'Disable "Click to Kill" | shell="{plugin}" | param1="disable" | terminal=false | refresh=true')
-    else:
-        print(f'Enable "Click to Kill" | shell="{plugin}" | param1="enable" | terminal=false | refresh=true')
+    print(f'{"Disable" if kill_process else "Enable"} "Click to Kill" | shell="{plugin}" | param1="{"disable" if kill_process else "enable"}" | terminal=false | refresh=true')
 
 if __name__ == '__main__':
     main()
