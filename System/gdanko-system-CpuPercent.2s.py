@@ -212,7 +212,7 @@ def main():
         print(f'Top {len(cpu_offenders)} CPU Consumers')
         for offender in cpu_offenders:
             pid = offender["pid"]
-            print(f'--{offender["cpu_usage"]} - {offender["command"]} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={"false" if kill_process else "true"}')
+            print(f'--{":skull: " if kill_process else ""}{offender["cpu_usage"]} - {offender["command"]} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={"false" if kill_process else "true"}')
     print('---')
     print(f'{"Disable" if kill_process else "Enable"} "Click to Kill" | shell="{plugin}" | param1="{"disable" if kill_process else "enable"}" | terminal=false | refresh=true')
 
