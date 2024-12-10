@@ -33,14 +33,36 @@ def pad_float(number):
 def get_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
+def read_config(param, default):
+    plugin = os.path.abspath(sys.argv[0])
+    jsonfile = f'{plugin}.vars.json'
+    if os.path.exists(jsonfile):
+        with open(jsonfile, 'r') as fh:
+            contents = json.load(fh)
+            if param in contents:
+                return contents[param]
+    return default
+
+def toggle_kill_process():
+    plugin = os.path.abspath(sys.argv[0])
+    jsonfile = f'{plugin}.vars.json'
+    if os.path.exists(jsonfile):
+        with open(jsonfile, 'r') as fh:
+            contents = json.load(fh)
+            if 'VAR_MEM_USAGE_KILL_PROCESS' in contents:
+                new_value = 'true' if contents['VAR_MEM_USAGE_KILL_PROCESS'] == 'false' else 'false'
+                contents['VAR_MEM_USAGE_KILL_PROCESS'] = new_value
+                with open(jsonfile, 'w') as fh:
+                    fh.write(json.dumps(contents))
+
 def get_defaults():
     valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
     unit = os.getenv('VAR_MEM_USAGE_UNIT', 'Gi') 
     if not unit in valid_units:
         unit = 'Gi'
 
-    kill_process = os.getenv('VAR_MEM_USAGE_KILL_PROCESS', "false") 
-    kill_process = True if kill_process == 'true' else False
+    kill_process = read_config('VAR_MEM_USAGE_KILL_PROCESS', "false")
+    kill_process = True if kill_process == "true" else False
     return unit, kill_process
 
 def get_memory_details():
@@ -99,8 +121,11 @@ def get_top_memory_usage():
     return memory_info[0:number_of_offenders]
 
 def main():
+    if len(sys.argv) == 2:
+        toggle_kill_process()
     unit, kill_process = get_defaults()
     command_length = 125
+    plugin = os.path.abspath(sys.argv[0])
     get_top_memory_usage()
     memory_type, memory_brand, err = get_memory_details()
 
@@ -130,6 +155,11 @@ def main():
                 print(f'--{offender["memory_usage"]} - {offender["command"]} | length={command_length} | shell=/bin/sh | param1="-c" | param2="kill {pid}"')
             else:
                 print(f'--{offender["memory_usage"]} - {offender["command"]} | length={command_length}')
+    print('---')
+    if kill_process:
+        print(f'Disable "Click to Kill" | shell="{plugin}" | param1="disable" | terminal=false | refresh=true')
+    else:
+        print(f'Enable "Click to Kill" | shell="{plugin}" | param1="enable" | terminal=false | refresh=true')
 
 if __name__ == '__main__':
     main()

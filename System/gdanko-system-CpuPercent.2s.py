@@ -12,6 +12,7 @@
 from collections import namedtuple
 from math import ceil
 import datetime
+import json
 import os
 import re
 import subprocess
@@ -28,9 +29,32 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
+def read_config(param, default):
+    plugin = os.path.abspath(sys.argv[0])
+    jsonfile = f'{plugin}.vars.json'
+    if os.path.exists(jsonfile):
+        with open(jsonfile, 'r') as fh:
+            contents = json.load(fh)
+            if param in contents:
+                return contents[param]
+    return default
+
+def toggle_kill_process():
+    plugin = os.path.abspath(sys.argv[0])
+    jsonfile = f'{plugin}.vars.json'
+    if os.path.exists(jsonfile):
+        with open(jsonfile, 'r') as fh:
+            contents = json.load(fh)
+            if 'VAR_CPU_USAGE_KILL_PROCESS' in contents:
+                new_value = 'true' if contents['VAR_CPU_USAGE_KILL_PROCESS'] == 'false' else 'false'
+                contents['VAR_CPU_USAGE_KILL_PROCESS'] = new_value
+                with open(jsonfile, 'w') as fh:
+                    fh.write(json.dumps(contents))
+
 def get_defaults():
-    kill_process = os.getenv('VAR_CPU_USAGE_KILL_PROCESS', "false") 
-    return True if kill_process == 'true' else False
+    kill_process = read_config('VAR_CPU_USAGE_KILL_PROCESS', "false")
+    kill_process = True if kill_process == "true" else False
+    return kill_process
 
 def get_cpu_family_strings():
     # We get this information from /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/mach/machine.h
@@ -149,8 +173,11 @@ def get_top_cpu_usage():
         return cpu_info
 
 def main():
+    if len(sys.argv) == 2:
+        toggle_kill_process()
     kill_process = get_defaults()
     command_length = 125
+    plugin = os.path.abspath(sys.argv[0])
     cpu_type = get_sysctl('machdep.cpu.brand_string')
     cpu_family = get_cpu_family_strings().get(int(get_sysctl('hw.cpufamily')), int(get_sysctl('hw.cpufamily')))
     max_cpu_freq = cpu_freq().max if cpu_freq().max is not None else None
@@ -166,6 +193,7 @@ def main():
     print(f'CPU: user {pad_float(combined_cpu_pct[0].user)}%, sys {pad_float(combined_cpu_pct[0].system)}%, idle {pad_float(combined_cpu_pct[0].idle)}%')
     print('---')
     print(f'Updated {get_timestamp(int(time.time()))}')
+    print(kill_process)
     print('---')
     if cpu_type is not None:
         processor = cpu_type
@@ -184,9 +212,14 @@ def main():
         for offender in cpu_offenders:
             pid = offender["pid"]
             if kill_process:
-                print(f'--{offender["cpu_usage"]} - {offender["command"]} | length={command_length} | shell=/bin/sh | param1="-c" | param2="kill {pid}"')
+                print(f'--{offender["cpu_usage"]} - {offender["command"]} | length={command_length} | shell=/bin/sh | param1="-c" | param2="kill {pid}"') # | disabled=true
             else:
                 print(f'--{offender["cpu_usage"]} - {offender["command"]} | length={command_length}')
+    print('---')
+    if kill_process:
+        print(f'Disable "Click to Kill" | shell="{plugin}" | param1="disable" | terminal=false | refresh=true')
+    else:
+        print(f'Enable "Click to Kill" | shell="{plugin}" | param1="enable" | terminal=false | refresh=true')
 
 if __name__ == '__main__':
     main()
