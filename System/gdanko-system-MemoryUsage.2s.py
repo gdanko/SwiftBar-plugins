@@ -95,33 +95,44 @@ def byte_converter(bytes, unit):
     prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
+def get_command_output(command):
+    commands = re.split(r'\s*\|\s*', command)
+    previous = None
+    output = None
+    for i, command in enumerate(commands):
+        cmd = re.split(r'\s+', command)
+        if previous:
+            p = subprocess.Popen(cmd, stdin=previous.stdout, stdout=subprocess.PIPE)
+        else:
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            previous = p
+
+        if i == len(commands) - 1:
+            output = p.stdout.read().strip().decode()
+    return output
+
 def get_top_memory_usage():
-    # This performs the equivalent of `ps -axm -o rss,comm | sort -rn -k 1 | head -n 10`
     number_of_offenders = 20
     memory_info = []
-    cmd1 = ['/bin/ps', '-axm', '-o', 'rss,pid,user,comm']
-    cmd2 = ['sort', '-rn', '-k', '1']
-
-    p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
-    p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
-    output = p2.stdout.read().decode()
-    lines = output.strip().split('\n')
-
-    for line in lines:
-        match = re.search(r'^(\d+)\s+(\d+)\s+([A-Za-z0-9\-\.]+)\s+(.*)$', line)
-        if match:
-            memory_usage = int(match.group(1)) * 1024
-            pid = match.group(2)
-            user = match.group(3)
-            command_name = match.group(4)
-            if float(memory_usage) > 0.0:
-                memory_info.append({
-                    'memory_usage': byte_converter(memory_usage, 'G'),
-                    'pid': pid,
-                    'user': user,
-                    'command': command_name,
-                })
-    return memory_info[0:number_of_offenders]
+    command = '/bin/ps -axm -o rss,pid,user,comm | tail -n+2 | sort -rn -k 1'
+    output = get_command_output(command)
+    if output:
+        lines = output.strip().split('\n')
+        for line in lines:
+            match = re.search(r'^(\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
+            if match:
+                memory_usage = int(match.group(1)) * 1024
+                pid = match.group(2)
+                user = match.group(3)
+                command_name = match.group(4)
+                if float(memory_usage) > 0.0:
+                    memory_info.append({
+                        'command': command_name,
+                        'memory_usage': memory_usage,
+                        'pid': pid,
+                        'user': user,
+                    })
+        return memory_info[0:number_of_offenders]
 
 def get_disabled_flag(process_owner, kill_process):
     if kill_process:
@@ -158,9 +169,15 @@ def main():
     memory_offenders = get_top_memory_usage()
     if len(memory_offenders) > 0:
         print(f'Top {len(memory_offenders)} Memory Consumers')
+        offender_total = 0
         for offender in memory_offenders:
-            pid = offender["pid"]
-            print(f'--{":skull: " if kill_process else ""}{offender["memory_usage"]} - {offender["command"]} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(offender["user"], kill_process)}')
+            command = offender['command']
+            memory_usage = offender['memory_usage']
+            pid = offender['pid']
+            user = offender['user']
+            offender_total += memory_usage
+            print(f'--{":skull: " if kill_process else ""}{byte_converter(memory_usage, "G")} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(user, kill_process)}')
+        print(f'--Total: {byte_converter(offender_total, "G")}')
     print('---')
     print(f'{"Disable" if kill_process else "Enable"} "Click to Kill" | shell="{plugin}" | param1="{"disable" if kill_process else "enable"}" | terminal=false | refresh=true')
 
