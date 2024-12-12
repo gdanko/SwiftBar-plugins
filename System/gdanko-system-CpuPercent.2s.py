@@ -7,10 +7,12 @@
 # <xbar.desc>Display CPU % for user, system, and idle</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-CpuPercent.2s.py</xbar.abouturl>
-# <xbar.var>string(VAR_CPU_USAGE_KILL_PROCESS="false"): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
+# <xbar.var>string(VAR_CPU_USAGE_CLICK_TO_KILL="false"): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
+# <xbar.var>string(VAR_CPU_USAGE_MAX_CONSUMERS=<int>): Maximum number of offenders to display</xbar.var>
 
 from collections import namedtuple
 from math import ceil
+import argparse
 import datetime
 import getpass
 import json
@@ -19,7 +21,6 @@ import re
 import subprocess
 import sys
 import time
-from pprint import pprint
 
 try:
     from psutil import cpu_freq, cpu_times, cpu_times_percent
@@ -29,33 +30,6 @@ except ModuleNotFoundError:
     subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
-
-def read_config(param, default):
-    plugin = os.path.abspath(sys.argv[0])
-    jsonfile = f'{plugin}.vars.json'
-    if os.path.exists(jsonfile):
-        with open(jsonfile, 'r') as fh:
-            contents = json.load(fh)
-            if param in contents:
-                return contents[param]
-    return default
-
-def toggle_kill_process():
-    plugin = os.path.abspath(sys.argv[0])
-    jsonfile = f'{plugin}.vars.json'
-    if os.path.exists(jsonfile):
-        with open(jsonfile, 'r') as fh:
-            contents = json.load(fh)
-            if 'VAR_CPU_USAGE_KILL_PROCESS' in contents:
-                new_value = 'true' if contents['VAR_CPU_USAGE_KILL_PROCESS'] == 'false' else 'false'
-                contents['VAR_CPU_USAGE_KILL_PROCESS'] = new_value
-                with open(jsonfile, 'w') as fh:
-                    fh.write(json.dumps(contents))
-
-def get_defaults():
-    kill_process = read_config('VAR_CPU_USAGE_KILL_PROCESS', "false")
-    kill_process = True if kill_process == "true" else False
-    return kill_process
 
 def get_cpu_family_strings():
     # We get this information from /Library/Developer/CommandLineTools/SDKs/MacOSX<version>.sdk/usr/include/mach/machine.h
@@ -104,6 +78,13 @@ def get_cpu_family_strings():
         0x204526d0: 'ARM Tupai',
     }
 
+def configure():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--toggle", help="Toggle \"Click to Kill\" functionality", required=False, default=False, action='store_true')
+    parser.add_argument("--max-consumers", help="Maximum number of CPU consumers to display", required=False, default=0, type=int)
+    args = parser.parse_args()
+    return args
+
 def pad_float(number):
     return '{:.2f}'.format(float(number))
 
@@ -114,18 +95,49 @@ def get_time_stats_tuple(cpu='cpu-total', cpu_type=None, user=0.0, system=0.0, i
     cpu_times = namedtuple('cpu_times', 'cpu cpu_type user system idle nice iowait irq softirq steal guest guestnice')
     return cpu_times(cpu=cpu, cpu_type=cpu_type, user=user, system=system, idle=idle, nice=nice, iowait=iowait, irq=irq, softirq=softirq, steal=steal, guest=guest, guestnice=guestnice)
 
+def read_config(param, default):
+    plugin = os.path.abspath(sys.argv[0])
+    jsonfile = f'{plugin}.vars.json'
+    if os.path.exists(jsonfile):
+        with open(jsonfile, 'r') as fh:
+            contents = json.load(fh)
+            if param in contents:
+                return contents[param]
+    return default
+
+def write_config(jsonfile, contents):
+    with open(jsonfile, 'w') as fh:
+        fh.write(json.dumps(contents, indent=4))
+
+def toggle_click_to_kill(plugin):
+    jsonfile = f'{plugin}.vars.json'
+    if os.path.exists(jsonfile):
+        with open(jsonfile, 'r') as fh:
+            contents = json.load(fh)
+            if 'VAR_CPU_USAGE_CLICK_TO_KILL' in contents:
+                new_value = 'true' if contents['VAR_CPU_USAGE_CLICK_TO_KILL'] == 'false' else 'false'
+                contents['VAR_CPU_USAGE_CLICK_TO_KILL'] = new_value
+                write_config(jsonfile, contents)
+
+def update_max_consumers(plugin, max_consumers):
+    jsonfile = f'{plugin}.vars.json'
+    if os.path.exists(jsonfile):
+        with open(jsonfile, 'r') as fh:
+            contents = json.load(fh)
+            if 'VAR_CPU_USAGE_MAX_CONSUMERS' in contents:
+                contents['VAR_CPU_USAGE_MAX_CONSUMERS'] = max_consumers
+                write_config(jsonfile, contents)
+
+def get_defaults():
+    kill_process = read_config('VAR_CPU_USAGE_CLICK_TO_KILL', "false")
+    kill_process = True if kill_process == "true" else False
+    max_consumers = read_config('VAR_CPU_USAGE_MAX_CONSUMERS', 30)
+
+    return kill_process, max_consumers
+
 def get_sysctl(metric):
-    p = subprocess.Popen(
-        ['/usr/sbin/sysctl', '-n', metric],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    stdout, _ = p.communicate()
-    if p.returncode == 0:
-        return stdout.strip()
-    else:
-        return None
+    output = get_command_output(f'/usr/sbin/sysctl -n {metric}')
+    return output
 
 def combine_stats(cpu_time_stats, cpu_type):
     idle      = 0.0
@@ -147,93 +159,43 @@ def combine_stats(cpu_time_stats, cpu_type):
     )
 
 def get_command_output(command):
-    commands = re.split(r'\s*\|\s*', command)
     previous = None
-    output = None
-    for i, command in enumerate(commands):
+    for command in re.split(r'\s*\|\s*', command):
         cmd = re.split(r'\s+', command)
-        if previous:
-            p = subprocess.Popen(cmd, stdin=previous.stdout, stdout=subprocess.PIPE)
-        else:
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-            previous = p
-
-        if i == len(commands) - 1:
-            output = p.stdout.read().strip().decode()
-    return output
-
-# def get_top_cpu_usage():
-#     number_of_offenders = 20
-#     cpu_info = []
-#     command = '/bin/ps -axm -o %cpu,pid,user,comm | tail -n+2 | sort -rn -k 1'
-#     output = get_command_output(command)
-#     if output:
-#         lines = output.strip().split('\n')
-#         for line in lines:
-#             match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
-#             if match:
-#                 cpu_usage = match.group(1)
-#                 pid = match.group(2)
-#                 user = match.group(3)
-#                 command_name = match.group(4)
-#                 if float(cpu_usage) > 0.0 and command_name not in ['ps', '(ps)']:
-#                     cpu_info.append({
-#                         'command': command_name,
-#                         'cpu_usage': cpu_usage + '%',
-#                         'pid': pid,
-#                         'user': user,
-#                     })
-#         if len(cpu_info) > number_of_offenders:
-#             return cpu_info[0:number_of_offenders]
-#         else:
-#             return cpu_info
+        p = subprocess.Popen(cmd, stdin=(previous.stdout if previous else None), stdout=subprocess.PIPE)
+        previous = p
+    return p.stdout.read().strip().decode()
 
 def get_top_cpu_usage():
-    # This performs the equivalent of `ps -axm -o %cpu,pid,user,comm | tail -n+2 | sort -rn -k 1`
-    number_of_offenders = 20
     cpu_info = []
-    cmd1 = ['/bin/ps', '-axm', '-o', '%cpu,pid,user,comm']
-    cmd2 = ['tail', '-n+2']
-    cmd3 = ['sort', '-rn', '-k', '1']
-
-    p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
-    p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
-    p3 = subprocess.Popen(cmd3, stdin=p2.stdout, stdout=subprocess.PIPE)
-    output = p3.stdout.read().decode()
-    lines = output.strip().split('\n')
-
-    for line in lines:
-        match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
-        if match: 
-            cpu_usage = match.group(1)
-            pid = match.group(2)
-            user = match.group(3)
-            command_name = match.group(4)
-            if float(cpu_usage) > 0.0 and command_name not in ['top', '(top)']:
-                cpu_info.append({
-                    'command': command_name,
-                    'cpu_usage': cpu_usage + '%',
-                    'pid': pid,
-                    'user': user,
-                })
-    if len(cpu_info) > number_of_offenders:
-        return cpu_info[0:number_of_offenders]
-    else:
+    command = '/bin/ps -axm -o %cpu,pid,user,comm | /usr/bin/tail -n+2 | /usr/bin/sort -rn -k 1'
+    output = get_command_output(command)
+    if output:
+        lines = output.strip().split('\n')
+        for line in lines:
+            match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
+            if match:
+                cpu_usage = match.group(1)
+                pid = match.group(2)
+                user = match.group(3)
+                command_name = match.group(4)
+                if float(cpu_usage) > 0.0:
+                    cpu_info.append({'command': command_name, 'cpu_usage': cpu_usage + '%', 'pid': pid, 'user': user})
         return cpu_info
 
 def get_disabled_flag(process_owner, kill_process):
-    if kill_process:
-        return 'false' if process_owner == getpass.getuser() else 'true'
-    else:
-        return 'true'
+    return ('false' if process_owner == getpass.getuser() else 'true') if kill_process else 'true'
 
 def main():
-    if len(sys.argv) == 2:
-        toggle_kill_process()
-    kill_process = get_defaults()
+    plugin = os.path.abspath(sys.argv[0])
+    args = configure()
+    if args.toggle:
+        toggle_click_to_kill(plugin)
+    elif args.max_consumers > 0:
+        update_max_consumers(plugin, args.max_consumers)
+    kill_process, max_consumers = get_defaults()
     command_length = 125
     font_size = 12
-    plugin = os.path.abspath(sys.argv[0])
     cpu_type = get_sysctl('machdep.cpu.brand_string')
     cpu_family = get_cpu_family_strings().get(int(get_sysctl('hw.cpufamily')), int(get_sysctl('hw.cpufamily')))
     max_cpu_freq = cpu_freq().max if cpu_freq().max is not None else None
@@ -261,17 +223,24 @@ def main():
     for cpu in individual_cpu_pct:
         print(f'Core {cpu.cpu}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
 
-    cpu_offenders = get_top_cpu_usage()
-    if len(cpu_offenders) > 0:
-        print(f'Top {len(cpu_offenders)} CPU Consumers')
-        for offender in cpu_offenders:
-            command = offender['command']
-            cpu_usage = offender['cpu_usage']
-            pid = offender['pid']
-            user = offender['user']
+    top_cpu_consumers = get_top_cpu_usage()
+    if len(top_cpu_consumers) > 0:
+        if len(top_cpu_consumers) > max_consumers:
+            top_cpu_consumers = top_cpu_consumers[0:max_consumers]
+        print(f'Top {len(top_cpu_consumers)} CPU Consumers')
+        for consumer in top_cpu_consumers:
+            command = consumer['command']
+            cpu_usage = consumer['cpu_usage']
+            pid = consumer['pid']
+            user = consumer['user']
             print(f'--{":skull: " if kill_process else ""}{cpu_usage} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(user, kill_process)}')
     print('---')
-    print(f'{"Disable" if kill_process else "Enable"} "Click to Kill" | shell="{plugin}" | param1="{"disable" if kill_process else "enable"}" | terminal=false | refresh=true')
+    print(f'{"Disable" if kill_process else "Enable"} "Click to Kill" | shell="{plugin}" | param1="--toggle" | terminal=false | refresh=true')
+    print('Maximum Number of Top Consumers')
+    for number in range(1, 51):
+        if number %5 == 0:
+            color = ' | color=blue' if number == max_consumers else ''
+            print(f'--{number} | shell="{plugin}" param1="--max-consumers" | param2={number} | terminal=false | refresh=true{color}')
 
 if __name__ == '__main__':
     main()
