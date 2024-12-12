@@ -129,11 +129,11 @@ def update_max_consumers(plugin, max_consumers):
                 write_config(jsonfile, contents)
 
 def get_defaults():
-    kill_process = read_config('VAR_CPU_USAGE_CLICK_TO_KILL', "false")
-    kill_process = True if kill_process == "true" else False
+    click_to_kill = read_config('VAR_CPU_USAGE_CLICK_TO_KILL', "false")
+    click_to_kill = True if click_to_kill == "true" else False
     max_consumers = read_config('VAR_CPU_USAGE_MAX_CONSUMERS', 30)
 
-    return kill_process, max_consumers
+    return click_to_kill, max_consumers
 
 def get_sysctl(metric):
     output = get_command_output(f'/usr/sbin/sysctl -n {metric}')
@@ -183,8 +183,8 @@ def get_top_cpu_usage():
                     cpu_info.append({'command': command_name, 'cpu_usage': cpu_usage + '%', 'pid': pid, 'user': user})
         return cpu_info
 
-def get_disabled_flag(process_owner, kill_process):
-    return ('false' if process_owner == getpass.getuser() else 'true') if kill_process else 'true'
+def get_disabled_flag(process_owner, click_to_kill):
+    return ('false' if process_owner == getpass.getuser() else 'true') if click_to_kill else 'true'
 
 def main():
     plugin = os.path.abspath(sys.argv[0])
@@ -193,7 +193,7 @@ def main():
         toggle_click_to_kill(plugin)
     elif args.max_consumers > 0:
         update_max_consumers(plugin, args.max_consumers)
-    kill_process, max_consumers = get_defaults()
+    click_to_kill, max_consumers = get_defaults()
     command_length = 125
     font_size = 12
     cpu_type = get_sysctl('machdep.cpu.brand_string')
@@ -233,9 +233,9 @@ def main():
             cpu_usage = consumer['cpu_usage']
             pid = consumer['pid']
             user = consumer['user']
-            print(f'--{":skull: " if kill_process else ""}{cpu_usage} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(user, kill_process)}')
+            print(f'--{":skull: " if click_to_kill else ""}{cpu_usage} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
     print('---')
-    print(f'{"Disable" if kill_process else "Enable"} "Click to Kill" | shell="{plugin}" | param1="--toggle" | terminal=false | refresh=true')
+    print(f'{"Disable" if click_to_kill else "Enable"} "Click to Kill" | shell="{plugin}" | param1="--toggle" | terminal=false | refresh=true')
     print('Maximum Number of Top Consumers')
     for number in range(1, 51):
         if number %5 == 0:

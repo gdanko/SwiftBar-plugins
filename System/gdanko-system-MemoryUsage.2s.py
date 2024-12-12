@@ -94,11 +94,11 @@ def get_defaults():
     unit = os.getenv('VAR_MEM_USAGE_UNIT', 'Gi') 
     if not unit in valid_units:
         unit = 'Gi'
-    kill_process = read_config('VAR_MEM_USAGE_CLICK_TO_KILL', "false")
-    kill_process = True if kill_process == "true" else False
+    click_to_kill = read_config('VAR_MEM_USAGE_CLICK_TO_KILL', "false")
+    click_to_kill = True if click_to_kill == "true" else False
     max_consumers = read_config('VAR_MEM_USAGE_MAX_CONSUMERS', 30)
 
-    return unit, kill_process, max_consumers
+    return unit, click_to_kill, max_consumers
 
 def get_memory_details():
     command = '/usr/sbin/system_profiler SPMemoryDataType -json'
@@ -138,8 +138,8 @@ def get_top_memory_usage():
                     memory_info.append({'command': command_name, 'memory_usage': memory_usage, 'pid': pid, 'user': user})
         return memory_info
 
-def get_disabled_flag(process_owner, kill_process):
-    return ('false' if process_owner == getpass.getuser() else 'true') if kill_process else 'true'
+def get_disabled_flag(process_owner, click_to_kill):
+    return ('false' if process_owner == getpass.getuser() else 'true') if click_to_kill else 'true'
 
 def main():
     plugin = os.path.abspath(sys.argv[0])
@@ -148,7 +148,7 @@ def main():
         toggle_click_to_kill(plugin)
     elif args.max_consumers > 0:
         update_max_consumers(plugin, args.max_consumers)
-    unit, kill_process, max_consumers = get_defaults()
+    unit, click_to_kill, max_consumers = get_defaults()
     command_length = 125
     font_size = 12
     memory_type, memory_brand, err = get_memory_details()
@@ -181,10 +181,10 @@ def main():
             pid = consumer['pid']
             user = consumer['user']
             consumer_total += memory_usage
-            print(f'--{":skull: " if kill_process else ""}{byte_converter(memory_usage, "G")} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(user, kill_process)}')
+            print(f'--{":skull: " if click_to_kill else ""}{byte_converter(memory_usage, "G")} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
         print(f'--Total: {byte_converter(consumer_total, "G")}')
     print('---')
-    print(f'{"Disable" if kill_process else "Enable"} "Click to Kill" | shell="{plugin}" | param1="--toggle" | terminal=false | refresh=true')
+    print(f'{"Disable" if click_to_kill else "Enable"} "Click to Kill" | shell="{plugin}" | param1="--toggle" | terminal=false | refresh=true')
     print('Maximum Number of Top Consumers')
     for number in range(1, 51):
         if number %5 == 0:
