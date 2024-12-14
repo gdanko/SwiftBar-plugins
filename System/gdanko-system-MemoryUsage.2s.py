@@ -70,10 +70,10 @@ def get_signal_map():
 
 def configure():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--disable", help="Disable \"Click to Kill\" functionality", required=False, default=False, action='store_true')
-    parser.add_argument("--enable", help="Enable \"Click to Kill\" functionality", required=False, default=False, action='store_true')
-    parser.add_argument("--max-consumers", help="Maximum number of memory consumers to display", required=False, default=0, type=int)
-    parser.add_argument("--signal", help="The signal level to use when killing a process", required=False)
+    parser.add_argument('--disable', help='Disable "Click to Kill" functionality', required=False, default=False, action='store_true')
+    parser.add_argument('--enable', help='Enable "Click to Kill" functionality', required=False, default=False, action='store_true')
+    parser.add_argument('--max-consumers', help='Maximum number of memory consumers to display', required=False, default=0, type=int)
+    parser.add_argument('--signal', help='The signal level to use when killing a process', required=False)
     args = parser.parse_args()
     return args
 
@@ -110,10 +110,6 @@ def write_config(jsonfile, contents):
 
 def update_setting(plugin, key, value):
     jsonfile = f'{plugin}.vars.json'
-    print(plugin)
-    print(key)
-    print(value)
-    print(jsonfile)
     if os.path.exists(jsonfile):
         with open(jsonfile, 'r') as fh:
             contents = json.load(fh)
@@ -126,8 +122,8 @@ def get_defaults():
     unit = os.getenv('VAR_MEM_USAGE_UNIT', 'Gi') 
     if not unit in valid_units:
         unit = 'Gi'
-    click_to_kill = read_config('VAR_MEM_USAGE_CLICK_TO_KILL', "false")
-    click_to_kill = True if click_to_kill == "true" else False
+    click_to_kill = read_config('VAR_MEM_USAGE_CLICK_TO_KILL', 'false')
+    click_to_kill = True if click_to_kill == 'true' else False
     signal = read_config('VAR_MEM_USAGE_KILL_SIGNAL', 'SIGQUIT')
     max_consumers = read_config('VAR_MEM_USAGE_MAX_CONSUMERS', 30)
 
@@ -223,7 +219,7 @@ def main():
         print(f'--Total: {byte_converter(consumer_total, "G")}')
     print('---')
     print('Settings')
-    print(f'{"--Disable" if click_to_kill else "Enable"} "Click to Kill" | shell="{plugin}" | param1="--toggle" | terminal=false | refresh=true')
+    print(f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill" | shell="{plugin}" | param1={"--disable" if click_to_kill else "--enable"} | terminal=false | refresh=true')
     print('--Kill Signal')
     for key, _ in get_signal_map().items():
         color = ' | color=blue' if key == signal else ''

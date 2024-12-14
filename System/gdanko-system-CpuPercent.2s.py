@@ -117,10 +117,10 @@ def get_cpu_family_strings():
 
 def configure():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--disable", help="Disable \"Click to Kill\" functionality", required=False, default=False, action='store_true')
-    parser.add_argument("--enable", help="Enable \"Click to Kill\" functionality", required=False, default=False, action='store_true')
-    parser.add_argument("--max-consumers", help="Maximum number of CPU consumers to display", required=False, default=0, type=int)
-    parser.add_argument("--signal", help="The signal level to use when killing a process", required=False)
+    parser.add_argument('--disable', help='Disable "Click to Kill" functionality', required=False, default=False, action='store_true')
+    parser.add_argument('--enable', help='Enable "Click to Kill" functionality', required=False, default=False, action='store_true')
+    parser.add_argument('--max-consumers', help='Maximum number of CPU consumers to display', required=False, default=0, type=int)
+    parser.add_argument('--signal', help='The signal level to use when killing a process', required=False)
     args = parser.parse_args()
     return args
 
@@ -159,8 +159,8 @@ def update_setting(plugin, key, value):
                 write_config(jsonfile, contents)
 
 def get_defaults():
-    click_to_kill = read_config('VAR_CPU_USAGE_CLICK_TO_KILL', "false")
-    click_to_kill = True if click_to_kill == "true" else False
+    click_to_kill = read_config('VAR_CPU_USAGE_CLICK_TO_KILL', 'false')
+    click_to_kill = True if click_to_kill == 'true' else False
     signal = read_config('VAR_CPU_USAGE_KILL_SIGNAL', 'SIGQUIT')
     max_consumers = read_config('VAR_CPU_USAGE_MAX_CONSUMERS', 30)
 
@@ -272,7 +272,7 @@ def main():
             print(f'--{":skull: " if click_to_kill else ""}{cpu_usage} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
     print('---')
     print('Settings')
-    print(f'{"--Disable" if click_to_kill else "Enable"} "Click to Kill" | shell="{plugin}" | param1="--toggle" | terminal=false | refresh=true')
+    print(f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill" | shell="{plugin}" | param1={"--disable" if click_to_kill else "--enable"} | terminal=false | refresh=true')
     print('--Kill Signal')
     for key, _ in get_signal_map().items():
         color = ' | color=blue' if key == signal else ''
