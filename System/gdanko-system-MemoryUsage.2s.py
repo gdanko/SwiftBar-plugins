@@ -110,6 +110,10 @@ def write_config(jsonfile, contents):
 
 def update_setting(plugin, key, value):
     jsonfile = f'{plugin}.vars.json'
+    print(plugin)
+    print(key)
+    print(value)
+    print(jsonfile)
     if os.path.exists(jsonfile):
         with open(jsonfile, 'r') as fh:
             contents = json.load(fh)
@@ -124,7 +128,7 @@ def get_defaults():
         unit = 'Gi'
     click_to_kill = read_config('VAR_MEM_USAGE_CLICK_TO_KILL', "false")
     click_to_kill = True if click_to_kill == "true" else False
-    signal = read_config('VAR_CPU_USAGE_KILL_SIGNAL', 'SIGQUIT')
+    signal = read_config('VAR_MEM_USAGE_KILL_SIGNAL', 'SIGQUIT')
     max_consumers = read_config('VAR_MEM_USAGE_MAX_CONSUMERS', 30)
 
     return unit, click_to_kill, signal, max_consumers
