@@ -9,6 +9,7 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-MemoryUsage.2s.py</xbar.abouturl>
 # <xbar.var>string(VAR_MEM_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_CLICK_TO_KILL="false"): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
+# <xbar.var>string(VAR_MEM_USAGE_KILL_SIGNAL=<int>): The Darwin kill signal to use when killing a process</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_MAX_CONSUMERS=<int>): Maximum number of offenders to display</xbar.var>
 
 import argparse
@@ -17,6 +18,7 @@ import getpass
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -30,10 +32,48 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
+def get_signal_map():
+    return {
+        'SIHGUP': signal.SIGHUP,
+        'SIGINT': signal.SIGINT,
+        'SIGQUIT': signal.SIGQUIT,
+        'SIGILL': signal.SIGILL,
+        'SIGTRAP': signal.SIGTRAP,
+        'SIGABRT': signal.SIGABRT,
+        'SIGEMT': signal.SIGEMT,
+        'SIGFPE': signal.SIGFPE,
+        'SIGKILL': signal.SIGKILL,
+        'SIGBUS': signal.SIGBUS,
+        'SIGSEGV': signal.SIGSEGV,
+        'SIGSYS': signal.SIGSYS,
+        'SIGPIPE': signal.SIGPIPE,
+        'SIGALRM': signal.SIGALRM,
+        'SIGTERM': signal.SIGTERM,
+        'SIGURG': signal.SIGURG,
+        'SIGSTOP': signal.SIGSTOP,
+        'SIGTSTP': signal.SIGTSTP,
+        'SIGCONT': signal.SIGCONT,
+        'SIGCHLD': signal.SIGCHLD,
+        'SIGTTIN': signal.SIGTTIN,
+        'SIGTTOU': signal.SIGTTOU,
+        'SIGIO': signal.SIGIO,
+        'SIGXCPU': signal.SIGXCPU,
+        'SIGXFSZ': signal.SIGXFSZ,
+        'SIGVTALRM': signal.SIGVTALRM,
+        'SIGPROF': signal.SIGPROF,
+        'SIGWINCH': signal.SIGWINCH,
+        'SIGINFO': signal.SIGINFO,
+        'SIGUSR1': signal.SIGUSR1,
+        'SIGUSR2': signal.SIGUSR2,
+    }
+
+
 def configure():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--toggle", help="Toggle \"Click to Kill\" functionality", required=False, default=False, action='store_true')
+    parser.add_argument("--disable", help="Disable \"Click to Kill\" functionality", required=False, default=False, action='store_true')
+    parser.add_argument("--enable", help="Enable \"Click to Kill\" functionality", required=False, default=False, action='store_true')
     parser.add_argument("--max-consumers", help="Maximum number of memory consumers to display", required=False, default=0, type=int)
+    parser.add_argument("--signal", help="The signal level to use when killing a process", required=False)
     args = parser.parse_args()
     return args
 
@@ -68,25 +108,13 @@ def write_config(jsonfile, contents):
     with open(jsonfile, 'w') as fh:
         fh.write(json.dumps(contents, indent=4))
 
-def toggle_click_to_kill(plugin):
-    plugin = os.path.abspath(sys.argv[0])
+def update_setting(plugin, key, value):
     jsonfile = f'{plugin}.vars.json'
     if os.path.exists(jsonfile):
         with open(jsonfile, 'r') as fh:
             contents = json.load(fh)
-            if 'VAR_MEM_USAGE_CLICK_TO_KILL' in contents:
-                new_value = 'true' if contents['VAR_MEM_USAGE_CLICK_TO_KILL'] == 'false' else 'false'
-                contents['VAR_MEM_USAGE_CLICK_TO_KILL'] = new_value
-                write_config(jsonfile, contents)
-
-def update_max_consumers(plugin, max_consumers):
-    plugin = os.path.abspath(sys.argv[0])
-    jsonfile = f'{plugin}.vars.json'
-    if os.path.exists(jsonfile):
-        with open(jsonfile, 'r') as fh:
-            contents = json.load(fh)
-            if 'VAR_MEM_USAGE_MAX_CONSUMERS' in contents:
-                contents['VAR_MEM_USAGE_MAX_CONSUMERS'] = max_consumers
+            if key in contents:
+                contents[key] = value
                 write_config(jsonfile, contents)
 
 def get_defaults():
@@ -96,9 +124,10 @@ def get_defaults():
         unit = 'Gi'
     click_to_kill = read_config('VAR_MEM_USAGE_CLICK_TO_KILL', "false")
     click_to_kill = True if click_to_kill == "true" else False
+    signal = read_config('VAR_CPU_USAGE_KILL_SIGNAL', 'SIGQUIT')
     max_consumers = read_config('VAR_MEM_USAGE_MAX_CONSUMERS', 30)
 
-    return unit, click_to_kill, max_consumers
+    return unit, click_to_kill, signal, max_consumers
 
 def get_memory_details():
     command = '/usr/sbin/system_profiler SPMemoryDataType -json'
@@ -144,11 +173,16 @@ def get_disabled_flag(process_owner, click_to_kill):
 def main():
     plugin = os.path.abspath(sys.argv[0])
     args = configure()
-    if args.toggle:
-        toggle_click_to_kill(plugin)
+    if args.enable:
+        update_setting(plugin, 'VAR_MEM_USAGE_CLICK_TO_KILL', 'true')
+    elif args.disable:
+        update_setting(plugin, 'VAR_MEM_USAGE_CLICK_TO_KILL', 'false')
+    elif args.signal:
+        update_setting(plugin, 'VAR_MEM_USAGE_KILL_SIGNAL', args.signal)
     elif args.max_consumers > 0:
-        update_max_consumers(plugin, args.max_consumers)
-    unit, click_to_kill, max_consumers = get_defaults()
+        update_setting(plugin, 'VAR_MEM_USAGE_MAX_CONSUMERS', args.max_consumers)
+    
+    unit, click_to_kill, signal, max_consumers = get_defaults()
     command_length = 125
     font_size = 12
     memory_type, memory_brand, err = get_memory_details()
@@ -181,14 +215,20 @@ def main():
             pid = consumer['pid']
             user = consumer['user']
             consumer_total += memory_usage
-            print(f'--{":skull: " if click_to_kill else ""}{byte_converter(memory_usage, "G")} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
+            print(f'--{":skull: " if click_to_kill else ""}{byte_converter(memory_usage, "G")} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
         print(f'--Total: {byte_converter(consumer_total, "G")}')
     print('---')
-    print(f'{"Disable" if click_to_kill else "Enable"} "Click to Kill" | shell="{plugin}" | param1="--toggle" | terminal=false | refresh=true')
-    print('Maximum Number of Top Consumers')
+    print('Settings')
+    print(f'{"--Disable" if click_to_kill else "Enable"} "Click to Kill" | shell="{plugin}" | param1="--toggle" | terminal=false | refresh=true')
+    print('--Kill Signal')
+    for key, _ in get_signal_map().items():
+        color = ' | color=blue' if key == signal else ''
+        print(f'----{key} | shell="{plugin}" param1="--signal" | param2={key} | terminal=false | refresh=true{color}')
+    print('--Maximum Number of Top Consumers')
     for number in range(1, 51):
         if number %5 == 0:
             color = ' | color=blue' if number == max_consumers else ''
-            print(f'--{number} | shell="{plugin}" param1="--max-consumers" | param2={number} | terminal=false | refresh=true{color}')
+            print(f'----{number} | shell="{plugin}" param1="--max-consumers" | param2={number} | terminal=false | refresh=true{color}')
+
 if __name__ == '__main__':
     main()
