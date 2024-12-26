@@ -49,6 +49,8 @@ def main():
         uptime.append(f'{duration.days} {get_plural(duration.days, "day")}')
     uptime.append(f'{str(duration.hours).zfill(2)}:{str(duration.minutes).zfill(2)}')
     print(f'up {" ".join(uptime)}')
+    print('---')
+    print(f'Last boot: {datetime.datetime.fromtimestamp(boot_time()).strftime("%Y-%m-%d %H:%M:%S")}')
 
 if __name__ == '__main__':
     main()
