@@ -19,6 +19,7 @@ import getpass
 import json
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -167,7 +168,8 @@ def get_defaults():
     return click_to_kill, signal, max_consumers
 
 def get_sysctl(metric):
-    output = get_command_output(f'/usr/sbin/sysctl -n {metric}')
+    command = f'{shutil.which("sysctl")} -n {metric}'
+    output = get_command_output(command)
     return output
 
 def combine_stats(cpu_time_stats, cpu_type):
@@ -199,7 +201,7 @@ def get_command_output(command):
 
 def get_top_cpu_usage():
     cpu_info = []
-    command = '/bin/ps -axm -o %cpu,pid,user,comm | /usr/bin/tail -n+2 | /usr/bin/sort -rn -k 1'
+    command = f'/bin/ps -axm -o %cpu,pid,user,comm | {shutil.which("tail")} -n+2 | {shutil.which("sort")} -rn -k 1'
     output = get_command_output(command)
     if output:
         lines = output.strip().split('\n')

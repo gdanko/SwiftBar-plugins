@@ -18,6 +18,7 @@ import getpass
 import json
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -130,7 +131,7 @@ def get_defaults():
     return unit, click_to_kill, signal, max_consumers
 
 def get_memory_details():
-    command = '/usr/sbin/system_profiler SPMemoryDataType -json'
+    command = f'{shutil.which("system_profiler")} SPMemoryDataType -json'
     output = get_command_output(command)
     if output:
         try:
@@ -152,7 +153,7 @@ def get_command_output(command):
 
 def get_top_memory_usage():
     memory_info = []
-    command = '/bin/ps -axm -o rss,pid,user,comm | /usr/bin/tail -n+2 | /usr/bin/sort -rn -k 1'
+    command = f'/bin/ps -axm -o rss,pid,user,comm | {shutil.which("tail")} -n+2 | {shutil.which("sort")} -rn -k 1'
     output = get_command_output(command)
     if output:
         lines = output.strip().split('\n')
@@ -171,6 +172,7 @@ def get_disabled_flag(process_owner, click_to_kill):
     return ('false' if process_owner == getpass.getuser() else 'true') if click_to_kill else 'true'
 
 def main():
+    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = os.path.abspath(sys.argv[0])
     args = configure()
     if args.enable:

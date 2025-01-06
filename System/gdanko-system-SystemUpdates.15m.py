@@ -9,23 +9,30 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-SystemUpdates.15m.py</xbar.abouturl>
 
 import datetime
+import os
+import re
+import shutil
 import subprocess
 import time
 
 def get_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
+def get_command_output(command):
+    previous = None
+    for command in re.split(r'\s*\|\s*', command):
+        cmd = re.split(r'\s+', command)
+        p = subprocess.Popen(cmd, stdin=(previous.stdout if previous else None), stdout=subprocess.PIPE)
+        previous = p
+    return p.stdout.read().strip().decode()
+
 def main():
+    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     updates = 0
-    p = subprocess.Popen(
-        ['softwareupdate', '--list'],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    stdout, stderr = p.communicate()
-    if p.returncode == 0:
-        lines = stdout.split('\n')
+    command = f'{shutil.which("softwareupdate")} --list'
+    output = get_command_output(command)
+    if output:
+        lines = output.split('\n')
         for line in lines:
             if '* Label' in line:
                 updates += 1
@@ -37,7 +44,8 @@ def main():
     else:
         print('Updates: Unknown')
         print('---')
-        print(f'Failed to find update count: {stderr}')
+        # Need to capture the error
+        print(f'Failed to find update count')
     
 if __name__ == '__main__':
     main()
