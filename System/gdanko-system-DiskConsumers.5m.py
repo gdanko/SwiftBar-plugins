@@ -6,12 +6,13 @@
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show files and directories using the most disk space for a given path</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
-# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-DiskConsumers.60s.py</xbar.abouturl>
+# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-DiskConsumers.5m.py</xbar.abouturl>
 # <xbar.var>string(VAR_DISK_CONSUMERS_PATHS="/"): A comma-delimited list of mount points</xbar.var>
 
 import datetime
 import os
 import re
+import shutil
 import subprocess
 
 def pad_float(number):
@@ -42,26 +43,33 @@ def get_command_output(command):
         command,
         shell=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL
+        stderr=subprocess.PIPE,
     )
     stdout, stderr = proc.communicate()
-    return stdout.strip().decode()
+    return stdout.strip().decode(), stderr.strip().decode()
 
 def get_top_consumers(path):
     top_consumers = []
-    command = f'/usr/bin/du -sk {path}/* | /usr/bin/sort -rn -k 1'
-    output = get_command_output(command)
-    if output:
-        lines = output.strip().split('\n')
-        for line in lines:
-            match = re.search(r'^(\d+)\s+(.*)$', line)
-            if match:
-                bytes = int(match.group(1)) * 1024
-                path = match.group(2)
-                if bytes > 0:
-                    top_consumers.append({'path': path.strip(), 'bytes': bytes})
+    commands = [
+        f'{shutil.which("du")} -sk {path}/* | {shutil.which("sort")} -rn -k 1',
+        f'{shutil.which("du")} -sk {path}/.* | {shutil.which("sort")} -rn -k 1',
+    ]
+    for command in commands:
+        output, error = get_command_output(command)
+        if output:
+            lines = output.strip().split('\n')
+            for line in lines:
+                match = re.search(r'^(\d+)\s+(.*)$', line)
+                if match:
+                    bytes = int(match.group(1)) * 1024
+                    path = match.group(2)
+                    if os.path.basename(path) not in ['.', '..']:
+                        if bytes > 0:
+                            top_consumers.append({'path': path.strip(), 'bytes': bytes})
 
-    return top_consumers
+
+    # return top_consumers
+    return sorted(top_consumers, key=lambda item: item['bytes'], reverse=True)
 
 def format_number(size):
     factor = 1024
@@ -80,6 +88,7 @@ def format_number(size):
         return byte_converter(size, "Gi")
 
 def main():
+    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     paths_list = get_defaults()
     font_name = 'Andale Mono'
     font_size = 13
