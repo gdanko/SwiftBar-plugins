@@ -60,8 +60,7 @@ def get_top_consumers(path):
                 path = match.group(2)
                 if bytes > 0:
                     top_consumers.append({'path': path.strip(), 'bytes': bytes})
-    from pprint import pprint
-    pprint(top_consumers)
+
     return top_consumers
 
 def format_number(size):
