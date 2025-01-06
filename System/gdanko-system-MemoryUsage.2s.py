@@ -218,7 +218,7 @@ def main():
             user = consumer['user']
             consumer_total += memory_usage
             print(f'--{":skull: " if click_to_kill else ""}{byte_converter(memory_usage, "G").rjust(8)} - {command} | length={command_length} | {font_data} | trim=false | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
-        print(f'--Total: {byte_converter(consumer_total, "G")}')
+        print(f'--Total: {byte_converter(consumer_total, "G")} | {font_data}')
     print('---')
     print('Settings')
     print(f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill" | shell="{plugin}" | param1={"--disable" if click_to_kill else "--enable"} | terminal=false | refresh=true')
