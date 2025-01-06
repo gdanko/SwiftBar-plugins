@@ -7,16 +7,12 @@
 # <xbar.desc>Show files and directories using the most disk space for a given path</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-DiskConsumers.60s.py</xbar.abouturl>
-# <xbar.var>string(VAR_DISK_CONSUMERS_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 # <xbar.var>string(VAR_DISK_CONSUMERS_PATHS="/"): A comma-delimited list of mount points</xbar.var>
 
 import datetime
 import os
 import re
-import shutil
 import subprocess
-import sys
-import time
 
 def pad_float(number):
    return '{:.2f}'.format(float(number))
@@ -27,11 +23,8 @@ def get_timestamp(timestamp):
 def get_defaults():
     paths = os.getenv('VAR_DISK_CONSUMERS_PATHS', '~,~/Library')
     paths_list = re.split(r'\s*,\s*', paths)
-    valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
-    unit = os.getenv('VAR_DISK_CONSUMERS_UNIT', 'Mi')
-    if not unit in valid_units:
-        unit = 'Gi'
-    return paths_list, unit
+
+    return paths_list
 
 def byte_converter(bytes, unit):
     suffix = 'B'
@@ -86,18 +79,24 @@ def format_number(size):
         return byte_converter(size, "Gi")
 
 def main():
-    paths_list, unit = get_defaults()
+    paths_list = get_defaults()
+    font_name = 'Andale Mono'
+    font_size = 13
+    font_data = f'size="{font_size}" font="{font_name}"'
 
     print('Disk Consumption')
     print('---')
     if len(paths_list) > 0:
         for path in paths_list:
             print(os.path.expanduser(path))
+            total = 0
             top_consumers = get_top_consumers(path)
             for top_consumer in top_consumers:
                 bytes = top_consumer["bytes"]
+                total += bytes
                 max_len = 11
-                print('--' + f'{format_number(bytes).rjust(max_len)} - {top_consumer["path"]} | trim=false | size=14 font="Andale Mono"')
+                print('--' + f'{format_number(bytes).rjust(max_len)} - {top_consumer["path"]} | trim=false | {font_data}')
+            print(f'--Total: {format_number(total)} | {font_data}')
     else:
         print('N/A')
     print('Refresh data | refresh=true')

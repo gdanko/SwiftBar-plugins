@@ -1,4 +1,3 @@
 {
-    "VAR_DISK_CONSUMERS_PATHS": "~,~/Library",
-    "VAR_DISK_CONSUMERS_UNIT": "Gi"
+    "VAR_DISK_CONSUMERS_PATHS": "~,~/Library"
 }
