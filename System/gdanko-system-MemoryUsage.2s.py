@@ -184,7 +184,9 @@ def main():
     
     unit, click_to_kill, signal, max_consumers = get_defaults()
     command_length = 125
-    font_size = 12
+    font_name = 'Andale Mono'
+    font_size = 13
+    font_data = f'size="{font_size}" font="{font_name}"'
     memory_type, memory_brand, err = get_memory_details()
     mem = virtual_memory()
     used = byte_converter(mem.used, unit)
@@ -215,7 +217,7 @@ def main():
             pid = consumer['pid']
             user = consumer['user']
             consumer_total += memory_usage
-            print(f'--{":skull: " if click_to_kill else ""}{byte_converter(memory_usage, "G")} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
+            print(f'--{":skull: " if click_to_kill else ""}{byte_converter(memory_usage, "G").rjust(8)} - {command} | length={command_length} | {font_data} | trim=false | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
         print(f'--Total: {byte_converter(consumer_total, "G")}')
     print('---')
     print('Settings')

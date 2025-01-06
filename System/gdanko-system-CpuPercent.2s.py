@@ -231,7 +231,9 @@ def main():
         
     click_to_kill, signal, max_consumers = get_defaults()
     command_length = 125
-    font_size = 12
+    font_name = 'Andale Mono'
+    font_size = 13
+    font_data = f'size="{font_size}" font="{font_name}"'
     cpu_type = get_sysctl('machdep.cpu.brand_string')
     cpu_family = get_cpu_family_strings().get(int(get_sysctl('hw.cpufamily')), int(get_sysctl('hw.cpufamily')))
     max_cpu_freq = cpu_freq().max if cpu_freq().max is not None else None
@@ -269,7 +271,7 @@ def main():
             cpu_usage = consumer['cpu_usage']
             pid = consumer['pid']
             user = consumer['user']
-            print(f'--{":skull: " if click_to_kill else ""}{cpu_usage} - {command} | length={command_length} | size={font_size} | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
+            print(f'--{":skull: " if click_to_kill else ""}{cpu_usage.rjust(6)} - {command} | length={command_length} | {font_data} | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
     print('---')
     print('Settings')
     print(f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill" | shell="{plugin}" | param1={"--disable" if click_to_kill else "--enable"} | terminal=false | refresh=true')
