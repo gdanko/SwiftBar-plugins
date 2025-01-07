@@ -41,16 +41,6 @@ def byte_converter(bytes, unit):
     prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
-def get_size(path):
-    """Returns the size of the file or directory."""
-    if os.path.isfile(path):
-        return os.path.getsize(path)
-    total_size = 0
-    for dirpath, dirnames, filenames in os.walk(path):
-        for filename in filenames:
-            total_size += os.path.getsize(os.path.join(dirpath, filename))
-    return total_size
-
 def get_command_output(command):
     proc = subprocess.Popen(
         command,
