@@ -11,7 +11,6 @@
 import datetime
 import os
 import re
-import shutil
 import subprocess
 import time
 
@@ -29,7 +28,7 @@ def get_command_output(command):
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     updates = 0
-    command = f'{shutil.which("softwareupdate")} --list'
+    command = f'softwareupdate --list'
     output = get_command_output(command)
     if output:
         lines = output.split('\n')
