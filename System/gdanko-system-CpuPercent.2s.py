@@ -19,7 +19,6 @@ import getpass
 import json
 import os
 import re
-import shutil
 import signal
 import subprocess
 import sys
@@ -168,7 +167,7 @@ def get_defaults():
     return click_to_kill, signal, max_consumers
 
 def get_sysctl(metric):
-    command = f'{shutil.which("sysctl")} -n {metric}'
+    command = f'sysctl -n {metric}'
     output = get_command_output(command)
     return output
 
@@ -201,25 +200,27 @@ def get_command_output(command):
 
 def get_top_cpu_usage():
     cpu_info = []
-    command = f'/bin/ps -axm -o %cpu,pid,user,comm | {shutil.which("tail")} -n+2 | {shutil.which("sort")} -rn -k 1'
+    command = f'ps -axm -o %cpu,pid,user,comm | tail -n+2'
     output = get_command_output(command)
     if output:
         lines = output.strip().split('\n')
         for line in lines:
             match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
             if match:
-                cpu_usage = match.group(1)
+                cpu_usage = float(match.group(1))
                 pid = match.group(2)
                 user = match.group(3)
                 command_name = match.group(4)
-                if float(cpu_usage) > 0.0:
-                    cpu_info.append({'command': command_name, 'cpu_usage': cpu_usage + '%', 'pid': pid, 'user': user})
-        return cpu_info
+                if cpu_usage > 0.0:
+                    cpu_info.append({'command': command_name, 'cpu_usage': float(cpu_usage), 'pid': pid, 'user': user})
+
+    return sorted(cpu_info, key=lambda item: float(item['cpu_usage']), reverse=True)
 
 def get_disabled_flag(process_owner, click_to_kill):
     return ('false' if process_owner == getpass.getuser() else 'true') if click_to_kill else 'true'
 
 def main():
+    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = os.path.abspath(sys.argv[0])
     args = configure()
     if args.enable:
@@ -273,7 +274,9 @@ def main():
             cpu_usage = consumer['cpu_usage']
             pid = consumer['pid']
             user = consumer['user']
-            print(f'--{":skull: " if click_to_kill else ""}{cpu_usage.rjust(6)} - {command} | length={command_length} | {font_data} | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
+            # Auto-set the width based on the widest member
+            padding_width = 6
+            print(f'--{":skull: " if click_to_kill else ""}{str(cpu_usage).rjust(padding_width)}% - {command} | length={command_length} | {font_data} | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
     print('---')
     print('Settings')
     print(f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill" | shell="{plugin}" | param1={"--disable" if click_to_kill else "--enable"} | terminal=false | refresh=true')
