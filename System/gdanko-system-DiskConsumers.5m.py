@@ -12,7 +12,6 @@
 import datetime
 import os
 import re
-import shutil
 import subprocess
 import time
 
@@ -64,7 +63,7 @@ def get_command_output(command):
 
 def get_consumers(path):
     consumers = []
-    command = f'{shutil.which("find")} {path} -depth 1 -exec {shutil.which("du")} -sk {{}} \; | {shutil.which("sort")} -rn -k 1'
+    command = f'find {path} -depth 1 -exec du -sk {{}} \;'
     output, error = get_command_output(command)
     if output:
         lines = output.strip().split('\n')
@@ -114,9 +113,10 @@ def main():
                 bytes = consumer["bytes"]
                 path = consumer["path"]
                 total += bytes
-                max_len = 11
+                # Auto-set the width based on the widest member
+                padding_width = 12
                 icon = ':file_folder:' if os.path.isdir(path) else ':page_facing_up:'
-                print(f'--{icon}' + f'{format_number(bytes).rjust(max_len)} - {path} | trim=false | {font_data} | shell=/bin/sh | param1="-c" | param2="{shutil.which("open")} {path}"')
+                print(f'--{icon}' + f'{format_number(bytes).rjust(padding_width)} - {path} | trim=false | {font_data} | shell=/bin/sh | param1="-c" | param2="open \'{path}\'"')
             print(f'--Total: {format_number(total)} | {font_data}')
     else:
         print('N/A')
