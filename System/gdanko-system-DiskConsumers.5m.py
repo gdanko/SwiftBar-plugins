@@ -14,12 +14,16 @@ import os
 import re
 import shutil
 import subprocess
+import time
 
 def pad_float(number):
    return '{:.2f}'.format(float(number))
 
 def get_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
+
+def unix_time_in_ms():
+    return int(time.time() * 1000)
 
 def get_defaults():
     paths = os.getenv('VAR_DISK_CONSUMERS_PATHS', '~,~/Library')
@@ -38,6 +42,16 @@ def byte_converter(bytes, unit):
     prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
+def get_size(path):
+    """Returns the size of the file or directory."""
+    if os.path.isfile(path):
+        return os.path.getsize(path)
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(path):
+        for filename in filenames:
+            total_size += os.path.getsize(os.path.join(dirpath, filename))
+    return total_size
+
 def get_command_output(command):
     proc = subprocess.Popen(
         command,
@@ -48,28 +62,22 @@ def get_command_output(command):
     stdout, stderr = proc.communicate()
     return stdout.strip().decode(), stderr.strip().decode()
 
-def get_top_consumers(path):
-    top_consumers = []
-    commands = [
-        f'{shutil.which("du")} -sk {path}/* | {shutil.which("sort")} -rn -k 1',
-        f'{shutil.which("du")} -sk {path}/.* | {shutil.which("sort")} -rn -k 1',
-    ]
-    for command in commands:
-        output, error = get_command_output(command)
-        if output:
-            lines = output.strip().split('\n')
-            for line in lines:
-                match = re.search(r'^(\d+)\s+(.*)$', line)
-                if match:
-                    bytes = int(match.group(1)) * 1024
-                    path = match.group(2)
-                    if os.path.basename(path) not in ['.', '..']:
-                        if bytes > 0:
-                            top_consumers.append({'path': path.strip(), 'bytes': bytes})
+def get_consumers(path):
+    consumers = []
+    command = f'{shutil.which("find")} {path} -depth 1 -exec {shutil.which("du")} -sk {{}} \; | {shutil.which("sort")} -rn -k 1'
+    output, error = get_command_output(command)
+    if output:
+        lines = output.strip().split('\n')
+        for line in lines:
+            match = re.search(r'^(\d+)\s+(.*)$', line)
+            if match:
+                bytes = int(match.group(1)) * 1024
+                path = match.group(2)
+                if os.path.basename(path) not in ['.', '..']:
+                    if bytes > 0:
+                        consumers.append({'path': path.strip(), 'bytes': bytes})
 
-
-    # return top_consumers
-    return sorted(top_consumers, key=lambda item: item['bytes'], reverse=True)
+    return sorted(consumers, key=lambda item: item['bytes'], reverse=True)
 
 def format_number(size):
     factor = 1024
@@ -88,6 +96,7 @@ def format_number(size):
         return byte_converter(size, "Gi")
 
 def main():
+    start_time = unix_time_in_ms()
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     paths_list = get_defaults()
     font_name = 'Andale Mono'
@@ -100,15 +109,19 @@ def main():
         for path in paths_list:
             print(os.path.expanduser(path))
             total = 0
-            top_consumers = get_top_consumers(path)
-            for top_consumer in top_consumers:
-                bytes = top_consumer["bytes"]
+            consumers = get_consumers(path)
+            for consumer in consumers:
+                bytes = consumer["bytes"]
+                path = consumer["path"]
                 total += bytes
                 max_len = 11
-                print('--' + f'{format_number(bytes).rjust(max_len)} - {top_consumer["path"]} | trim=false | {font_data}')
+                icon = ':file_folder:' if os.path.isdir(path) else ':page_facing_up:'
+                print(f'--{icon}' + f'{format_number(bytes).rjust(max_len)} - {path} | trim=false | {font_data} | shell=/bin/sh | param1="-c" | param2="{shutil.which("open")} {path}"')
             print(f'--Total: {format_number(total)} | {font_data}')
     else:
         print('N/A')
+    end_time = unix_time_in_ms()
+    print(f'Data fetched at {get_timestamp(int(time.time()))} in {end_time - start_time}ms')
     print('Refresh data | refresh=true')
 
 if __name__ == '__main__':
