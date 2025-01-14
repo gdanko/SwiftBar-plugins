@@ -216,8 +216,14 @@ def get_top_cpu_usage():
 
     return sorted(cpu_info, key=lambda item: float(item['cpu_usage']), reverse=True)
 
-def get_disabled_flag(process_owner, click_to_kill):
-    return ('false' if process_owner == getpass.getuser() else 'true') if click_to_kill else 'true'
+def get_icon_and_disabled_flag(process_owner, click_to_kill):
+    if click_to_kill:
+        if process_owner == getpass.getuser():
+            return ':skull:', 'false'
+        else:
+            return ':no_entry_sign:', 'true'
+    else:
+        return '', 'true'
 
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
@@ -276,7 +282,8 @@ def main():
             user = consumer['user']
             # Auto-set the width based on the widest member
             padding_width = 6
-            print(f'--{":skull: " if click_to_kill else ""}{str(cpu_usage).rjust(padding_width)}% - {command} | length={command_length} | {font_data} | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={get_disabled_flag(user, click_to_kill)}')
+            icon, disabled_flag = get_icon_and_disabled_flag(user, click_to_kill)
+            print(f'--{icon}{str(cpu_usage).rjust(padding_width)}% - {command} | length={command_length} | {font_data} | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={disabled_flag}')
     print('---')
     print('Settings')
     print(f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill" | shell="{plugin}" | param1={"--disable" if click_to_kill else "--enable"} | terminal=false | refresh=true')
