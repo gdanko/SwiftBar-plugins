@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Weather WeatherAPI</xbar.title>
-# <xbar.version>v0.1.0</xbar.version>
+# <xbar.version>v0.2.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the weather using weatherapi.com</xbar.desc>
