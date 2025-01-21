@@ -115,6 +115,14 @@ def byte_converter(bytes, unit):
     prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
+def process_bytes(num):
+    suffix = 'B'
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+        if abs(num) < 1024.0:
+            return f'{round(num, 2)} {unit}{suffix}/s'
+        num = num / 1024
+    return f'{pad_float(num)} Yi{suffix}'
+
 def format_number(size):
     factor = 1024
     bytes = factor
