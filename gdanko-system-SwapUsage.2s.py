@@ -10,7 +10,6 @@
 # <xbar.var>string(VAR_SWAP_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 
 from collections import namedtuple
-import datetime
 import os
 import plugin
 import re
