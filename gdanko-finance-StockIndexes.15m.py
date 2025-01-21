@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Stock Indexes</xbar.title>
-# <xbar.version>v0.1.0</xbar.version>
+# <xbar.version>v0.2.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show info about the DOW, NASDAQ, S&P indexes</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/Finance/gdanko-finance-StockIndexes.15m.py</xbar.abouturl>
 
-import datetime
+import plugin
 import subprocess
 import sys
 import time
@@ -22,12 +22,6 @@ except ModuleNotFoundError:
     subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install yfinance')
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
-
-def pad_float(number):
-    return '{:.2f}'.format(float(number))
-
-def get_timestamp(timestamp):
-    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
 def main():
     output = []
@@ -49,15 +43,15 @@ def main():
 
         if price > last:
             updown = u'\u2191'
-            pct_change = f'{pad_float((price - last) / last * 100)}%'
+            pct_change = f'{plugin.pad_float((price - last) / last * 100)}%'
         else:
             updown = u'\u2193'
-            pct_change = f'{pad_float((last - price) / last * 100)}%'
+            pct_change = f'{plugin.pad_float((last - price) / last * 100)}%'
 
         output.append(f'{key} {updown} {pct_change}')
     print('; '.join(output))
     print('---')
-    print(f'Updated {get_timestamp(int(time.time()))}')
+    print(f'Updated {plugin.get_timestamp(int(time.time()))}')
 
 if __name__ == '__main__':
     main()
