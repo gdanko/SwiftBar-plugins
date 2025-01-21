@@ -9,54 +9,25 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-DiskConsumers.5m.py</xbar.abouturl>
 # <xbar.var>string(VAR_DISK_CONSUMERS_PATHS="/"): A comma-delimited list of mount points</xbar.var>
 
-import datetime
 import os
+import plugin
 import re
-import subprocess
+import sys
 import time
 
-def pad_float(number):
-   return '{:.2f}'.format(float(number))
-
-def get_timestamp(timestamp):
-    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
-
-def unix_time_in_ms():
-    return int(time.time() * 1000)
-
-def get_defaults():
-    paths = os.getenv('VAR_DISK_CONSUMERS_PATHS', '~,~/Library')
+def get_defaults(config_dir, plugin_name):
+    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
+    paths = plugin.read_config(vars_file, 'VAR_DISK_CONSUMERS_PATHS', '~,~/Library')
     paths_list = re.split(r'\s*,\s*', paths)
 
     return paths_list
 
-def byte_converter(bytes, unit):
-    suffix = 'B'
-    prefix = unit[0]
-    divisor = 1000
-
-    if len(unit) == 2 and unit.endswith('i'):
-        divisor = 1024
-
-    prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
-    return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
-
-def get_command_output(command):
-    proc = subprocess.Popen(
-        command,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    stdout, stderr = proc.communicate()
-    return stdout.strip().decode(), stderr.strip().decode()
-
 def get_consumers(path):
     consumers = []
     command = f'find {path} -depth 1 -exec du -sk {{}} \;'
-    output, error = get_command_output(command)
-    if output:
-        lines = output.strip().split('\n')
+    stdout, _ = plugin.get_command_output(command)
+    if stdout:
+        lines = stdout.strip().split('\n')
         for line in lines:
             match = re.search(r'^(\d+)\s+(.*)$', line)
             if match:
@@ -68,26 +39,12 @@ def get_consumers(path):
 
     return sorted(consumers, key=lambda item: item['bytes'], reverse=True)
 
-def format_number(size):
-    factor = 1024
-    bytes = factor
-    megabytes = bytes * factor
-    gigabytes = megabytes * factor
-    if size < gigabytes:
-        if size < megabytes:
-            if size < bytes:
-                return f'{size} B'
-            else:
-                return byte_converter(size, "Ki")
-        else:
-            return byte_converter(size, "Mi")
-    else:
-        return byte_converter(size, "Gi")
-
 def main():
-    start_time = unix_time_in_ms()
+    start_time = plugin.unix_time_in_ms()
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
-    paths_list = get_defaults()
+    invoker, config_dir = plugin.get_config_dir()
+    plugin_name = os.path.abspath(sys.argv[0])
+    paths_list = get_defaults(config_dir, os.path.basename(plugin_name))
     font_name = 'Andale Mono'
     font_size = 13
     font_data = f'size="{font_size}" font="{font_name}"'
@@ -103,15 +60,22 @@ def main():
                 bytes = consumer["bytes"]
                 path = consumer["path"]
                 total += bytes
-                # Auto-set the width based on the widest member
                 padding_width = 12
                 icon = ':file_folder:' if os.path.isdir(path) else ':page_facing_up:'
-                print(f'--{icon}' + f'{format_number(bytes).rjust(padding_width)} - {path} | trim=false | {font_data} | shell=/bin/sh | param1="-c" | param2="open \'{path}\'"')
-            print(f'--Total: {format_number(total)} | {font_data}')
+                bits = [
+                    f'--{icon}' + f'{plugin.format_number(bytes).rjust(padding_width)} - {path}',
+                    f'bash=open param1=""{path}"" terminal=false',
+                    font_data,
+                    'trim=false',
+                ]
+                if invoker == 'SwiftBar':
+                    bits.append('emojize=true symbolize=false')
+                print(' | '.join(bits))
+            print(f'--Total: {plugin.format_number(total)} | {font_data}')
     else:
         print('N/A')
-    end_time = unix_time_in_ms()
-    print(f'Data fetched at {get_timestamp(int(time.time()))} in {end_time - start_time}ms')
+    end_time = plugin.unix_time_in_ms()
+    print(f'Data fetched at {plugin.get_timestamp(int(time.time()))} in {end_time - start_time}ms')
     print('Refresh data | refresh=true')
 
 if __name__ == '__main__':

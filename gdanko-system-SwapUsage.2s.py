@@ -9,26 +9,19 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-SwapUsage.2s.py</xbar.abouturl>
 # <xbar.var>string(VAR_SWAP_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 
+from collections import namedtuple
 import datetime
 import os
-import subprocess
-import sys
+import plugin
+import re
 import time
-
-try:
-    from psutil import swap_memory
-except ModuleNotFoundError:
-    print('Error: missing "psutil" library.')
-    print('---')
-    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
-    print('Fix copied to clipboard. Paste on terminal and run.')
-    exit(1)
 
 def pad_float(number):
     return '{:.2f}'.format(float(number))
 
-def get_timestamp(timestamp):
-    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
+def get_swap_usage_tuple(total=0, used=0, free=0):
+    swap_usage = namedtuple('swap_usage', 'total free used')
+    return swap_usage(total=total, free=free, used=used)
 
 def get_defaults():
     valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
@@ -37,26 +30,25 @@ def get_defaults():
         unit = 'Gi'
     return unit
 
-def byte_converter(bytes, unit):
-    suffix = 'B'
-    prefix = unit[0]
-    divisor = 1000
-
-    if len(unit) == 2 and unit.endswith('i'):
-        divisor = 1024
-
-    prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
-    return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
+def get_swap_usage():
+    command = 'sysctl -n vm.swapusage'
+    stdout, _ = plugin.get_command_output(command)
+    match = re.search(r'^total = (\d+\.\d+)M\s+used = (\d+\.\d+)M\s+free = (\d+\.\d+)M\s+', stdout)
+    if match:
+        total = int(float(match.group(1))) * 1024 * 1024
+        used = int(float(match.group(2))) * 1024 * 1024
+        free = int(float(match.group(3))) * 1024 * 1024
+        return get_swap_usage_tuple(total=total, free=free, used=used)
+    return None
 
 def main():
         unit = get_defaults()
-
-        mem = swap_memory()
-        used = byte_converter(mem.used, unit)
-        total = byte_converter(mem.total, unit)
-        print(f'Memory: {used} / {total}')
+        mem = get_swap_usage()
+        used = plugin.byte_converter(mem.used, unit)
+        total = plugin.byte_converter(mem.total, unit)
+        print(f'Swap: {used} / {total}')
         print('---')
-        print(f'Updated {get_timestamp(int(time.time()))}')
+        print(f'Updated {plugin.get_timestamp(int(time.time()))}')
 
 if __name__ == '__main__':
     main()

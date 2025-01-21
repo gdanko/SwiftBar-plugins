@@ -12,14 +12,10 @@
 # <xbar.var>string(VAR_CPU_USAGE_MAX_CONSUMERS=<int>): Maximum number of offenders to display</xbar.var>
 
 from collections import namedtuple
-from math import ceil
 import argparse
-import datetime
-import getpass
-import json
 import os
+import plugin
 import re
-import signal
 import subprocess
 import sys
 import time
@@ -32,41 +28,6 @@ except ModuleNotFoundError:
     subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
-
-def get_signal_map():
-    return {
-        'SIHGUP': signal.SIGHUP,
-        'SIGINT': signal.SIGINT,
-        'SIGQUIT': signal.SIGQUIT,
-        'SIGILL': signal.SIGILL,
-        'SIGTRAP': signal.SIGTRAP,
-        'SIGABRT': signal.SIGABRT,
-        'SIGEMT': signal.SIGEMT,
-        'SIGFPE': signal.SIGFPE,
-        'SIGKILL': signal.SIGKILL,
-        'SIGBUS': signal.SIGBUS,
-        'SIGSEGV': signal.SIGSEGV,
-        'SIGSYS': signal.SIGSYS,
-        'SIGPIPE': signal.SIGPIPE,
-        'SIGALRM': signal.SIGALRM,
-        'SIGTERM': signal.SIGTERM,
-        'SIGURG': signal.SIGURG,
-        'SIGSTOP': signal.SIGSTOP,
-        'SIGTSTP': signal.SIGTSTP,
-        'SIGCONT': signal.SIGCONT,
-        'SIGCHLD': signal.SIGCHLD,
-        'SIGTTIN': signal.SIGTTIN,
-        'SIGTTOU': signal.SIGTTOU,
-        'SIGIO': signal.SIGIO,
-        'SIGXCPU': signal.SIGXCPU,
-        'SIGXFSZ': signal.SIGXFSZ,
-        'SIGVTALRM': signal.SIGVTALRM,
-        'SIGPROF': signal.SIGPROF,
-        'SIGWINCH': signal.SIGWINCH,
-        'SIGINFO': signal.SIGINFO,
-        'SIGUSR1': signal.SIGUSR1,
-        'SIGUSR2': signal.SIGUSR2,
-    }
 
 def get_cpu_family_strings():
     # We get this information from /Library/Developer/CommandLineTools/SDKs/MacOSX<version>.sdk/usr/include/mach/machine.h
@@ -124,52 +85,18 @@ def configure():
     args = parser.parse_args()
     return args
 
-def pad_float(number):
-    return '{:.2f}'.format(float(number))
-
-def get_timestamp(timestamp):
-    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
-
 def get_time_stats_tuple(cpu='cpu-total', cpu_type=None, user=0.0, system=0.0, idle=0.0, nice=0.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guestnice=0.0):
     cpu_times = namedtuple('cpu_times', 'cpu cpu_type user system idle nice iowait irq softirq steal guest guestnice')
     return cpu_times(cpu=cpu, cpu_type=cpu_type, user=user, system=system, idle=idle, nice=nice, iowait=iowait, irq=irq, softirq=softirq, steal=steal, guest=guest, guestnice=guestnice)
 
-def read_config(param, default):
-    plugin = os.path.abspath(sys.argv[0])
-    jsonfile = f'{plugin}.vars.json'
-    if os.path.exists(jsonfile):
-        with open(jsonfile, 'r') as fh:
-            contents = json.load(fh)
-            if param in contents:
-                return contents[param]
-    return default
-
-def write_config(jsonfile, contents):
-    with open(jsonfile, 'w') as fh:
-        fh.write(json.dumps(contents, indent=4))
-
-
-def update_setting(plugin, key, value):
-    jsonfile = f'{plugin}.vars.json'
-    if os.path.exists(jsonfile):
-        with open(jsonfile, 'r') as fh:
-            contents = json.load(fh)
-            if key in contents:
-                contents[key] = value
-                write_config(jsonfile, contents)
-
-def get_defaults():
-    click_to_kill = read_config('VAR_CPU_USAGE_CLICK_TO_KILL', 'false')
+def get_defaults(config_dir, plugin_name):
+    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
+    click_to_kill = plugin.read_config(vars_file, 'VAR_MEM_USAGE_CLICK_TO_KILL', 'true')
     click_to_kill = True if click_to_kill == 'true' else False
-    signal = read_config('VAR_CPU_USAGE_KILL_SIGNAL', 'SIGQUIT')
-    max_consumers = read_config('VAR_CPU_USAGE_MAX_CONSUMERS', 30)
+    signal = plugin.read_config(vars_file, 'VAR_MEM_USAGE_KILL_SIGNAL', 'SIGQUIT')
+    max_consumers = int(plugin.read_config(vars_file, 'VAR_MEM_USAGE_MAX_CONSUMERS', 30))
 
     return click_to_kill, signal, max_consumers
-
-def get_sysctl(metric):
-    command = f'sysctl -n {metric}'
-    output = get_command_output(command)
-    return output
 
 def combine_stats(cpu_time_stats, cpu_type):
     idle      = 0.0
@@ -190,20 +117,12 @@ def combine_stats(cpu_time_stats, cpu_type):
         user=(user / len(cpu_time_stats)),
     )
 
-def get_command_output(command):
-    previous = None
-    for command in re.split(r'\s*\|\s*', command):
-        cmd = re.split(r'\s+', command)
-        p = subprocess.Popen(cmd, stdin=(previous.stdout if previous else None), stdout=subprocess.PIPE)
-        previous = p
-    return p.stdout.read().strip().decode()
-
 def get_top_cpu_usage():
     cpu_info = []
     command = f'ps -axm -o %cpu,pid,user,comm | tail -n+2'
-    output = get_command_output(command)
-    if output:
-        lines = output.strip().split('\n')
+    stdout, _ = plugin.get_command_output(command)
+    if stdout:
+        lines = stdout.strip().split('\n')
         for line in lines:
             match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
             if match:
@@ -216,35 +135,27 @@ def get_top_cpu_usage():
 
     return sorted(cpu_info, key=lambda item: float(item['cpu_usage']), reverse=True)
 
-def get_icon_and_disabled_flag(process_owner, click_to_kill):
-    if click_to_kill:
-        if process_owner == getpass.getuser():
-            return ':skull:', 'false'
-        else:
-            return ':no_entry_sign:', 'true'
-    else:
-        return '', 'true'
-
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
-    plugin = os.path.abspath(sys.argv[0])
+    invoker, config_dir = plugin.get_config_dir()
+    plugin_name = os.path.abspath(sys.argv[0])
     args = configure()
     if args.enable:
-        update_setting(plugin, 'VAR_CPU_USAGE_CLICK_TO_KILL', 'true')
+        plugin.update_setting(config_dir, os.path.basename(plugin_name), 'VAR_CPU_USAGE_CLICK_TO_KILL', 'true')
     elif args.disable:
-        update_setting(plugin, 'VAR_CPU_USAGE_CLICK_TO_KILL', 'false')
+        plugin.update_setting(config_dir, os.path.basename(plugin_name), 'VAR_CPU_USAGE_CLICK_TO_KILL', 'false')
     elif args.signal:
-        update_setting(plugin, 'VAR_CPU_USAGE_KILL_SIGNAL', args.signal)
+        plugin.update_setting(config_dir, os.path.basename(plugin_name), 'VAR_CPU_USAGE_KILL_SIGNAL', args.signal)
     elif args.max_consumers > 0:
-        update_setting(plugin, 'VAR_CPU_USAGE_MAX_CONSUMERS', args.max_consumers)
+        plugin.update_setting(config_dir, os.path.basename(plugin_name), 'VAR_CPU_USAGE_MAX_CONSUMERS', args.max_consumers)
         
-    click_to_kill, signal, max_consumers = get_defaults()
+    click_to_kill, signal, max_consumers = get_defaults(config_dir, os.path.basename(plugin_name))
     command_length = 125
     font_name = 'Andale Mono'
     font_size = 13
     font_data = f'size="{font_size}" font="{font_name}"'
-    cpu_type = get_sysctl('machdep.cpu.brand_string')
-    cpu_family = get_cpu_family_strings().get(int(get_sysctl('hw.cpufamily')), int(get_sysctl('hw.cpufamily')))
+    cpu_type = plugin.get_sysctl('machdep.cpu.brand_string')
+    cpu_family = get_cpu_family_strings().get(int(plugin.get_sysctl('hw.cpufamily')), int(plugin.get_sysctl('hw.cpufamily')))
     max_cpu_freq = cpu_freq().max if cpu_freq().max is not None else None
     individual_cpu_pct = []
     combined_cpu_pct = []
@@ -255,16 +166,16 @@ def main():
         individual_cpu_pct.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
     combined_cpu_pct.append(combine_stats(individual_cpu_pct, cpu_type))
 
-    print(f'CPU: user {pad_float(combined_cpu_pct[0].user)}%, sys {pad_float(combined_cpu_pct[0].system)}%, idle {pad_float(combined_cpu_pct[0].idle)}%')
+    print(f'CPU: user {plugin.pad_float(combined_cpu_pct[0].user)}%, sys {plugin.pad_float(combined_cpu_pct[0].system)}%, idle {plugin.pad_float(combined_cpu_pct[0].idle)}%')
     print('---')
-    print(f'Updated {get_timestamp(int(time.time()))}')
+    print(f'Updated {plugin.get_timestamp(int(time.time()))}')
     print('---')
     if cpu_type is not None:
         processor = cpu_type
         if cpu_family:
             processor = processor + f' ({cpu_family})'
         if max_cpu_freq:
-            processor = processor + f' @ {pad_float(max_cpu_freq / 1000)} GHz'
+            processor = processor + f' @ {plugin.pad_float(max_cpu_freq / 1000)} GHz'
         print(f'Processor: {processor}')
         
     for cpu in individual_cpu_pct:
@@ -280,22 +191,43 @@ def main():
             cpu_usage = consumer['cpu_usage']
             pid = consumer['pid']
             user = consumer['user']
-            # Auto-set the width based on the widest member
             padding_width = 6
-            icon, disabled_flag = get_icon_and_disabled_flag(user, click_to_kill)
-            print(f'--{icon}{str(cpu_usage).rjust(padding_width)}% - {command} | length={command_length} | {font_data} | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={disabled_flag}')
+            icon = plugin.get_process_icon(user, click_to_kill)
+            cpu_usage = f'{str(cpu_usage)}%'
+            bits = [
+                f'--{icon}{cpu_usage.rjust(padding_width)} - {command}',
+                f'bash=kill param1="{plugin.get_signal_map()[signal]}" param2="{pid}" terminal=false',
+                font_data,
+                'trim=true',
+                f'length={command_length}',
+            ]
+            if invoker == 'SwiftBar':
+                bits.append('emojize=true symbolize=false')
+            print(' | '.join(bits))
     print('---')
     print('Settings')
-    print(f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill" | shell="{plugin}" | param1={"--disable" if click_to_kill else "--enable"} | terminal=false | refresh=true')
+    print(f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill" | shell="{plugin_name}" | param1={"--disable" if click_to_kill else "--enable"} | terminal=false | refresh=true')
     print('--Kill Signal')
-    for key, _ in get_signal_map().items():
-        color = ' | color=blue' if key == signal else ''
-        print(f'----{key} | shell="{plugin}" param1="--signal" | param2={key} | terminal=false | refresh=true{color}')
+    for key, _ in plugin.get_signal_map().items():
+        bits = [
+            f'----{key}',
+            f'bash="{plugin_name}" param1="--signal" param2="{key}" terminal=false',
+            'refresh=true',
+        ]
+        if key == signal:
+            bits.insert(1, 'color=blue')
+        print(' | '.join(bits))
     print('--Maximum Number of Top Consumers')
     for number in range(1, 51):
         if number %5 == 0:
-            color = ' | color=blue' if number == max_consumers else ''
-            print(f'----{number} | shell="{plugin}" param1="--max-consumers" | param2={number} | terminal=false | refresh=true{color}')
+            bits = [
+                f'----{number}',
+                f'bash="{plugin_name}" param1="--max-consumers" param2="{number}" terminal=false',
+                'refresh=true',
+            ]
+            if number == max_consumers:
+                bits.insert(1, 'color=blue')
+            print(' | '.join(bits))
 
 if __name__ == '__main__':
     main()

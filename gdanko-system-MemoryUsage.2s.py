@@ -11,13 +11,14 @@
 # <xbar.var>string(VAR_MEM_USAGE_KILL_SIGNAL=<int>): The Darwin kill signal to use when killing a process</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_MAX_CONSUMERS=<int>): Maximum number of offenders to display</xbar.var>
 
+from pathlib import Path
 import argparse
 import datetime
 import getpass
 import json
 import os
+import plugin
 import re
-import signal
 import subprocess
 import sys
 import time
@@ -31,41 +32,28 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
-def get_signal_map():
-    return {
-        'SIHGUP': signal.SIGHUP,
-        'SIGINT': signal.SIGINT,
-        'SIGQUIT': signal.SIGQUIT,
-        'SIGILL': signal.SIGILL,
-        'SIGTRAP': signal.SIGTRAP,
-        'SIGABRT': signal.SIGABRT,
-        'SIGEMT': signal.SIGEMT,
-        'SIGFPE': signal.SIGFPE,
-        'SIGKILL': signal.SIGKILL,
-        'SIGBUS': signal.SIGBUS,
-        'SIGSEGV': signal.SIGSEGV,
-        'SIGSYS': signal.SIGSYS,
-        'SIGPIPE': signal.SIGPIPE,
-        'SIGALRM': signal.SIGALRM,
-        'SIGTERM': signal.SIGTERM,
-        'SIGURG': signal.SIGURG,
-        'SIGSTOP': signal.SIGSTOP,
-        'SIGTSTP': signal.SIGTSTP,
-        'SIGCONT': signal.SIGCONT,
-        'SIGCHLD': signal.SIGCHLD,
-        'SIGTTIN': signal.SIGTTIN,
-        'SIGTTOU': signal.SIGTTOU,
-        'SIGIO': signal.SIGIO,
-        'SIGXCPU': signal.SIGXCPU,
-        'SIGXFSZ': signal.SIGXFSZ,
-        'SIGVTALRM': signal.SIGVTALRM,
-        'SIGPROF': signal.SIGPROF,
-        'SIGWINCH': signal.SIGWINCH,
-        'SIGINFO': signal.SIGINFO,
-        'SIGUSR1': signal.SIGUSR1,
-        'SIGUSR2': signal.SIGUSR2,
-    }
+def get_command_output(command):
+    proc = subprocess.Popen(
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stdout, stderr = proc.communicate()
+    return stdout.strip().decode(), stderr.strip().decode()
 
+def get_config_dir():
+    ppid = os.getppid()
+    stdout, stderr = get_command_output(f'/bin/ps -o command -p {ppid} | tail -n+2')
+    if stderr:
+        return None
+    if stdout:
+        if stdout == '/Applications/xbar.app/Contents/MacOS/xbar':
+            return os.path.basename(stdout), os.path.dirname(os.path.abspath(sys.argv[0]))
+        elif stdout == '/Applications/SwiftBar.app/Contents/MacOS/SwiftBar':
+            return os.path.basename(stdout), os.path.join(Path.home(), '.config', 'SwiftBar')
+    # return 'local', Path.home()
+    return 'xbar', '/Users/gdanko/Library/Application Support/xbar/plugins'
 
 def configure():
     parser = argparse.ArgumentParser()
@@ -93,43 +81,46 @@ def byte_converter(bytes, unit):
     prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
-def read_config(param, default):
-    plugin = os.path.abspath(sys.argv[0])
-    jsonfile = f'{plugin}.vars.json'
-    if os.path.exists(jsonfile):
-        with open(jsonfile, 'r') as fh:
-            contents = json.load(fh)
-            if param in contents:
-                return contents[param]
+def read_config(vars_file, param, default):
+    if os.path.exists(vars_file):
+        try:
+            with open(vars_file, 'r') as fh:
+                contents = json.load(fh)
+                if param in contents:
+                    return contents[param]
+                return default
+        except:
+            return default
     return default
 
 def write_config(jsonfile, contents):
     with open(jsonfile, 'w') as fh:
         fh.write(json.dumps(contents, indent=4))
 
-def update_setting(plugin, key, value):
-    jsonfile = f'{plugin}.vars.json'
-    if os.path.exists(jsonfile):
-        with open(jsonfile, 'r') as fh:
+def update_setting(config_dir, plugin_name, key, value):
+    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
+    if os.path.exists(vars_file):
+        with open(vars_file, 'r') as fh:
             contents = json.load(fh)
             if key in contents:
                 contents[key] = value
-                write_config(jsonfile, contents)
+                write_config(vars_file, contents)
 
-def get_defaults():
-    click_to_kill = read_config('VAR_MEM_USAGE_CLICK_TO_KILL', 'false')
+def get_defaults(config_dir, plugin_name):
+    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
+    click_to_kill = read_config(vars_file, 'VAR_MEM_USAGE_CLICK_TO_KILL', 'true')
     click_to_kill = True if click_to_kill == 'true' else False
-    signal = read_config('VAR_MEM_USAGE_KILL_SIGNAL', 'SIGQUIT')
-    max_consumers = read_config('VAR_MEM_USAGE_MAX_CONSUMERS', 30)
+    signal = read_config(vars_file, 'VAR_MEM_USAGE_KILL_SIGNAL', 'SIGQUIT')
+    max_consumers = int(read_config(vars_file, 'VAR_MEM_USAGE_MAX_CONSUMERS', 30))
 
     return click_to_kill, signal, max_consumers
 
 def get_memory_details():
     command = f'system_profiler SPMemoryDataType -json'
-    output = get_command_output(command)
-    if output:
+    stdout, stderr = get_command_output(command)
+    if stdout:
         try:
-            json_data = json.loads(output)
+            json_data = json.loads(stdout)
             meminfo = json_data['SPMemoryDataType'][0]
             return meminfo['dimm_type'], meminfo['dimm_manufacturer'], None
         except Exception as e:
@@ -137,20 +128,12 @@ def get_memory_details():
     else:
         return '', '', e
 
-def get_command_output(command):
-    previous = None
-    for command in re.split(r'\s*\|\s*', command):
-        cmd = re.split(r'\s+', command)
-        p = subprocess.Popen(cmd, stdin=(previous.stdout if previous else None), stdout=subprocess.PIPE)
-        previous = p
-    return p.stdout.read().strip().decode()
-
 def get_top_memory_usage():
     memory_info = []
     command = f'/bin/ps -axm -o rss,pid,user,comm | tail -n+2'
-    output = get_command_output(command)
-    if output:
-        lines = output.strip().split('\n')
+    stdout, stderr = get_command_output(command)
+    if stdout:
+        lines = stdout.strip().split('\n')
         for line in lines:
             match = re.search(r'^(\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
             if match:
@@ -163,14 +146,14 @@ def get_top_memory_usage():
 
     return sorted(memory_info, key=lambda item: item['bytes'], reverse=True)
 
-def get_icon_and_disabled_flag(process_owner, click_to_kill):
+def get_icon(process_owner, click_to_kill):
     if click_to_kill:
         if process_owner == getpass.getuser():
-            return ':skull:', 'false'
+            return ':skull:'
         else:
-            return ':no_entry_sign:', 'true'
+            return ':no_entry_sign:'
     else:
-        return '', 'true'
+        return ''
 
 def format_number(size):
     factor = 1024
@@ -189,23 +172,24 @@ def format_number(size):
         return byte_converter(size, "Gi")
 
 def main():
-    unit = 'Gi'
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
-    plugin = os.path.abspath(sys.argv[0])
+    invoker, config_dir = get_config_dir()
+    plugin_name = os.path.abspath(sys.argv[0])
+    vars_file = os.path.join(config_dir, os.path.basename(plugin_name)) + '.vars.json'
     args = configure()
     if args.enable:
-        update_setting(plugin, 'VAR_MEM_USAGE_CLICK_TO_KILL', 'true')
+        update_setting(config_dir, os.path.basename(plugin_name), 'VAR_MEM_USAGE_CLICK_TO_KILL', 'true')
     elif args.disable:
-        update_setting(plugin, 'VAR_MEM_USAGE_CLICK_TO_KILL', 'false')
+        update_setting(config_dir, os.path.basename(plugin_name), 'VAR_MEM_USAGE_CLICK_TO_KILL', 'false')
     elif args.signal:
-        update_setting(plugin, 'VAR_MEM_USAGE_KILL_SIGNAL', args.signal)
+        update_setting(config_dir, os.path.basename(plugin_name), 'VAR_MEM_USAGE_KILL_SIGNAL', args.signal)
     elif args.max_consumers > 0:
-        update_setting(plugin, 'VAR_MEM_USAGE_MAX_CONSUMERS', args.max_consumers)
+        update_setting(config_dir, os.path.basename(plugin_name), 'VAR_MEM_USAGE_MAX_CONSUMERS', args.max_consumers)
     
-    click_to_kill, signal, max_consumers = get_defaults()
+    click_to_kill, signal, max_consumers = get_defaults(config_dir, os.path.basename(plugin_name))
     command_length = 125
     font_name = 'Andale Mono'
-    font_size = 13
+    font_size = 12
     font_data = f'size="{font_size}" font="{font_name}"'
     memory_type, memory_brand, err = get_memory_details()
     mem = virtual_memory()
@@ -213,6 +197,7 @@ def main():
     total = format_number(mem.total)
     print(f'Memory: {used} / {total}')
     print('---')
+    print(f'open {vars_file} | bash=open param1="{vars_file}"')
     print(f'Updated {get_timestamp(int(time.time()))}')
     print('---')
     if not err:
@@ -237,23 +222,43 @@ def main():
             pid = consumer['pid']
             user = consumer['user']
             consumer_total += bytes
-            # Auto-set the width based on the widest member
-            padding_width = 11
-            icon, disabled_flag = get_icon_and_disabled_flag(user, click_to_kill)
-            print(f'--{icon}{format_number(bytes).rjust(padding_width)} - {command} | length={command_length} | {font_data} | trim=false | shell=/bin/sh | param1="-c" | param2="kill -{get_signal_map()[signal]} {pid}" | disabled={disabled_flag}')
+            padding_width = 12
+            icon = get_icon(user, click_to_kill)
+            bits = [
+                f'--{icon}{format_number(bytes).rjust(padding_width)} - {command}',
+                f'bash=kill param1="{plugin.get_signal_map()[signal]}" param2="{pid}" terminal=false',
+                font_data,
+                'trim=false',
+                f'length={command_length}',
+            ]
+            if invoker == 'SwiftBar':
+                bits.append('emojize=true symbolize=false')
+            print(' | '.join(bits))
         print(f'--Total: {format_number(consumer_total)} | {font_data}')
     print('---')
     print('Settings')
-    print(f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill" | shell="{plugin}" | param1={"--disable" if click_to_kill else "--enable"} | terminal=false | refresh=true')
+    print(f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill" | bash="{plugin_name}" param1="{"--disable" if click_to_kill else "--enable"}" terminal=false | refresh=true')
     print('--Kill Signal')
-    for key, _ in get_signal_map().items():
-        color = ' | color=blue' if key == signal else ''
-        print(f'----{key} | shell="{plugin}" param1="--signal" | param2={key} | terminal=false | refresh=true{color}')
+    for key, _ in plugin.get_signal_map().items():
+        bits = [
+            f'----{key}',
+            f'bash="{plugin_name}" param1="--signal" param2="{key}" terminal=false',
+            'refresh=true',
+        ]
+        if key == signal:
+            bits.insert(1, 'color=blue')
+        print(' | '.join(bits))
     print('--Maximum Number of Top Consumers')
     for number in range(1, 51):
         if number %5 == 0:
-            color = ' | color=blue' if number == max_consumers else ''
-            print(f'----{number} | shell="{plugin}" param1="--max-consumers" | param2={number} | terminal=false | refresh=true{color}')
+            bits = [
+                f'----{number}',
+                f'bash="{plugin_name}" param1="--max-consumers" param2="{number}" terminal=false',
+                'refresh=true',
+            ]
+            if number == max_consumers:
+                bits.insert(1, 'color=blue')
+            print(' | '.join(bits))
 
 if __name__ == '__main__':
     main()
