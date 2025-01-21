@@ -10,6 +10,8 @@
 # <xbar.var>string(VAR_DISK_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 # <xbar.var>string(VAR_DISK_MOUNTPOINTS="/"): A comma-delimited list of mount points</xbar.var>
 
+# "Run in Terminal..."" currently uses the default values, not reading the config file
+
 from collections import namedtuple
 from pathlib import Path
 import datetime
@@ -70,28 +72,24 @@ def pad_float(number):
 def get_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
 
-def get_defaults(config_dir, plugin_name):
-    default_mountpoint = '/'
-    default_unit = 'Gi'
-    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
+def read_config(vars_file, param, default):
+    value = os.environ.get(param)
+    if value:
+        return value
     if os.path.exists(vars_file):
         with open(vars_file, 'r') as fh:
-            try:
-                contents = json.load(fh)
-                if 'VAR_DISK_MOUNTPOINTS' in contents:
-                    mountpoints = contents['VAR_DISK_MOUNTPOINTS']
-                if 'VAR_DISK_USAGE_UNIT' in contents:
-                    unit = contents['VAR_DISK_USAGE_UNIT']
-            except:
-                mountpoints = default_mountpoint
-                unit = default_unit
-    else:
-        mountpoints = os.getenv('VAR_DISK_MOUNTPOINTS', default_mountpoint)
-        unit = os.getenv('VAR_DISK_USAGE_UNIT', default_unit)
+            contents = json.load(fh)
+            if param in contents:
+                return contents[param]
+    return default
+
+def get_defaults(config_dir, plugin_name):
+    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
+    mountpoints = read_config(vars_file, 'VAR_DISK_MOUNTPOINTS', '/')
+    unit = read_config(vars_file, 'VAR_DISK_USAGE_UNIT', 'Gi')
 
     mountpoints_list = re.split(r'\s*,\s*', mountpoints)
     valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
-
     if not unit in valid_units:
         unit = 'Gi'
     return mountpoints_list, unit
@@ -110,23 +108,26 @@ def byte_converter(bytes, unit):
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     config_dir = get_config_dir()
-    plugin_name = os.path.basename(os.path.abspath(sys.argv[0]))
+    plugin_name = os.path.abspath(sys.argv[0])
     output = []
     partition_data = {}
     valid_mountpoints = []
-    mountpoints_list, unit = get_defaults(config_dir, plugin_name)
+    mountpoints_list, unit = get_defaults(config_dir, os.path.basename(plugin_name))
     partitions = get_partition_info()
 
     for partition in partitions:
         partition_data[partition.mountpoint] = partition
 
     for mountpoint in mountpoints_list:
-        total, used, free = shutil.disk_usage(mountpoint)
-        if total and used:
-            valid_mountpoints.append(mountpoint)
-            total = byte_converter(total, unit)
-            used = byte_converter(used, unit)
-            output.append(f'"{mountpoint}" {used} / {total}')
+        try:
+            total, used, free = shutil.disk_usage(mountpoint)
+            if total and used:
+                valid_mountpoints.append(mountpoint)
+                total = byte_converter(total, unit)
+                used = byte_converter(used, unit)
+                output.append(f'"{mountpoint}" {used} / {total}')
+        except:
+            pass
 
     if len(output) > 0:
         print(f'Disk: {"; ".join(output)}')
