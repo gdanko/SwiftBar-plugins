@@ -139,3 +139,15 @@ def get_timestamp(timestamp):
 
 def unix_time_in_ms():
     return int(time.time() * 1000)
+
+def to_dollar(number):
+    return '${:,.2f}'.format(number)
+
+def add_commas(number):
+    return '{:,.0f}'.format(number)
+
+def unix_to_human(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
+
+def float_to_pct(number):
+    return f'{number:.2%}'
