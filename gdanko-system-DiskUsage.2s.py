@@ -8,7 +8,7 @@
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-MemoryUsage.2s.py</xbar.abouturl>
 # <xbar.var>string(VAR_DISK_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
-# <xbar.var>string(VAR_DISK_MOUNTPOINTS="/"): A comma-delimited list of mount points</xbar.var>
+# <xbar.var>string(VAR_DISK_USAGE_MOUNTPOINTS="/"): A comma-delimited list of mount points</xbar.var>
 
 # "Run in Terminal..."" currently uses the default values, not reading the config file
 
@@ -46,14 +46,15 @@ def get_partition_info():
 
 def get_defaults(config_dir, plugin_name):
     vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
-    mountpoints = plugin.read_config(vars_file, 'VAR_DISK_MOUNTPOINTS', '/')
-    unit = plugin.read_config(vars_file, 'VAR_DISK_USAGE_UNIT', 'Gi')
-
-    mountpoints_list = re.split(r'\s*,\s*', mountpoints)
+    default_values = {
+        'VAR_DISK_USAGE_MOUNTPOINTS': '/',
+        'VAR_DISK_USAGE_UNIT': 'Gi',
+    }
+    defaults = plugin.read_config(vars_file, default_values)
     valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
-    if not unit in valid_units:
-        unit = 'Gi'
-    return mountpoints_list, unit
+    if not defaults['VAR_DISK_USAGE_UNIT'] in valid_units:
+        defaults['VAR_DISK_USAGE_UNIT'] = 'Gi'
+    return defaults['VAR_DISK_USAGE_MOUNTPOINTS'], defaults['VAR_DISK_USAGE_UNIT']
 
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'

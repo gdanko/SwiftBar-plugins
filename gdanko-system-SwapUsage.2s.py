@@ -13,6 +13,7 @@ from collections import namedtuple
 import os
 import plugin
 import re
+import sys
 import time
 
 def pad_float(number):
@@ -22,12 +23,14 @@ def get_swap_usage_tuple(total=0, used=0, free=0):
     swap_usage = namedtuple('swap_usage', 'total free used')
     return swap_usage(total=total, free=free, used=used)
 
-def get_defaults():
+def get_defaults(config_dir, plugin_name):
+    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
+    default_values = {
+        'VAR_SWAP_USAGE_UNIT': 'Gi',
+    }
+    defaults = plugin.read_config(vars_file, default_values)
     valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
-    unit = os.getenv('VAR_SWAP_USAGE_UNIT', 'Gi') 
-    if not unit in valid_units:
-        unit = 'Gi'
-    return unit
+    return defaults['VAR_SWAP_USAGE_UNIT'] if defaults['VAR_SWAP_USAGE_UNIT'] in valid_units else 'Gi'
 
 def get_swap_usage():
     command = 'sysctl -n vm.swapusage'
@@ -41,13 +44,16 @@ def get_swap_usage():
     return None
 
 def main():
-        unit = get_defaults()
-        mem = get_swap_usage()
-        used = plugin.byte_converter(mem.used, unit)
-        total = plugin.byte_converter(mem.total, unit)
-        print(f'Swap: {used} / {total}')
-        print('---')
-        print(f'Updated {plugin.get_timestamp(int(time.time()))}')
+    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
+    invoker, config_dir = plugin.get_config_dir()
+    plugin_name = os.path.abspath(sys.argv[0])
+    unit = get_defaults(config_dir, os.path.basename(plugin_name))
+    mem = get_swap_usage()
+    used = plugin.byte_converter(mem.used, unit)
+    total = plugin.byte_converter(mem.total, unit)
+    print(f'Swap: {used} / {total}')
+    print('---')
+    print(f'Updated {plugin.get_timestamp(int(time.time()))}')
 
 if __name__ == '__main__':
     main()

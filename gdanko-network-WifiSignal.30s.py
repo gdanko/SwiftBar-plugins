@@ -18,9 +18,11 @@ import time
 
 def get_defaults(config_dir, plugin_name):
     vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
-    interface = plugin.read_config(vars_file, 'VAR_WIFI_STATUS_INTERFACE', 'en0')
-
-    return interface
+    default_values = {
+        'VAR_WIFI_STATUS_INTERFACE': 'en0',
+    }
+    defaults = plugin.read_config(vars_file, default_values)
+    return defaults['VAR_WIFI_STATUS_INTERFACE']
 
 def get_profiler_data(stdout):
     try:

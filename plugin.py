@@ -53,17 +53,24 @@ def get_command_output(command):
     stdout, stderr = proc.communicate()
     return stdout.strip().decode(), stderr.strip().decode()
 
-def read_config(vars_file, param, default):
+def read_config(vars_file, default_values):
     if os.path.exists(vars_file):
         try:
             with open(vars_file, 'r') as fh:
                 contents = json.load(fh)
-                if param in contents:
-                    return contents[param]
-                return default
+                for key, _ in default_values.items():
+                    if key in contents:
+                        default_values[key] = contents[key]
+            return default_values
         except:
-            return default
-    return default
+            return default_values
+    else:
+        try:
+            with open(vars_file, 'w') as fh:
+                fh.write(json.dumps(default_values, indent=4))
+        except:
+            pass
+        return default_values
 
 def write_config(jsonfile, contents):
     with open(jsonfile, 'w') as fh:

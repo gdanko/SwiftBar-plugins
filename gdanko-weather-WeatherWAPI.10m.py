@@ -33,14 +33,18 @@ except ModuleNotFoundError:
 
 def get_defaults(config_dir, plugin_name):
     vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
+    default_values = {
+        'VAR_WEATHER_WAPI_LOCATION': 'Los Angeles, CA, US',
+        'VAR_WEATHER_WAPI_API_KEY': '',
+        'VAR_WEATHER_WAPI_UNITS': 'F',
+        'VAR_WEATHER_WAPI_SHOW_FORECAST': 'true',
+    }
+    defaults = plugin.read_config(vars_file, default_values)
     valid_units = ['C', 'F']
-    location = plugin.read_config(vars_file, 'VAR_WEATHER_WAPI_LOCATION', 'San Diego, CA, US')
-    api_key = plugin.read_config(vars_file, 'VAR_WEATHER_WAPI_API_KEY', '')
-    units = plugin.read_config(vars_file, 'VAR_WEATHER_WAPI_UNITS', 'F')
-    show_forecast = plugin.read_config(vars_file, 'VAR_WEATHER_WAPI_SHOW_FORECAST', 'true')
-    if not units in valid_units:
-        units = 'F'
-    return location, api_key, units, True if show_forecast == 'true' else False
+    return defaults['VAR_WEATHER_WAPI_LOCATION'], \
+        defaults['VAR_WEATHER_WAPI_API_KEY'], \
+        defaults['VAR_WEATHER_WAPI_UNITS'] if defaults['VAR_WEATHER_WAPI_UNITS'] in valid_units else 'F', \
+        True if defaults['VAR_WEATHER_WAPI_SHOW_FORECAST'] == 'true' else False
 
 def fetch_data(url=None):
     response = None

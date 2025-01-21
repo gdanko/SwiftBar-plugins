@@ -29,10 +29,12 @@ except ModuleNotFoundError:
 
 def get_defaults(config_dir, plugin_name):
     vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
-    interface = plugin.read_config(vars_file, 'VAR_NET_THROUGHPUT_INTERFACE', 'en0')
-    verbose = plugin.read_config(vars_file, 'VAR_NET_THROUGHPUT_VERBOSE', 'false')
-
-    return interface, True if verbose == 'true' else False
+    default_values = {
+        'VAR_NET_THROUGHPUT_INTERFACE': 'en0',
+        'VAR_NET_THROUGHPUT_VERBOSE': 'false',
+    }
+    defaults = plugin.read_config(vars_file, default_values)
+    return defaults['VAR_NET_THROUGHPUT_INTERFACE'], True if defaults['VAR_NET_THROUGHPUT_VERBOSE'] == 'true' else False
 
 def get_io_counter_tuple(interface=None, bytes_sent=0, bytes_recv=0, packets_sent=0, packets_recv=0, errin=0, errout=0, dropin=0, dropout=0):
     net_io = namedtuple('net_io', 'interface bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')

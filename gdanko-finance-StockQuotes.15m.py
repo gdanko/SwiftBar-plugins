@@ -29,10 +29,11 @@ except ModuleNotFoundError:
 
 def get_defaults(config_dir, plugin_name):
     vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
-    symbols = plugin.read_config(vars_file, 'VAR_STOCK_SYMBOLS', 'AAPL')
-    symbols_list = re.split(r'\s*,\s*', symbols)
-
-    return symbols_list
+    default_values = {
+        'VAR_STOCK_SYMBOLS': 'AAPL',
+    }
+    defaults = plugin.read_config(vars_file, default_values)
+    return re.split(r'\s*,\s*', defaults['VAR_STOCK_SYMBOLS'])
 
 def main():
     invoker, config_dir = plugin.get_config_dir()

@@ -91,12 +91,13 @@ def get_time_stats_tuple(cpu='cpu-total', cpu_type=None, user=0.0, system=0.0, i
 
 def get_defaults(config_dir, plugin_name):
     vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
-    click_to_kill = plugin.read_config(vars_file, 'VAR_MEM_USAGE_CLICK_TO_KILL', 'true')
-    click_to_kill = True if click_to_kill == 'true' else False
-    signal = plugin.read_config(vars_file, 'VAR_MEM_USAGE_KILL_SIGNAL', 'SIGQUIT')
-    max_consumers = int(plugin.read_config(vars_file, 'VAR_MEM_USAGE_MAX_CONSUMERS', 30))
-
-    return click_to_kill, signal, max_consumers
+    default_values = {
+        'VAR_CPU_USAGE_CLICK_TO_KILL': 'true',
+        'VAR_CPU_USAGE_KILL_SIGNAL': 'SIGQUIT',
+        'VAR_CPU_USAGE_MAX_CONSUMERS': 30,
+    }
+    defaults = plugin.read_config(vars_file, default_values)
+    return True if defaults['VAR_CPU_USAGE_CLICK_TO_KILL'] == 'true' else False, defaults['VAR_CPU_USAGE_KILL_SIGNAL'], int(defaults['VAR_CPU_USAGE_MAX_CONSUMERS'])
 
 def combine_stats(cpu_time_stats, cpu_type):
     idle      = 0.0

@@ -17,10 +17,11 @@ import time
 
 def get_defaults(config_dir, plugin_name):
     vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
-    paths = plugin.read_config(vars_file, 'VAR_DISK_CONSUMERS_PATHS', '~,~/Library')
-    paths_list = re.split(r'\s*,\s*', paths)
-
-    return paths_list
+    default_values = {
+        'VAR_DISK_CONSUMERS_PATHS': '~,~/Library',
+    }
+    defaults = plugin.read_config(vars_file, default_values)
+    return re.split(r'\s*,\s*', defaults['VAR_DISK_CONSUMERS_PATHS'])
 
 def get_consumers(path):
     consumers = []
