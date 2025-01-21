@@ -20,8 +20,11 @@ SwiftBar doesn't know what to do with xbar's `<plugin_name>.vars.json` files. Wi
 
 When a plugin is executed, it attempts to look for a `.vars.json` file to set its values. If one doesn't exist, it will use the default values specified in the plugin's code. This logic applies to both xbar and SwiftBar. This solution allows you to use a traditional xbar `.vars.json` with SwiftBar. The only caveat to this approach is that when you select the `Run in Terminal` option, the default values are used because of the way the plugin is being invoked. I am looking for a solution to this problem.
 
-## Plugins
+## Features
+* Plugins that support environment variables will automatically create the `.vars.json` file if one doesn't exist in the config path
+* Some plugins allow you to modify settings on the fly
 
+## Plugins
 * [Network](#network)
 * [System](#system)
 * [Weather](#weather)
