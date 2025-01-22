@@ -6,9 +6,9 @@
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>fetches current rsa token, and allows you to copy your pin from keychain to your paste buffer</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
-# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/Other/gdanko-system-RsaToken.10s.py</xbar.abouturl>
+# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-RsaToken.10s.py</xbar.abouturl>
 #
-# Credit goes to Marcus D'Camp for the original, which was a shell script.
+# Credit to Marcus D'Camp for the original, which was a shell script.
 # Requirements:
 # Set up stoken with your sdtid XML file
 # stoken import --file=<PATH_TO_YOUR_SDTID_FILE>
@@ -28,10 +28,9 @@
 
 import argparse
 import os
+import plugin
 import shutil
-import subprocess
 import sys
-import re
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -41,27 +40,6 @@ def get_args():
     parser.add_argument('--next', help='Refesh the token and copy it to the clipboard', required=False, default=False, action='store_true')
     args = parser.parse_args()
     return args   
-
-def get_command_output2(command):
-    previous = None
-    for command in re.split(r'\s*\|\s*', command):
-        cmd = re.split(r'\s+', command)
-        p = subprocess.Popen(cmd, stdin=(previous.stdout if previous else None), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        previous = p
-    return p.stdout.read().strip(), p.stderr.read().strip()
-
-def get_command_output(command, input=None):
-    previous = None
-    for command in re.split(r'\s*\|\s*', command):
-        cmd = re.split(r'\s+', command)
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        stdin = input if input else (previous.stdout.read().strip() if previous else None)
-        if stdin:
-            p.stdin.write(stdin)
-            p.stdin.close()
-        input = None
-        previous = p
-    return p.stdout.read().strip(), p.stderr.read().strip()
 
 def setup():
     brew = shutil.which('brew')
@@ -73,13 +51,13 @@ def setup():
         return 'stoken not installed - brew install stoken'
 
 def refresh_token():
-    output, error = get_command_output('security find-generic-password -w -s rsatoken | stoken --stdin')
+    output, error = plugin.get_command_output('security find-generic-password -w -s rsatoken | stoken --stdin')
     if error:
         return None, error
     return output, None
 
 def get_item(key):
-    output, error = get_command_output(f'security find-generic-password -w -s {key}')
+    output, error = plugin.get_command_output(f'security find-generic-password -w -s {key}')
     if error:
         return None, error
     return output, None
@@ -99,11 +77,14 @@ def get_data():
     return output, errors
 
 def pbcopy(text):
-    get_command_output('pbcopy', input=text)
+    plugin.get_command_output('pbcopy', input=text)
     
 def main():
     os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
-    plugin = os.path.abspath(sys.argv[0])
+    invoker, config_dir = plugin.get_config_dir()
+    invoker='SwiftBar'
+    plugin_name = os.path.abspath(sys.argv[0])
+    emojize = ' | emojize=true symbolize=false' if invoker == 'SwiftBar' else ''
     error = setup()
     if error:
         print('RSA Token Error')
@@ -132,13 +113,13 @@ def main():
             print('---')
             print(output['token'])
             print('---')
-            print(f':scissors: | shell="{plugin}" | param1="--token" | terminal=false | refresh=true')
+            print(f':scissors: | bash="{plugin_name}" param1="--token" terminal=false refresh=true{emojize}')
             print('---')
-            print(f':fast_forward: | shell="{plugin}" | param1="--refresh" | terminal=false | refresh=true')
+            print(f':fast_forward: | bash="{plugin_name}" param1="--refresh" terminal=false refresh=true{emojize}')
             print('---')
-            print(f':man: | shell="{plugin}" | param1="--snad" | terminal=false | refresh=true')
+            print(f':man: | bash="{plugin_name}" param1="--snad" | terminal=false refresh=true{emojize}')
             print('---')
-            print(f':key: | shell="{plugin}" | param1="--ldap" | terminal=false | refresh=true')
+            print(f':key: | bash="{plugin_name}" param1="--ldap" terminal=false refresh=true{emojize}')
             print('---')
             print('Refresh | refresh=true')
 
