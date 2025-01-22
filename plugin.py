@@ -3,6 +3,7 @@ import datetime
 import getpass
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -43,15 +44,18 @@ def get_signal_map():
         'SIGUSR2': signal.SIGUSR2,
     }
 
-def get_command_output(command):
-    proc = subprocess.Popen(
-        command,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    stdout, stderr = proc.communicate()
-    return stdout.strip().decode(), stderr.strip().decode()
+def get_command_output(command, input=None):
+    previous = None
+    for command in re.split(r'\s*\|\s*', command):
+        cmd = re.split(r'\s+', command)
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        stdin = input if input else (previous.stdout.read().strip() if previous else None)
+        if stdin:
+            p.stdin.write(stdin)
+            p.stdin.close()
+        input = None
+        previous = p
+    return p.stdout.read().strip(), p.stderr.read().strip()
 
 def read_config(vars_file, default_values):
     if os.path.exists(vars_file):
