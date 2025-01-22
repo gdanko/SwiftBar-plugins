@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>WiFi Signal</xbar.title>
-# <xbar.version>v0.1.0</xbar.version>
+# <xbar.version>v0.2.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the current WiFi signal strength</xbar.desc>
@@ -9,19 +9,20 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/Network/gdanko-network-WifiSignal.30s.py</xbar.abouturl>
 # <xbar.var>string(VAR_WIFI_STATUS_INTERFACE="en0"): The network interface to measure.</xbar.var>
 
-import datetime
 import json
 import os
+import plugin
 import re
-import subprocess
+import sys
 import time
 
-def get_timestamp(timestamp):
-    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
-
-def get_defaults():
-    interface = os.getenv('VAR_WIFI_STATUS_INTERFACE', 'en0') 
-    return interface
+def get_defaults(config_dir, plugin_name):
+    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
+    default_values = {
+        'VAR_WIFI_STATUS_INTERFACE': 'en0',
+    }
+    defaults = plugin.read_config(vars_file, default_values)
+    return defaults['VAR_WIFI_STATUS_INTERFACE']
 
 def get_profiler_data(stdout):
     try:
@@ -31,18 +32,14 @@ def get_profiler_data(stdout):
         return None, f'Failed to parse the JSON from system_profiler: {e}'
 
 def main():
-    interface = get_defaults()
-
-    p = subprocess.Popen(
-        ['/usr/sbin/system_profiler', 'SPAirPortDataType', '-json', 'detailLevel', 'basic'],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    stdout, stderr = p.communicate()
+    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
+    invoker, config_dir = plugin.get_config_dir()
+    plugin_name = os.path.abspath(sys.argv[0])
+    interface = get_defaults(config_dir, os.path.basename(plugin_name))
+    stdout, _ = plugin.get_command_output('system_profiler SPAirPortDataType -json detailLevel basic')
     my_interface = None
     rating = 'Unknown'
-    if p.returncode == 0:
+    if stdout:
         profiler_data, err = get_profiler_data(stdout)
         if err is not None:
             print('WiFi status: N/A')
@@ -87,8 +84,9 @@ def main():
                                         rating = 'Unknown'
                                     print(f'WiFI: {ssid} - {rating}')
                                     print('---')
-                                    print(f'Updated {get_timestamp(int(time.time()))}')
+                                    print(f'Updated {plugin.get_timestamp(int(time.time()))}')
                                     print('---')
+                                    print(f'Device: {interface}')
                                     print(f'Channel: {channel}')
                                     print(f'Mode: {mode}')
                                     print(f'Signal: {signal} dBm ({rating})')
