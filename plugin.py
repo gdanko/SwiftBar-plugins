@@ -92,9 +92,16 @@ def get_config_dir():
         return None
     if stdout:
         if stdout == '/Applications/xbar.app/Contents/MacOS/xbar':
-            return os.path.basename(stdout), os.path.dirname(os.path.abspath(sys.argv[0]))
+            config_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+            return os.path.basename(stdout), config_path
         elif stdout == '/Applications/SwiftBar.app/Contents/MacOS/SwiftBar':
-            return os.path.basename(stdout), os.path.join(Path.home(), '.config', 'SwiftBar')
+            config_path = os.path.join(Path.home(), '.config', 'SwiftBar')
+            if not os.path.exists(config_path):
+                try:
+                    os.makedirs(config_path)
+                except:
+                    pass
+            return os.path.basename(stdout), config_path
     return 'local', Path.home()
 
 def get_process_icon(process_owner, click_to_kill):
