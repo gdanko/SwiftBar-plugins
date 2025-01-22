@@ -8,6 +8,7 @@
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/Other/gdanko-system-RsaToken.10s.py</xbar.abouturl>
 #
+# Credit goes to Marcus D'Camp for the original, which was a shell script.
 # Requirements:
 # Set up stoken with your sdtid XML file
 # stoken import --file=<PATH_TO_YOUR_SDTID_FILE>
@@ -41,21 +42,26 @@ def get_args():
     args = parser.parse_args()
     return args   
 
-def get_command_output(command, input=None):
-    # input = f'"{input}"'
+def get_command_output2(command):
     previous = None
     for command in re.split(r'\s*\|\s*', command):
         cmd = re.split(r'\s+', command)
-        stdin = input if input else (previous.stdout if previous else None)
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(cmd, stdin=(previous.stdout if previous else None), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        previous = p
+    return p.stdout.read().strip(), p.stderr.read().strip()
+
+def get_command_output(command, input=None):
+    previous = None
+    for command in re.split(r'\s*\|\s*', command):
+        cmd = re.split(r'\s+', command)
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        stdin = input if input else (previous.stdout.read().strip() if previous else None)
         if stdin:
             p.stdin.write(stdin)
             p.stdin.close()
         input = None
-
-        # p = subprocess.Popen(cmd, stdin=(previous.stdout if previous else None), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         previous = p
-    return p.stdout.read().strip().decode(), p.stderr.read().strip().decode()
+    return p.stdout.read().strip(), p.stderr.read().strip()
 
 def setup():
     brew = shutil.which('brew')
@@ -93,7 +99,7 @@ def get_data():
     return output, errors
 
 def pbcopy(text):
-    output, error = get_command_output('pbcopy', input=text)
+    get_command_output('pbcopy', input=text)
     
 def main():
     os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
@@ -119,16 +125,16 @@ def main():
                 pbcopy(output['snad'])
             elif args.ldap:
                 pbcopy(output['snc.bssh.ldap_pass'])
-            # elif args.next:
-            #     token, error = 
+            elif args.next:
+                refresh_token()
+
             print('RSA Token')
             print('---')
             print(output['token'])
             print('---')
-            # print(f':scissors: | shell=/bin/bash | param1="-c" | param2="echo -n {output["rsatoken-pin"]}{output["token"]} | pbcopy" | terminal=false | refresh=true')
             print(f':scissors: | shell="{plugin}" | param1="--token" | terminal=false | refresh=true')
             print('---')
-            print(f':fast_forward: - Coming soon')
+            print(f':fast_forward: | shell="{plugin}" | param1="--refresh" | terminal=false | refresh=true')
             print('---')
             print(f':man: | shell="{plugin}" | param1="--snad" | terminal=false | refresh=true')
             print('---')
