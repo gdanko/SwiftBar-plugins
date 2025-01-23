@@ -51,16 +51,16 @@ def setup():
         return 'stoken not installed - brew install stoken'
 
 def refresh_token():
-    output, error = plugin.get_command_output('security find-generic-password -w -s rsatoken | stoken --stdin')
-    if error:
-        return None, error
-    return output, None
+    returncode, stdout, stderr = plugin.execute_command('security find-generic-password -w -s rsatoken | stoken --stdin')
+    if stderr:
+        return None, stderr
+    return stdout, None
 
 def get_item(key):
-    output, error = plugin.get_command_output(f'security find-generic-password -w -s {key}')
-    if error:
-        return None, error
-    return output, None
+    returncode, stdout, stderr = plugin.execute_command(f'security find-generic-password -w -s {key}')
+    if stderr:
+        return None, stderr
+    return stdout, None
 
 def get_data():
     errors = []
@@ -73,16 +73,14 @@ def get_data():
         output[key], error =  get_item(key)
         if error:
             errors.append(f'Failed to retrieve "{key}": {error}')
-    
     return output, errors
 
 def pbcopy(text):
-    plugin.get_command_output('pbcopy', input=text)
+    plugin.execute_command('pbcopy', input=text)
     
 def main():
     os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
     invoker, config_dir = plugin.get_config_dir()
-    invoker='SwiftBar'
     plugin_name = os.path.abspath(sys.argv[0])
     emojize = ' | emojize=true symbolize=false' if invoker == 'SwiftBar' else ''
     error = setup()
@@ -117,7 +115,7 @@ def main():
             print('---')
             print(f':fast_forward: | bash="{plugin_name}" param1="--refresh" terminal=false refresh=true{emojize}')
             print('---')
-            print(f':man: | bash="{plugin_name}" param1="--snad" | terminal=false refresh=true{emojize}')
+            print(f':man: | bash="{plugin_name}" param1="--snad" terminal=false refresh=true{emojize}')
             print('---')
             print(f':key: | bash="{plugin_name}" param1="--ldap" terminal=false refresh=true{emojize}')
             print('---')
