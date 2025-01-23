@@ -6,7 +6,7 @@
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the current WiFi signal strength</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
-# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/Network/gdanko-network-WifiSignal.30s.py</xbar.abouturl>
+# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/gdanko-network-WifiSignal.30s.py</xbar.abouturl>
 # <xbar.var>string(VAR_WIFI_STATUS_INTERFACE="en0"): The network interface to measure.</xbar.var>
 
 import json
@@ -36,7 +36,7 @@ def main():
     invoker, config_dir = plugin.get_config_dir()
     plugin_name = os.path.abspath(sys.argv[0])
     interface = get_defaults(config_dir, os.path.basename(plugin_name))
-    stdout, _ = plugin.get_command_output('system_profiler SPAirPortDataType -json detailLevel basic')
+    returncode, stdout, _ = plugin.execute_command('system_profiler SPAirPortDataType -json detailLevel basic')
     my_interface = None
     rating = 'Unknown'
     if stdout:
