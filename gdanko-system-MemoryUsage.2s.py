@@ -6,7 +6,7 @@
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show system memery usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
-# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-MemoryUsage.2s.py</xbar.abouturl>
+# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-MemoryUsage.2s.py</xbar.abouturl>
 # <xbar.var>string(VAR_MEM_USAGE_CLICK_TO_KILL="false"): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_KILL_SIGNAL=<int>): The Darwin kill signal to use when killing a process</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_MAX_CONSUMERS=<int>): Maximum number of offenders to display</xbar.var>
@@ -53,7 +53,7 @@ def get_defaults(config_dir, plugin_name):
 
 def get_memory_details():
     command = f'system_profiler SPMemoryDataType -json'
-    stdout, stderr = plugin.get_command_output(command)
+    returncode, stdout, stderr = plugin.execute_command(command)
     if stdout:
         try:
             json_data = json.loads(stdout)
@@ -67,7 +67,7 @@ def get_memory_details():
 def get_top_memory_usage():
     memory_info = []
     command = f'ps -axm -o rss,pid,user,comm | tail -n+2'
-    stdout, _ = plugin.get_command_output(command)
+    returncode, stdout, _ = plugin.execute_command(command)
     if stdout:
         lines = stdout.strip().split('\n')
         for line in lines:

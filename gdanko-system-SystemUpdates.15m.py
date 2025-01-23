@@ -6,7 +6,7 @@
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the number of available system updates</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
-# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-SystemUpdates.15m.py</xbar.abouturl>
+# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-SystemUpdates.15m.py</xbar.abouturl>
 
 import os
 import plugin
@@ -16,7 +16,7 @@ def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     updates = 0
     command = f'softwareupdate --list'
-    stdout, stderr = plugin.get_command_output(command)
+    returncode, stdout, stderr = plugin.execute_command(command)
     if stdout:
         lines = stdout.split('\n')
         for line in lines:

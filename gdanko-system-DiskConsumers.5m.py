@@ -6,7 +6,7 @@
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show files and directories using the most disk space for a given path</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
-# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-DiskConsumers.5m.py</xbar.abouturl>
+# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-DiskConsumers.5m.py</xbar.abouturl>
 # <xbar.var>string(VAR_DISK_CONSUMERS_PATHS="/"): A comma-delimited list of mount points</xbar.var>
 
 import os
@@ -26,7 +26,7 @@ def get_defaults(config_dir, plugin_name):
 def get_consumers(path):
     consumers = []
     command = f'find {path} -depth 1 -exec du -sk {{}} \;'
-    stdout, _ = plugin.get_command_output(command)
+    returncode, stdout, _ = plugin.execute_command(command)
     if stdout:
         lines = stdout.strip().split('\n')
         for line in lines:

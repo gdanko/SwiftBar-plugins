@@ -6,7 +6,7 @@
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display CPU % for user, system, and idle</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
-# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-CpuPercent.2s.py</xbar.abouturl>
+# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-CpuPercent.2s.py</xbar.abouturl>
 # <xbar.var>string(VAR_CPU_USAGE_CLICK_TO_KILL="false"): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
 # <xbar.var>string(VAR_CPU_USAGE_KILL_SIGNAL=<int>): The Darwin kill signal to use when killing a process</xbar.var>
 # <xbar.var>string(VAR_CPU_USAGE_MAX_CONSUMERS=<int>): Maximum number of offenders to display</xbar.var>
@@ -121,7 +121,7 @@ def combine_stats(cpu_time_stats, cpu_type):
 def get_top_cpu_usage():
     cpu_info = []
     command = f'ps -axm -o %cpu,pid,user,comm | tail -n+2'
-    stdout, _ = plugin.get_command_output(command)
+    returncode, stdout, _ = plugin.execute_command(command)
     if stdout:
         lines = stdout.strip().split('\n')
         for line in lines:

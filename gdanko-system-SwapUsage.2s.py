@@ -6,7 +6,7 @@
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show system swap usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
-# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/System/gdanko-system-SwapUsage.2s.py</xbar.abouturl>
+# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-SwapUsage.2s.py</xbar.abouturl>
 # <xbar.var>string(VAR_SWAP_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 
 from collections import namedtuple
@@ -34,7 +34,7 @@ def get_defaults(config_dir, plugin_name):
 
 def get_swap_usage():
     command = 'sysctl -n vm.swapusage'
-    stdout, _ = plugin.get_command_output(command)
+    returncode, stdout, _ = plugin.execute_command(command)
     match = re.search(r'^total = (\d+\.\d+)M\s+used = (\d+\.\d+)M\s+free = (\d+\.\d+)M\s+', stdout)
     if match:
         total = int(float(match.group(1))) * 1024 * 1024
