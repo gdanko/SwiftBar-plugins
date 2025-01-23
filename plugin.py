@@ -8,6 +8,51 @@ import signal
 import subprocess
 import sys
 import time
+import typing
+
+class Params(typing.TypedDict, total=False):
+    """
+    A set of optional parameters for menu items.
+    See https://github.com/swiftbar/SwiftBar#parameters for descriptions.
+    """
+
+    # Text Formatting:
+    ansi: bool
+    color: str
+    emojize: bool
+    font: str
+    length: int
+    md: bool
+    sfcolor: str
+    sfsize: int
+    size: int
+    symbolize: bool
+    trim: bool
+
+    # Visuals:
+    alternate: bool
+    checked: bool
+    dropdown: bool
+    image: str
+    sfimage: str
+    templateImage: str
+    tooltip: str
+
+    # Actions:
+    cmd: list
+    refresh: bool
+    href: str
+    shortcut: str
+    bash: str
+    shell: str
+    terminal: bool
+
+class Writer(typing.Protocol):
+    """
+    Anything that supports write.
+    """
+
+    def write(self, _: str, /) -> int: ...
 
 def get_signal_map():
     return {
@@ -89,7 +134,7 @@ def update_setting(config_dir, plugin_name, key, value):
 def get_config_dir():
     ppid = os.getppid()
     returncode, stdout, stderr = execute_command(f'/bin/ps -o command -p {ppid} | tail -n+2')
-    if stderr:
+    if returncode != 0 or stderr:
         return None
     if stdout:
         if stdout == '/Applications/xbar.app/Contents/MacOS/xbar':
@@ -119,6 +164,7 @@ def get_sysctl(metric):
     returncode, stdout, stderr = execute_command(command)
     return stdout
 
+# Formatting functions
 def byte_converter(bytes, unit):
     suffix = 'B'
     prefix = unit[0]
@@ -154,6 +200,7 @@ def format_number(size):
     else:
         return byte_converter(size, "Gi")
 
+# Conversion functions
 def pad_float(number):
     return '{:.2f}'.format(float(number))
 
@@ -174,3 +221,32 @@ def unix_to_human(timestamp):
 
 def float_to_pct(number):
     return f'{number:.2%}'
+
+def print_menu_title(title: str, *, out: Writer = sys.stdout, **params: Params) -> None:
+    """
+    Print a menu title.
+    """
+
+    params_str = ' '.join(f'{k}={v}' for k, v in params.items())
+    print(f'{title} | {params_str}', file=out)
+
+def print_menu_item(text: str, *, out: Writer=sys.stdout, **params: Params) ->None:
+    # https://github.com/tmzane/swiftbar-plugins
+    # If python >= 3.11, we can replace **params: Params with **params: typing.Unpack[Params]
+    """
+    Print a menu item.
+    """
+    if 'cmd' in params and type(params['cmd']) == list and len(params['cmd']) > 0:
+        params['bash'] = params['cmd'][0]
+        for i, arg in enumerate(params['cmd'][1:]):
+            params[f'param{i}'] = arg
+        params.pop('cmd')
+    params_str = ' '.join(f'{k}={v}' for k, v in params.items())
+    print(f'{text} | {params_str}', file=out)
+
+def print_menu_separator(*, out: Writer = sys.stdout) -> None:
+    """
+    Print a menu separator.
+    """
+
+    print('---', file=out)
