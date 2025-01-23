@@ -6,7 +6,7 @@
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show the current network throughput for a given interface</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
-# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/Network/gdanko-network-NetworkThroughput.2s.py</xbar.abouturl>
+# <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/gdanko-network-NetworkThroughput.2s.py</xbar.abouturl>
 # <xbar.var>string(VAR_NET_THROUGHPUT_INTERFACE="en0"): The network interface to measure.</xbar.var>
 # <xbar.var>string(VAR_NET_THROUGHPUT_VERBOSE="false"): Show more verbose detail.</xbar.var>
 
@@ -70,7 +70,7 @@ def get_data(interface=None):
 def get_interface_data(interface):
     flags, mac, inet, inet6 = None, None, None, None
     command = f'ifconfig {interface}'
-    stdout, _ = plugin.get_command_output(command)
+    returncode, stdout, _ = plugin.execute_command(command)
     if stdout:
         match = re.findall(r'flags=\d+\<([A-Z0-9,]+)\>', stdout, re.MULTILINE)
         if match:
@@ -87,7 +87,7 @@ def get_interface_data(interface):
     return get_interface_data_tuple(interface=interface, flags=flags, mac=mac, inet=inet, inet6=inet6)
 
 def get_public_ip():
-    stdout, _ = plugin.get_command_output('curl https://ifconfig.io')
+    returncode, stdout, _ = plugin.execute_command('curl https://ifconfig.io')
     return stdout if stdout else None
  
 def main():
