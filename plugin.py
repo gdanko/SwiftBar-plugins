@@ -44,18 +44,15 @@ def get_signal_map():
         'SIGUSR2': signal.SIGUSR2,
     }
 
-def get_command_output(command, input=None):
-    previous = None
+def execute_command(command, input=None):
     for command in re.split(r'\s*\|\s*', command):
-        cmd = re.split(r'\s+', command)
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        stdin = input if input else (previous.stdout.read().strip() if previous else None)
-        if stdin:
-            p.stdin.write(stdin)
-            p.stdin.close()
-        input = None
-        previous = p
-    return p.stdout.read().strip(), p.stderr.read().strip()
+        p = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate(input=input.encode('utf-8') if input else None)
+        stdout = stdout.decode('utf-8').strip()
+        stderr = stderr.decode('utf-8').strip()
+        if stdout:
+            input = stdout
+    return p.returncode, stdout, stderr
 
 def read_config(vars_file, default_values):
     if os.path.exists(vars_file):
@@ -91,7 +88,7 @@ def update_setting(config_dir, plugin_name, key, value):
 
 def get_config_dir():
     ppid = os.getppid()
-    stdout, stderr = get_command_output(f'/bin/ps -o command -p {ppid} | tail -n+2')
+    returncode, stdout, stderr = execute_command(f'/bin/ps -o command -p {ppid} | tail -n+2')
     if stderr:
         return None
     if stdout:
@@ -119,7 +116,7 @@ def get_process_icon(process_owner, click_to_kill):
 
 def get_sysctl(metric):
     command = f'sysctl -n {metric}'
-    stdout, stderr = get_command_output(command)
+    returncode, stdout, stderr = execute_command(command)
     return stdout
 
 def byte_converter(bytes, unit):
