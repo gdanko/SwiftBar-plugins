@@ -53,6 +53,9 @@ class Plugin:
         self.font = 'AndaleMono'
         self.size = 13
 
+        self.success = True
+        self.error_messages = []
+
         self.configuration = {}
         self.plugin_name = os.path.abspath(sys.argv[0])
         self.plugin_basename = os.path.basename(self.plugin_name)
