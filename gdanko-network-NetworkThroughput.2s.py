@@ -48,10 +48,6 @@ def get_io_counter_tuple(interface=None, bytes_sent=0, bytes_recv=0, packets_sen
     net_io = namedtuple('net_io', 'interface bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')
     return net_io(interface=interface, bytes_sent=bytes_sent, bytes_recv=bytes_recv, packets_sent=packets_sent, packets_recv=packets_recv, errin=errin, errout=errout, dropin=dropin, dropout=dropout)
 
-def get_percent_stats_tuple(cpu='cpu-total', user=0.0, system=0.0, idle=0.0, nice=0.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guestnice=0.0):
-    cpu_percent = namedtuple('cpu_percent', 'cpu user system idle nice iowait irq softirq steal guest guestnice')
-    return cpu_percent(cpu=cpu, user=user, system=system, idle=idle, nice=nice, iowait=iowait, irq=irq, softirq=softirq, steal=steal, guest=guest, guestnice=guestnice)
-
 def get_interface_data_tuple(interface=None, flags=None, mac=None, inet=None, inet6=None):
     interface_data = namedtuple('interface_data', 'interface flags mac inet inet6')
     return interface_data(interface=interface, flags=flags, mac=mac, inet=inet, inet6=inet6)
