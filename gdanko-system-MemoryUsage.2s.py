@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Memory Usage</xbar.title>
-# <xbar.version>v0.3.0</xbar.version>
+# <xbar.version>v0.3.1</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show system memery usage in the format used/total</xbar.desc>
@@ -29,9 +29,9 @@ def configure():
     args = parser.parse_args()
     return args
 
-def get_memory_tuple(total=None, available=None, percent=None, used=None, free=None, active=None, inactive=None, wired=None):
-    svmem = namedtuple('svmem', 'total available percent used free active inactive wired')
-    return svmem(total=total, available=available, percent=percent, used=used, free=free, active=active, inactive=inactive, wired=wired)
+def get_memory_tuple(total=None, available=None, percent=None, used=None, free=None, active=None, inactive=None, wired=None, speculative=None):
+    svmem = namedtuple('svmem', 'total available percent used free active inactive wired speculative')
+    return svmem(total=total, available=available, percent=percent, used=used, free=free, active=active, inactive=inactive, wired=wired, speculative=speculative)
 
 def get_memory_pressure_value(pagesize, pattern, string):
     match = re.search(pattern, string)
@@ -98,8 +98,9 @@ def virtual_memory():
         free=memory_pressure_output['free'],
         active=memory_pressure_output['active'],
         inactive=memory_pressure_output['inactive'],
-        wired=memory_pressure_output['wired']
-    )    
+        wired=memory_pressure_output['wired'],
+        speculative=memory_pressure_output['speculative'],
+    )
 
 def get_top_memory_usage():
     memory_info = []
@@ -175,6 +176,7 @@ def main():
         memory_output['Active'] = util.format_number(mem.active)
         memory_output['Inactive'] = util.format_number(mem.inactive)
         memory_output['Wired'] = util.format_number(mem.wired)
+        memory_output['Speculative'] = util.format_number(mem.speculative)
         plugin.print_ordered_dict(memory_output, justify='left')
 
         top_memory_consumers = get_top_memory_usage()
