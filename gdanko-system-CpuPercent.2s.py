@@ -12,7 +12,10 @@
 # <xbar.var>string(VAR_CPU_USAGE_MAX_CONSUMERS=<int>): Maximum number of offenders to display</xbar.var>
 
 from collections import namedtuple
+from swiftbar import util
+from swiftbar.plugin import Plugin
 import argparse
+import json
 import os
 import plugin
 import re
@@ -21,7 +24,7 @@ import sys
 import time
 
 try:
-    from psutil import cpu_freq, cpu_times, cpu_times_percent
+    from psutil import cpu_freq, cpu_times_percent
 except ModuleNotFoundError:
     print('Error: missing "psutil" library.')
     print('---')
@@ -89,16 +92,6 @@ def get_time_stats_tuple(cpu='cpu-total', cpu_type=None, user=0.0, system=0.0, i
     cpu_times = namedtuple('cpu_times', 'cpu cpu_type user system idle nice iowait irq softirq steal guest guestnice')
     return cpu_times(cpu=cpu, cpu_type=cpu_type, user=user, system=system, idle=idle, nice=nice, iowait=iowait, irq=irq, softirq=softirq, steal=steal, guest=guest, guestnice=guestnice)
 
-def get_defaults(config_dir, plugin_name):
-    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
-    default_values = {
-        'VAR_CPU_USAGE_CLICK_TO_KILL': 'true',
-        'VAR_CPU_USAGE_KILL_SIGNAL': 'SIGQUIT',
-        'VAR_CPU_USAGE_MAX_CONSUMERS': 30,
-    }
-    defaults = plugin.read_config(vars_file, default_values)
-    return True if defaults['VAR_CPU_USAGE_CLICK_TO_KILL'] == 'true' else False, defaults['VAR_CPU_USAGE_KILL_SIGNAL'], int(defaults['VAR_CPU_USAGE_MAX_CONSUMERS'])
-
 def combine_stats(cpu_time_stats, cpu_type):
     idle      = 0.0
     nice      = 0.0
@@ -121,8 +114,8 @@ def combine_stats(cpu_time_stats, cpu_type):
 def get_top_cpu_usage():
     cpu_info = []
     command = f'ps -axm -o %cpu,pid,user,comm | tail -n+2'
-    returncode, stdout, _ = plugin.execute_command(command)
-    if stdout:
+    retcode, stdout, _ = plugin.execute_command(command)
+    if retcode == 0:
         lines = stdout.strip().split('\n')
         for line in lines:
             match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
@@ -138,25 +131,43 @@ def get_top_cpu_usage():
 
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
-    invoker, config_dir = plugin.get_config_dir()
-    plugin_name = os.path.abspath(sys.argv[0])
+    plugin = Plugin()
+    defaults_dict = {
+        'VAR_CPU_USAGE_CLICK_TO_KILL': {
+            'default_value': True,
+            'valid_values': [True, False],
+        },
+        'VAR_CPU_USAGE_DEBUG_ENABLED': {
+            'default_value': False,
+            'valid_values': [True, False],
+        },
+        'VAR_CPU_USAGE_KILL_SIGNAL': {
+            'default_value': 'SIGQUIT',
+            'valid_values': list(util.get_signal_map().keys()),
+        },
+        'VAR_CPU_USAGE_MAX_CONSUMERS': {
+            'default_value': 30,
+        }
+    }
+
     args = configure()
     if args.enable:
-        plugin.update_setting(config_dir, os.path.basename(plugin_name), 'VAR_CPU_USAGE_CLICK_TO_KILL', 'true')
+        plugin.update_setting('VAR_CPU_USAGE_CLICK_TO_KILL', True)
     elif args.disable:
-        plugin.update_setting(config_dir, os.path.basename(plugin_name), 'VAR_CPU_USAGE_CLICK_TO_KILL', 'false')
+        plugin.update_setting('VAR_CPU_USAGE_CLICK_TO_KILL', False)
     elif args.signal:
-        plugin.update_setting(config_dir, os.path.basename(plugin_name), 'VAR_CPU_USAGE_KILL_SIGNAL', args.signal)
+        plugin.update_setting('VAR_CPU_USAGE_KILL_SIGNAL', args.signal)
     elif args.max_consumers > 0:
-        plugin.update_setting(config_dir, os.path.basename(plugin_name), 'VAR_CPU_USAGE_MAX_CONSUMERS', args.max_consumers)
+        plugin.update_setting('VAR_CPU_USAGE_MAX_CONSUMERS', args.max_consumers)
         
-    click_to_kill, signal, max_consumers = get_defaults(config_dir, os.path.basename(plugin_name))
+    plugin.read_config(defaults_dict)
+    click_to_kill = plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL']
+    debug_enabled = plugin.configuration['VAR_CPU_USAGE_DEBUG_ENABLED']
+    signal = plugin.configuration['VAR_CPU_USAGE_KILL_SIGNAL']
+    max_consumers = plugin.configuration['VAR_CPU_USAGE_MAX_CONSUMERS']
     command_length = 125
-    font_name = 'Andale Mono'
-    font_size = 13
-    font_data = f'size="{font_size}" font="{font_name}"'
-    cpu_type = plugin.get_sysctl('machdep.cpu.brand_string')
-    cpu_family = get_cpu_family_strings().get(int(plugin.get_sysctl('hw.cpufamily')), int(plugin.get_sysctl('hw.cpufamily')))
+    cpu_type = util.get_sysctl('machdep.cpu.brand_string')
+    cpu_family = get_cpu_family_strings().get(int(util.get_sysctl('hw.cpufamily')), int(util.get_sysctl('hw.cpufamily')))
     max_cpu_freq = cpu_freq().max if cpu_freq().max is not None else None
     individual_cpu_pct = []
     combined_cpu_pct = []
@@ -167,68 +178,83 @@ def main():
         individual_cpu_pct.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
     combined_cpu_pct.append(combine_stats(individual_cpu_pct, cpu_type))
 
-    print(f'CPU: user {plugin.pad_float(combined_cpu_pct[0].user)}%, sys {plugin.pad_float(combined_cpu_pct[0].system)}%, idle {plugin.pad_float(combined_cpu_pct[0].idle)}%')
-    print('---')
-    print(f'Updated {plugin.get_timestamp(int(time.time()))}')
-    print('---')
+    plugin.print_menu_item(f'CPU: user {util.pad_float(combined_cpu_pct[0].user)}%, sys {util.pad_float(combined_cpu_pct[0].system)}%, idle {util.pad_float(combined_cpu_pct[0].idle)}%')
+    plugin.print_menu_separator()
+    plugin.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
+    plugin.print_menu_separator()
     if cpu_type is not None:
         processor = cpu_type
         if cpu_family:
             processor = processor + f' ({cpu_family})'
         if max_cpu_freq:
-            processor = processor + f' @ {plugin.pad_float(max_cpu_freq / 1000)} GHz'
-        print(f'Processor: {processor}')
+            processor = processor + f' @ {util.pad_float(max_cpu_freq / 1000)} GHz'
+        plugin.print_menu_item(f'Processor: {processor}')
         
     for cpu in individual_cpu_pct:
-        print(f'Core {cpu.cpu}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
+        plugin.print_menu_item(f'Core {str(cpu.cpu)}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
 
     top_cpu_consumers = get_top_cpu_usage()
     if len(top_cpu_consumers) > 0:
         if len(top_cpu_consumers) > max_consumers:
             top_cpu_consumers = top_cpu_consumers[0:max_consumers]
-        print(f'Top {len(top_cpu_consumers)} CPU Consumers')
+        plugin.print_menu_item(
+            f'Top {len(top_cpu_consumers)} CPU Consumers',
+        )
         for consumer in top_cpu_consumers:
             command = consumer['command']
             cpu_usage = consumer['cpu_usage']
             pid = consumer['pid']
             user = consumer['user']
             padding_width = 6
-            icon = plugin.get_process_icon(user, click_to_kill)
+            icon = util.get_process_icon(user, click_to_kill)
             cpu_usage = f'{str(cpu_usage)}%'
-            bits = [
+            cmd = ['kill', f'-{util.get_signal_map()[signal]}', pid] if click_to_kill else []
+            plugin.print_menu_item(
                 f'--{icon}{cpu_usage.rjust(padding_width)} - {command}',
-                f'bash=kill param1="{plugin.get_signal_map()[signal]}" param2="{pid}" terminal=false',
-                font_data,
-                'trim=true',
-                f'length={command_length}',
-            ]
-            if invoker == 'SwiftBar':
-                bits.append('emojize=true symbolize=false')
-            print(' | '.join(bits))
-    print('---')
-    print('Settings')
-    print(f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill" | shell="{plugin_name}" | param1={"--disable" if click_to_kill else "--enable"} | terminal=false | refresh=true')
-    print('--Kill Signal')
-    for key, _ in plugin.get_signal_map().items():
-        bits = [
-            f'----{key}',
-            f'bash="{plugin_name}" param1="--signal" param2="{key}" terminal=false',
-            'refresh=true',
-        ]
-        if key == signal:
-            bits.insert(1, 'color=blue')
-        print(' | '.join(bits))
-    print('--Maximum Number of Top Consumers')
-    for number in range(1, 51):
-        if number %5 == 0:
-            bits = [
-                f'----{number}',
-                f'bash="{plugin_name}" param1="--max-consumers" param2="{number}" terminal=false',
-                'refresh=true',
-            ]
-            if number == max_consumers:
-                bits.insert(1, 'color=blue')
-            print(' | '.join(bits))
+                cmd=cmd,
+                emojize=True,
+                length=command_length,
+                symbolize=False,
+                terminal=False,
+                trim=False,
+            )
+        plugin.print_menu_separator()
+        plugin.print_menu_item(
+            'Settings',
+        )
+        plugin.print_menu_item(
+            f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill"',
+            cmd=[plugin.plugin_name, f'{"--disable" if click_to_kill else "--enable"}'],
+            refresh=True,
+            terminal=False,
+        )
+        plugin.print_menu_item(
+            '--Kill Signal',
+        )
+        for key, _ in util.get_signal_map().items():
+            color = 'blue' if key == signal else 'black'
+            plugin.print_menu_item(
+                f'----{key}',
+                color=color,
+                cmd=[plugin.plugin_name, '--signal', key],
+                refresh=True,
+                terminal=False,
+            )
+        plugin.print_menu_item(
+            '--Maximum Number of Top Consumers',
+        )
+        for number in range(1, 51):
+            if number %5 == 0:
+                color = 'blue' if number == max_consumers else 'black'
+                plugin.print_menu_item(
+                    f'----{number}',
+                    color=color,
+                    cmd=[plugin.plugin_name, '--max-consumers', number],
+                    refresh=True,
+                    terminal=False,
+                )
+        if debug_enabled:
+            plugin.display_debug_data()
 
 if __name__ == '__main__':
     main()

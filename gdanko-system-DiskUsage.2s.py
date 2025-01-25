@@ -13,9 +13,8 @@
 # "Run in Terminal..."" currently uses the default values, not reading the config file
 
 from collections import namedtuple
-from pathlib import Path
-import datetime
-import json
+from swiftbar.plugin import Plugin
+from swiftbar import util
 import os
 import plugin
 import re
@@ -30,7 +29,7 @@ def get_partion_tuple(device=None, mountpoint=None, fstype=None, opts=None):
 def get_partition_info():
     partitions = []
     returncode, stdout, _ = plugin.execute_command('mount')
-    if stdout:
+    if returncode == 0:
         entries = stdout.split('\n')
         for entry in entries:
             match = re.search(r'^(/dev/disk[s0-9]+)\s+on\s+([^(]+)\s+\((.*)\)', entry)
@@ -44,26 +43,31 @@ def get_partition_info():
                 partitions.append(get_partion_tuple(device=device, mountpoint=mountpoint, fstype=fstype, opts=opts))
     return partitions
 
-def get_defaults(config_dir, plugin_name):
-    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
-    default_values = {
-        'VAR_DISK_USAGE_MOUNTPOINTS': '/',
-        'VAR_DISK_USAGE_UNIT': 'Gi',
-    }
-    defaults = plugin.read_config(vars_file, default_values)
-    valid_units = ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
-    if not defaults['VAR_DISK_USAGE_UNIT'] in valid_units:
-        defaults['VAR_DISK_USAGE_UNIT'] = 'Gi'
-    return defaults['VAR_DISK_USAGE_MOUNTPOINTS'], defaults['VAR_DISK_USAGE_UNIT']
-
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
-    invoker, config_dir = plugin.get_config_dir()
-    plugin_name = os.path.abspath(sys.argv[0])
-    output = []
+    plugin = Plugin()
+    defaults_dict = {
+        'VAR_DISK_USAGE_DEBUG_ENABLED': {
+            'default_value': False,
+            'valid_values': [True, False],
+        },
+        'VAR_DISK_USAGE_MOUNTPOINTS': {
+            'default_value': '/',
+            'split_value': True,
+        },
+        'VAR_DISK_USAGE_UNIT': {
+            'default_value': 'Gi',
+            'valid_values': ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei'],
+        },
+    }
+    plugin.read_config(defaults_dict)
+    debug_enabled = plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED']
+    mountpoints_list = re.split(r'\s*,\s*', plugin.configuration['VAR_DISK_USAGE_MOUNTPOINTS'])
+    unit = plugin.configuration['VAR_DISK_USAGE_UNIT']
+
+    plugin_output = []
     partition_data = {}
     valid_mountpoints = []
-    mountpoints_list, unit = get_defaults(config_dir, os.path.basename(plugin_name))
     partitions = get_partition_info()
 
     for partition in partitions:
@@ -71,20 +75,20 @@ def main():
 
     for mountpoint in mountpoints_list:
         try:
-            total, used, free = shutil.disk_usage(mountpoint)
+            total, used, _ = shutil.disk_usage(mountpoint)
             if total and used:
                 valid_mountpoints.append(mountpoint)
-                total = plugin.byte_converter(total, unit)
-                used = plugin.byte_converter(used, unit)
-                output.append(f'"{mountpoint}" {used} / {total}')
+                total = util.byte_converter(total, unit)
+                used = util.byte_converter(used, unit)
+                plugin_output.append(f'"{mountpoint}" {used} / {total}')
         except:
             pass
 
-    if len(output) > 0:
-        print(f'Disk: {"; ".join(output)}')
-        print('---')
-        print(f'Updated {plugin.get_timestamp(int(time.time()))}')
-        print('---')
+    if len(plugin_output) > 0:
+        plugin.print_menu_item(f'Disk: {"; ".join(plugin_output)}')
+        plugin.print_menu_separator()
+        plugin.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
+        plugin.print_menu_separator()
         for valid_mountpoint in valid_mountpoints:
             print(valid_mountpoint)
             print(f'--mountpoint: {partition_data[valid_mountpoint].mountpoint}')
@@ -92,7 +96,9 @@ def main():
             print(f'--type: {partition_data[valid_mountpoint].fstype}')
             print(f'--options: {partition_data[valid_mountpoint].opts}')
     else:
-        print('Disk: Not found')
+        plugin.print_menu_item('Disk: Not found')
+    if debug_enabled:
+        plugin.display_debug_data()
 
 if __name__ == '__main__':
     main()

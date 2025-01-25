@@ -8,7 +8,8 @@
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-finance-StockIndexes.15m.py</xbar.abouturl>
 
-import plugin
+from swiftbar import util
+from swiftbar.plugin import Plugin
 import subprocess
 import sys
 import time
@@ -24,7 +25,8 @@ except ModuleNotFoundError:
     exit(1)
 
 def main():
-    output = []
+    plugin = Plugin()
+    plugin_output = []
     symbol_map = {
         'Dow': '^DJI',
         'Nasdaq': '^IXIC',
@@ -43,15 +45,15 @@ def main():
 
         if price > last:
             updown = u'\u2191'
-            pct_change = f'{plugin.pad_float((price - last) / last * 100)}%'
+            pct_change = f'{util.pad_float((price - last) / last * 100)}%'
         else:
             updown = u'\u2193'
-            pct_change = f'{plugin.pad_float((last - price) / last * 100)}%'
+            pct_change = f'{util.pad_float((last - price) / last * 100)}%'
 
-        output.append(f'{key} {updown} {pct_change}')
-    print('; '.join(output))
-    print('---')
-    print(f'Updated {plugin.get_timestamp(int(time.time()))}')
+        plugin_output.append(f'{key} {updown} {pct_change}')
+    plugin.print_menu_item('; '.join(plugin_output))
+    plugin.print_menu_separator()
+    plugin.print_menu_item  (f'Updated {util.get_timestamp(int(time.time()))}')
 
 if __name__ == '__main__':
     main()

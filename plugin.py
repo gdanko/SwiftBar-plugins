@@ -10,49 +10,49 @@ import sys
 import time
 import typing
 
-class Params(typing.TypedDict, total=False):
-    """
-    A set of optional parameters for menu items.
-    See https://github.com/swiftbar/SwiftBar#parameters for descriptions.
-    """
+# class Params(typing.TypedDict, total=False):
+#     """
+#     A set of optional parameters for menu items.
+#     See https://github.com/swiftbar/SwiftBar#parameters for descriptions.
+#     """
 
-    # Text Formatting:
-    ansi: bool
-    color: str
-    emojize: bool
-    font: str
-    length: int
-    md: bool
-    sfcolor: str
-    sfsize: int
-    size: int
-    symbolize: bool
-    trim: bool
+#     # Text Formatting:
+#     ansi: bool
+#     color: str
+#     emojize: bool
+#     font: str
+#     length: int
+#     md: bool
+#     sfcolor: str
+#     sfsize: int
+#     size: int
+#     symbolize: bool
+#     trim: bool
 
-    # Visuals:
-    alternate: bool
-    checked: bool
-    dropdown: bool
-    image: str
-    sfimage: str
-    templateImage: str
-    tooltip: str
+#     # Visuals:
+#     alternate: bool
+#     checked: bool
+#     dropdown: bool
+#     image: str
+#     sfimage: str
+#     templateImage: str
+#     tooltip: str
 
-    # Actions:
-    cmd: list
-    refresh: bool
-    href: str
-    shortcut: str
-    bash: str
-    shell: str
-    terminal: bool
+#     # Actions:
+#     cmd: list
+#     refresh: bool
+#     href: str
+#     shortcut: str
+#     bash: str
+#     shell: str
+#     terminal: bool
 
-class Writer(typing.Protocol):
-    """
-    Anything that supports write.
-    """
+# class Writer(typing.Protocol):
+#     """
+#     Anything that supports write.
+#     """
 
-    def write(self, _: str, /) -> int: ...
+#     def write(self, _: str, /) -> int: ...
 
 def get_signal_map():
     return {
@@ -138,16 +138,16 @@ def get_config_dir():
         return None
     if stdout:
         if stdout == '/Applications/xbar.app/Contents/MacOS/xbar':
-            config_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-            return os.path.basename(stdout), config_path
+            config_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+            return os.path.basename(stdout), config_dir
         elif stdout == '/Applications/SwiftBar.app/Contents/MacOS/SwiftBar':
-            config_path = os.path.join(Path.home(), '.config', 'SwiftBar')
-            if not os.path.exists(config_path):
+            config_dir = os.path.join(Path.home(), '.config', 'SwiftBar')
+            if not os.path.exists(config_dir):
                 try:
-                    os.makedirs(config_path)
+                    os.makedirs(config_dir)
                 except:
                     pass
-            return os.path.basename(stdout), config_path
+            return os.path.basename(stdout), config_dir
     return 'local', Path.home()
 
 def get_process_icon(process_owner, click_to_kill):
@@ -222,31 +222,31 @@ def unix_to_human(timestamp):
 def float_to_pct(number):
     return f'{number:.2%}'
 
-def print_menu_title(title: str, *, out: Writer = sys.stdout, **params: Params) -> None:
-    """
-    Print a menu title.
-    """
+# def print_menu_title(title: str, *, out: Writer = sys.stdout, **params: Params) -> None:
+#     """
+#     Print a menu title.
+#     """
 
-    params_str = ' '.join(f'{k}={v}' for k, v in params.items())
-    print(f'{title} | {params_str}', file=out)
+#     params_str = ' '.join(f'{k}={v}' for k, v in params.items())
+#     print(f'{title} | {params_str}', file=out)
 
-def print_menu_item(text: str, *, out: Writer=sys.stdout, **params: Params) ->None:
-    # https://github.com/tmzane/swiftbar-plugins
-    # If python >= 3.11, we can replace **params: Params with **params: typing.Unpack[Params]
-    """
-    Print a menu item.
-    """
-    if 'cmd' in params and type(params['cmd']) == list and len(params['cmd']) > 0:
-        params['bash'] = params['cmd'][0]
-        for i, arg in enumerate(params['cmd'][1:]):
-            params[f'param{i}'] = arg
-        params.pop('cmd')
-    params_str = ' '.join(f'{k}={v}' for k, v in params.items())
-    print(f'{text} | {params_str}', file=out)
+# def print_menu_item(text: str, *, out: Writer=sys.stdout, **params: Params) ->None:
+#     # https://github.com/tmzane/swiftbar-plugins
+#     # If python >= 3.11, we can replace **params: Params with **params: typing.Unpack[Params]
+#     """
+#     Print a menu item.
+#     """
+#     if 'cmd' in params and type(params['cmd']) == list and len(params['cmd']) > 0:
+#         params['bash'] = params['cmd'][0]
+#         for i, arg in enumerate(params['cmd'][1:]):
+#             params[f'param{i}'] = arg
+#         params.pop('cmd')
+#     params_str = ' '.join(f'{k}={v}' for k, v in params.items())
+#     print(f'{text} | {params_str}', file=out)
 
-def print_menu_separator(*, out: Writer = sys.stdout) -> None:
-    """
-    Print a menu separator.
-    """
+# def print_menu_separator(*, out: Writer = sys.stdout) -> None:
+#     """
+#     Print a menu separator.
+#     """
 
-    print('---', file=out)
+#     print('---', file=out)

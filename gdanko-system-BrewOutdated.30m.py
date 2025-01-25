@@ -9,12 +9,11 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-BrewOutdated.30m.py</xbar.abouturl>
 
 from dataclasses import dataclass
+from swiftbar import util
+from swiftbar.plugin import Plugin
 import json
 import os
-import plugin
 import shutil
-
-from pprint import pprint
 
 @dataclass
 class Package:
@@ -28,18 +27,18 @@ def get_brew_data():
         return None, 'Homebrew isn\'t installed'
 
     command = 'brew update'
-    retcode, _, _ = plugin.execute_command(command)
+    retcode, _, _ = util.execute_command(command)
     if retcode > 0:
         return None, f'Failed to execute "{command}"'
     
     command = 'brew list --installed-on-request'
-    retcode, stdout, _ = plugin.execute_command(command)
+    retcode, stdout, _ = util.execute_command(command)
     if retcode > 0:
         return None, f'Failed to execute "{command}"'
     manually_installed = {line for line in stdout.splitlines()}
 
     command = 'brew outdated --json'
-    retcode, stdout, _ = plugin.execute_command(command)
+    retcode, stdout, _ = util.execute_command(command)
     if retcode > 0:
         return None, f'Failed to execute "{command}"'
     
@@ -56,27 +55,32 @@ def get_brew_data():
 
 def main() -> None:
     os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
-    invoker, _ = plugin.get_config_dir()
-    invoker = 'SwiftBar'
-    if invoker == 'SwiftBar':
+    plugin = Plugin()
+    defaults_dict = {
+        'BREW_OUTDATED_DEBUG_ENABLED': {
+            'default_value': False,
+            'valid_values': [True, False],
+        },
+    }
+    plugin.read_config(defaults_dict)
+    debug_enabled = plugin.configuration['BREW_OUTDATED_DEBUG_ENABLED']
+
+    if plugin.invoked_by == 'SwiftBar':
         data, err = get_brew_data()
         if err:
-            plugin.print_menu_title(title='Brew Outdated: Failure')
+            plugin.print_menu_item(title='Brew Outdated: Failure')
             plugin.print_menu_separator()
             plugin.print_menu_item(err, font='AndaleMono', size=13)
         else:
             total = len(data['Formulae']) + len(data['Casks'])
-            plugin.print_menu_title(title=f'Brew Outdated: {total}')
-            print()
+            plugin.print_menu_item(title=f'Brew Outdated: {total}')
             if total > 0:
                 plugin.print_menu_separator()
                 plugin.print_menu_item(
                     f'Update {total} package(s)',
                     cmd=['brew', 'upgrade'],
-                    font='AndaleMono',
                     refresh=True,
                     sfimage='arrow.up.square',
-                    size=13, 
                     terminal=True,
                 )
             for key, formulae in data.items():
@@ -88,16 +92,16 @@ def main() -> None:
                         plugin.print_menu_item(
                             f'Update {formula.name:<{longest_name_length}}    {formula.installed_version.rjust(7)} > {formula.current_version}',
                             cmd=['brew', 'upgrade', formula.name],
-                            font='AndaleMono',
                             refresh=True,
                             sfimage='shippingbox',
-                            size=13,
                             terminal=True,
                         )
         plugin.print_menu_separator()
+        if debug_enabled:
+            plugin.display_debug_data()
         plugin.print_menu_item('Refresh', font='AndaleMono', size=13, refresh=True)
-    elif invoker == 'xbar':
-        plugin.print_menu_title(title='Brew Outdated: Failure')
+    elif plugin.invoked_by == 'xbar':
+        plugin.print_menu_item(title='Brew Outdated: Failure')
         plugin.print_menu_separator()
         plugin.print_menu_item('I do not yet support xbar')
 
