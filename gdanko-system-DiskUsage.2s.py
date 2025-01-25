@@ -12,13 +12,20 @@
 
 # "Run in Terminal..."" currently uses the default values, not reading the config file
 
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from swiftbar.plugin import Plugin
 from swiftbar import util
+import argparse
 import os
 import re
 import shutil
 import time
+
+def configure():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
+    args = parser.parse_args()
+    return args
 
 def get_partion_tuple(device=None, mountpoint=None, fstype=None, opts=None):
     sdiskpart = namedtuple('sdiskpart', 'device mountpoint fstype opts')
@@ -59,6 +66,11 @@ def main():
         },
     }
     plugin.read_config(defaults_dict)
+    args = configure()
+    if args.debug:
+            plugin.update_setting('VAR_DISK_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED'] == False else False)
+    
+    plugin.read_config(defaults_dict)
     debug_enabled = plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED']
     mountpoints_list = re.split(r'\s*,\s*', plugin.configuration['VAR_DISK_USAGE_MOUNTPOINTS'])
     unit = plugin.configuration['VAR_DISK_USAGE_UNIT']
@@ -83,16 +95,26 @@ def main():
             pass
 
     if len(plugin_output) > 0:
-        plugin.print_menu_item(f'Disk: {"; ".join(plugin_output)}')
+        plugin.print_menu_title(f'Disk: {"; ".join(plugin_output)}')
         plugin.print_menu_separator()
         plugin.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
         plugin.print_menu_separator()
         for valid_mountpoint in valid_mountpoints:
-            print(valid_mountpoint)
-            print(f'--mountpoint: {partition_data[valid_mountpoint].mountpoint}')
-            print(f'--device: {partition_data[valid_mountpoint].device}')
-            print(f'--type: {partition_data[valid_mountpoint].fstype}')
-            print(f'--options: {partition_data[valid_mountpoint].opts}')
+            plugin.print_menu_title(valid_mountpoint)
+            mountpoint_output = OrderedDict()
+            mountpoint_output['--mountpoint'] = partition_data[valid_mountpoint].mountpoint
+            mountpoint_output['--device'] = partition_data[valid_mountpoint].device
+            mountpoint_output['--type'] = partition_data[valid_mountpoint].fstype
+            mountpoint_output['--options'] = partition_data[valid_mountpoint].opts
+            plugin.print_ordered_dict(mountpoint_output, justify='left')
+        plugin.print_menu_separator()
+        plugin.print_menu_item('Settings')
+        plugin.print_menu_item(
+            f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+            cmd=[plugin.plugin_name, '--debug'],
+            terminal=False,
+            refresh=True,
+        )
     else:
         plugin.print_menu_item('Disk: Not found')
     if debug_enabled:

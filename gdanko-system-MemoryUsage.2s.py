@@ -11,7 +11,7 @@
 # <xbar.var>string(VAR_MEM_USAGE_KILL_SIGNAL=<int>): The Darwin kill signal to use when killing a process</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_MAX_CONSUMERS=<int>): Maximum number of offenders to display</xbar.var>
 
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from swiftbar import util
 from swiftbar.plugin import Plugin
 import argparse
@@ -22,8 +22,8 @@ import time
 
 def configure():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--disable', help='Disable "Click to Kill" functionality', required=False, default=False, action='store_true')
-    parser.add_argument('--enable', help='Enable "Click to Kill" functionality', required=False, default=False, action='store_true')
+    parser.add_argument('--click-to-kill', help='Toggle "Click to kill" functionality', required=False, default=False, action='store_true')
+    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     parser.add_argument('--max-consumers', help='Maximum number of memory consumers to display', required=False, default=0, type=int)
     parser.add_argument('--signal', help='The signal level to use when killing a process', required=False)
     args = parser.parse_args()
@@ -39,8 +39,8 @@ def get_memory_pressure_value(pagesize, pattern, string):
 
 def get_memory_details():
     command = f'system_profiler SPMemoryDataType -json'
-    retcode, stdout, _ = util.execute_command(command)
-    if retcode == 0:
+    returncode, stdout, _ = util.execute_command(command)
+    if returncode == 0:
         try:
             json_data = json.loads(stdout)
             meminfo = json_data['SPMemoryDataType'][0]
@@ -53,8 +53,8 @@ def get_memory_details():
 def virtual_memory():
     # https://github.com/giampaolo/psutil/blob/master/psutil/_psosx.py
     round_ = 1
-    retcode, stdout, _ = util.execute_command('memory_pressure')
-    if retcode == 0:
+    returncode, stdout, _ = util.execute_command('memory_pressure')
+    if returncode == 0:
         memory_pressure = stdout
     else:
         return None
@@ -139,12 +139,12 @@ def main():
             'default_value': 30,
         }
     }
-
+    plugin.read_config(defaults_dict)
     args = configure()
-    if args.enable:
-        plugin.update_setting('VAR_MEM_USAGE_CLICK_TO_KILL', True)
-    elif args.disable:
-        plugin.update_setting('VAR_MEM_USAGE_CLICK_TO_KILL', False)
+    if args.click_to_kill:
+        plugin.update_setting('VAR_MEM_USAGE_CLICK_TO_KILL', True if plugin.configuration['VAR_MEM_USAGE_CLICK_TO_KILL'] == False else False)
+    elif args.debug:
+        plugin.update_setting('VAR_MEM_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_MEM_USAGE_DEBUG_ENABLED'] == False else False)
     elif args.signal:
         plugin.update_setting('VAR_MEM_USAGE_KILL_SIGNAL', args.signal)
     elif args.max_consumers > 0:
@@ -161,19 +161,21 @@ def main():
     if mem:
         used = util.format_number(mem.used)
         total = util.format_number(mem.total)
-        plugin.print_menu_item(f'Memory: {used} / {total}')
+        plugin.print_menu_title(f'Memory: {used} / {total}')
         plugin.print_menu_separator()
         plugin.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
         plugin.print_menu_separator()
+        memory_output = OrderedDict()
         if not err:
-            print(f'Memory: {memory_brand} {memory_type}')
-        print(f'Total: {util.format_number(mem.total)}')
-        print(f'Available: {util.format_number(mem.available)}')
-        print(f'Used: {util.format_number(mem.used)}')
-        print(f'Free: {util.format_number(mem.free)}')
-        print(f'Active: {util.format_number(mem.active)}')
-        print(f'Inactive: {util.format_number(mem.inactive)}')
-        print(f'Wired: {util.format_number(mem.wired)}')
+            memory_output['Memory'] = f'{memory_brand} {memory_type}'
+        memory_output['Total'] = util.format_number(mem.total)
+        memory_output['Available'] = util.format_number(mem.available)
+        memory_output['Used'] = util.format_number(mem.used)
+        memory_output['Free'] = util.format_number(mem.free)
+        memory_output['Active'] = util.format_number(mem.active)
+        memory_output['Inactive'] = util.format_number(mem.inactive)
+        memory_output['Wired'] = util.format_number(mem.wired)
+        plugin.print_ordered_dict(memory_output, justify='left')
 
         top_memory_consumers = get_top_memory_usage()
         if len(top_memory_consumers) > 0:
@@ -206,7 +208,13 @@ def main():
         plugin.print_menu_item('Settings')
         plugin.print_menu_item(
             f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill"',
-            cmd=[plugin.plugin_name, f'{"--disable" if click_to_kill else "--enable"}'],
+            cmd=[plugin.plugin_name, '--click-to-kill'],
+            terminal=False,
+            refresh=True,
+        )
+        plugin.print_menu_item(
+            f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+            cmd=[plugin.plugin_name, '--debug'],
             terminal=False,
             refresh=True,
         )

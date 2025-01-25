@@ -10,6 +10,7 @@
 
 from collections import namedtuple
 from swiftbar import util
+from swiftbar.plugin import Plugin
 import datetime
 import re
 import time
@@ -28,8 +29,8 @@ def get_duration(seconds):
         return None
 
 def get_boot_time():
-    returncode, stdout, stderr = util.execute_command('sysctl -n kern.boottime')
-    if stderr:
+    returncode, stdout, _ = util.execute_command('sysctl -n kern.boottime')
+    if returncode != 0:
         return None
     pattern = re.compile(r'sec = ([0-9]{10,13})')
     match = re.search(pattern, stdout)
@@ -46,19 +47,20 @@ def get_duration_tuple():
         return None, None
 
 def main():
+    plugin = Plugin()
     boot_time, duration_tuple = get_duration_tuple()
     if duration_tuple:
         uptime = []
         if duration_tuple.days > 0:
             uptime.append(f'{duration_tuple.days} {"day" if duration_tuple.days == 1 else "days"}')
         uptime.append(f'{str(duration_tuple.hours).zfill(2)}:{str(duration_tuple.minutes).zfill(2)}')
-        print(f'up {" ".join(uptime)}')
-        print('---')
-        print(f'Last boot: {datetime.datetime.fromtimestamp(boot_time).strftime("%Y-%m-%d %H:%M:%S")}')
+        plugin.print_menu_title(f'up {" ".join(uptime)}')
+        plugin.print_menu_separator()
+        plugin.print_menu_item(f'Last boot: {datetime.datetime.fromtimestamp(boot_time).strftime("%Y-%m-%d %H:%M:%S")}')
     else:
-        print('Uptime: N/A')
-        print('---')
-        print('Failed to determine boot time')
+        plugin.print_menu_item('Uptime: N/A')
+        plugin.print_menu_separator()
+        plugin.print_menu_item('Failed to determine boot time')
 
 if __name__ == '__main__':
     main()

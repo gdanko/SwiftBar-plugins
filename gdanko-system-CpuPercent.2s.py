@@ -79,8 +79,8 @@ def get_cpu_family_strings():
 
 def configure():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--disable', help='Disable "Click to Kill" functionality', required=False, default=False, action='store_true')
-    parser.add_argument('--enable', help='Enable "Click to Kill" functionality', required=False, default=False, action='store_true')
+    parser.add_argument('--click-to-kill', help='Toggle "Click to kill" functionality', required=False, default=False, action='store_true')
+    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     parser.add_argument('--max-consumers', help='Maximum number of CPU consumers to display', required=False, default=0, type=int)
     parser.add_argument('--signal', help='The signal level to use when killing a process', required=False)
     args = parser.parse_args()
@@ -112,8 +112,8 @@ def combine_stats(cpu_time_stats, cpu_type):
 def get_top_cpu_usage():
     cpu_info = []
     command = f'ps -axm -o %cpu,pid,user,comm | tail -n+2'
-    retcode, stdout, _ = util.execute_command(command)
-    if retcode == 0:
+    returncode, stdout, _ = util.execute_command(command)
+    if returncode == 0:
         lines = stdout.strip().split('\n')
         for line in lines:
             match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
@@ -148,11 +148,12 @@ def main():
         }
     }
 
+    plugin.read_config(defaults_dict)
     args = configure()
-    if args.enable:
-        plugin.update_setting('VAR_CPU_USAGE_CLICK_TO_KILL', True)
-    elif args.disable:
-        plugin.update_setting('VAR_CPU_USAGE_CLICK_TO_KILL', False)
+    if args.click_to_kill:
+        plugin.update_setting('VAR_CPU_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_CPU_USAGE_DEBUG_ENABLED'] == False else False)
+    elif args.debug:
+        plugin.update_setting('VAR_CPU_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_CPU_USAGE_DEBUG_ENABLED'] == False else False)
     elif args.signal:
         plugin.update_setting('VAR_CPU_USAGE_KILL_SIGNAL', args.signal)
     elif args.max_consumers > 0:
@@ -176,7 +177,7 @@ def main():
         individual_cpu_pct.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
     combined_cpu_pct.append(combine_stats(individual_cpu_pct, cpu_type))
 
-    plugin.print_menu_item(f'CPU: user {util.pad_float(combined_cpu_pct[0].user)}%, sys {util.pad_float(combined_cpu_pct[0].system)}%, idle {util.pad_float(combined_cpu_pct[0].idle)}%')
+    plugin.print_menu_title(f'CPU: user {util.pad_float(combined_cpu_pct[0].user)}%, sys {util.pad_float(combined_cpu_pct[0].system)}%, idle {util.pad_float(combined_cpu_pct[0].idle)}%')
     plugin.print_menu_separator()
     plugin.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
     plugin.print_menu_separator()
@@ -222,9 +223,15 @@ def main():
         )
         plugin.print_menu_item(
             f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill"',
-            cmd=[plugin.plugin_name, f'{"--disable" if click_to_kill else "--enable"}'],
-            refresh=True,
+            cmd=[plugin.plugin_name, '--click-to-kill'],
             terminal=False,
+            refresh=True,
+        )
+        plugin.print_menu_item(
+            f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+            cmd=[plugin.plugin_name, '--debug'],
+            terminal=False,
+            refresh=True,
         )
         plugin.print_menu_item(
             '--Kill Signal',
