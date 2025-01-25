@@ -11,6 +11,7 @@
 from dataclasses import dataclass
 from swiftbar import util
 from swiftbar.plugin import Plugin
+import argparse
 import json
 import os
 import shutil
@@ -21,6 +22,12 @@ class Package:
         self.name = name
         self.current_version = current_version
         self.installed_version = installed_versions[0]
+
+def configure():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
+    args = parser.parse_args()
+    return args
 
 def get_brew_data():
     if not shutil.which('brew'):
@@ -57,53 +64,59 @@ def main() -> None:
     os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     defaults_dict = {
-        'BREW_OUTDATED_DEBUG_ENABLED': {
+        'VAR_BREW_OUTDATED_DEBUG_ENABLED': {
             'default_value': False,
             'valid_values': [True, False],
         },
     }
     plugin.read_config(defaults_dict)
-    debug_enabled = plugin.configuration['BREW_OUTDATED_DEBUG_ENABLED']
+    args = configure()
+    if args.debug:
+        plugin.update_setting('VAR_BREW_OUTDATED_DEBUG_ENABLED', True if plugin.configuration['VAR_BREW_OUTDATED_DEBUG_ENABLED'] == False else False)
 
-    if plugin.invoked_by == 'SwiftBar':
-        data, err = get_brew_data()
-        if err:
-            plugin.print_menu_title('Brew Outdated: Failure')
-            plugin.print_menu_separator()
-            plugin.print_menu_item(err)
-        else:
-            total = len(data['Formulae']) + len(data['Casks'])
-            plugin.print_menu_title(f'Brew Outdated: {total}')
-            if total > 0:
-                plugin.print_menu_separator()
-                plugin.print_menu_item(
-                    f'Update {total} package(s)',
-                    cmd=['brew', 'upgrade'],
-                    refresh=True,
-                    sfimage='arrow.up.square',
-                    terminal=True,
-                )
-            for key, formulae in data.items():
-                if len(formulae) > 0:
-                    longest_name_length = max(len(formula.name) for formula in formulae)
-                    plugin.print_menu_separator()
-                    plugin.print_menu_item(key)
-                    for formula in formulae:
-                        plugin.print_menu_item(
-                            f'Update {formula.name:<{longest_name_length}}    {formula.installed_version.rjust(7)} > {formula.current_version}',
-                            cmd=['brew', 'upgrade', formula.name],
-                            refresh=True,
-                            sfimage='shippingbox',
-                            terminal=True,
-                        )
+    plugin.read_config(defaults_dict)
+    debug_enabled = plugin.configuration['VAR_BREW_OUTDATED_DEBUG_ENABLED']
+    data, err = get_brew_data()
+    if err:
+        plugin.print_menu_title('Brew Outdated: Failure')
         plugin.print_menu_separator()
+        plugin.print_menu_item(err)
+    else:
+        total = len(data['Formulae']) + len(data['Casks'])
+        plugin.print_menu_title(f'Brew Outdated: {total}')
+        if total > 0:
+            plugin.print_menu_separator()
+            plugin.print_menu_item(
+                f'Update {total} package(s)',
+                cmd=['brew', 'upgrade'],
+                refresh=True,
+                sfimage='arrow.up.square',
+                terminal=True,
+            )
+        for key, formulae in data.items():
+            if len(formulae) > 0:
+                longest_name_length = max(len(formula.name) for formula in formulae)
+                plugin.print_menu_separator()
+                plugin.print_menu_item(key)
+                for formula in formulae:
+                    plugin.print_menu_item(
+                        f'Update {formula.name:<{longest_name_length}}    {formula.installed_version.rjust(7)} > {formula.current_version}',
+                        cmd=['brew', 'upgrade', formula.name],
+                        refresh=True,
+                        sfimage='shippingbox',
+                        terminal=True,
+                    )
+        plugin.print_menu_separator()
+        plugin.print_menu_item('Settings')
+        plugin.print_menu_item(
+            f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+            cmd=[plugin.plugin_name, '--debug'],
+            terminal=False,
+            refresh=True,
+        )
         if debug_enabled:
             plugin.display_debug_data()
         plugin.print_menu_item('Refresh', refresh=True)
-    elif plugin.invoked_by == 'xbar':
-        plugin.print_menu_title('Brew Outdated: Failure')
-        plugin.print_menu_separator()
-        plugin.print_menu_item('I do not yet support xbar')
 
 if __name__ == '__main__':
     main()
