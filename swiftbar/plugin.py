@@ -175,10 +175,10 @@ class Plugin:
         debug_data = OrderedDict()
         debug_data['--Plugin path'] = self.plugin_name
         debug_data['--Invoked by'] = f'{self.invoked_by_full} (PID {self.invoker_pid})'
-        debug_data['--Configuration directory'] = self.config_dir
-        debug_data['--Variables file'] = self.vars_file
         debug_data['--Default font family'] = self.font
         debug_data['--Default font size'] = self.size
+        debug_data['--Configuration directory'] = self.config_dir
+        debug_data['--Variables file'] = self.vars_file
         self.print_ordered_dict(debug_data, justify='left')
         self.print_menu_item('--Variables')
         variables = OrderedDict()
