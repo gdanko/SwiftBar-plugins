@@ -30,11 +30,14 @@ except ModuleNotFoundError:
 
 def main():
     plugin = Plugin()
-    plugin.default_values = {
-        'VAR_STOCK_SYMBOLS': 'AAPL',
+    defaults_dict = {
+        'VAR_STOCK_SYMBOLS': {
+            'default_value': 'AAPL',
+            'split_value': True,
+        },
     }
-    plugin.read_config()
-    symbols = re.split(r'\*,\*', plugin.default_values['VAR_STOCK_SYMBOLS'])
+    plugin.read_config(defaults_dict)
+    symbols = re.split(r'\*,\*', plugin.configuration['VAR_STOCK_SYMBOLS'])
     plugin_output = []
     info_dict = {}
     metadata_dict = {}
@@ -63,7 +66,7 @@ def main():
         plugin_output.append(f'{symbol} {util.pad_float(price)} {updown} {updown_amount} ({pct_change}%)')
     plugin.print_menu_item('; '.join(plugin_output))
     plugin.print_menu_separator()
-    print(f'Updated {util.get_timestamp(int(time.time()))}') # this should be a util func
+    plugin.print_update_time()
     plugin.print_menu_separator()
     for i in range (len(symbols)):
         symbol = symbols[i]
@@ -164,7 +167,6 @@ def main():
             print(symbol)
             for item in plugin_output:
                 print(item)
-
     print('Refresh market data | refresh=true')
 
 if __name__ == '__main__':
