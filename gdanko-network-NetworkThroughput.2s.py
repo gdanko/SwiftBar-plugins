@@ -10,10 +10,12 @@
 # <xbar.var>string(VAR_NET_THROUGHPUT_INTERFACE="en0"): The network interface to measure.</xbar.var>
 # <xbar.var>string(VAR_NET_THROUGHPUT_VERBOSE="false"): Show more verbose detail.</xbar.var>
 
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
+from swiftbar import util
+from swiftbar.plugin import Plugin
+import argparse
 import os
 import re
-import plugin
 import subprocess
 import sys
 import time
@@ -27,14 +29,20 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
-def get_defaults(config_dir, plugin_name):
-    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
-    default_values = {
-        'VAR_NET_THROUGHPUT_INTERFACE': 'en0',
-        'VAR_NET_THROUGHPUT_VERBOSE': 'false',
-    }
-    defaults = plugin.read_config(vars_file, default_values)
-    return defaults['VAR_NET_THROUGHPUT_INTERFACE'], True if defaults['VAR_NET_THROUGHPUT_VERBOSE'] == 'true' else False
+def configure():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
+    parser.add_argument('--verbose', help='Toggle verbose mode', required=False, default=False, action='store_true')
+    parser.add_argument('--interface', help='The name of the interface to monitor', required=False)
+    args = parser.parse_args()
+    return args
+
+def find_valid_interfaces():
+    returncode, stdout, _ = util.execute_command('ifconfig')
+    if returncode == 0  and stdout:
+        pattern = r'([a-z0-9]+):\s*flags='
+        matches = re.findall(pattern, stdout)
+        return sorted(matches) if (matches and type(matches) == list) else ['l']
 
 def get_io_counter_tuple(interface=None, bytes_sent=0, bytes_recv=0, packets_sent=0, packets_recv=0, errin=0, errout=0, dropin=0, dropout=0):
     net_io = namedtuple('net_io', 'interface bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')
@@ -70,7 +78,7 @@ def get_data(interface=None):
 def get_interface_data(interface):
     flags, mac, inet, inet6 = None, None, None, None
     command = f'ifconfig {interface}'
-    returncode, stdout, _ = plugin.execute_command(command)
+    returncode, stdout, _ = util.execute_command(command)
     if stdout:
         match = re.findall(r'flags=\d+\<([A-Z0-9,]+)\>', stdout, re.MULTILINE)
         if match:
@@ -87,14 +95,40 @@ def get_interface_data(interface):
     return get_interface_data_tuple(interface=interface, flags=flags, mac=mac, inet=inet, inet6=inet6)
 
 def get_public_ip():
-    returncode, stdout, _ = plugin.execute_command('curl https://ifconfig.io')
+    returncode, stdout, _ = util.execute_command('curl https://ifconfig.io')
     return stdout if stdout else None
  
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
-    invoker, config_dir = plugin.get_config_dir()
-    plugin_name = os.path.abspath(sys.argv[0])
-    interface, verbose = get_defaults(config_dir, os.path.basename(plugin_name))
+    plugin = Plugin()
+    defaults_dict = {
+        'VAR_NET_THROUGHPUT_DEBUG_ENABLED': {
+            'default_value': False,
+            'valid_values': [True, False],
+        },
+        'VAR_NET_THROUGHPUT_INTERFACE': {
+            'default_value': 'en0',
+            'valid_values': find_valid_interfaces(),
+        },
+        'VAR_NET_THROUGHPUT_VERBOSE': {
+            'default_value': False,
+            'valid_values': [True, False],
+        },
+    }
+    plugin.read_config(defaults_dict)
+    args = configure()
+    if args.debug:
+        plugin.update_setting('VAR_NET_THROUGHPUT_DEBUG_ENABLED', True if plugin.configuration['VAR_NET_THROUGHPUT_DEBUG_ENABLED'] == False else False)
+    elif args.interface:
+        plugin.update_setting('VAR_NET_THROUGHPUT_INTERFACE', args.interface)
+    elif args.verbose:
+        plugin.update_setting('VAR_NET_THROUGHPUT_VERBOSE', True if plugin.configuration['VAR_NET_THROUGHPUT_VERBOSE'] == False else False)
+
+    plugin.read_config(defaults_dict)
+    debug_enabled = plugin.configuration['VAR_NET_THROUGHPUT_DEBUG_ENABLED']
+    interface = plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE']
+    vebose_enabled = plugin.configuration['VAR_NET_THROUGHPUT_VERBOSE']
+
     interface_data = get_interface_data(interface)
     public_ip = get_public_ip()
 
@@ -113,35 +147,63 @@ def main():
         dropin       = second_sample.dropin - first_sample.dropin,
         dropout      = second_sample.dropout - first_sample.dropout,
     )
-    print(f'{network_throughput.interface} {plugin.process_bytes(network_throughput.bytes_recv)} RX / {plugin.process_bytes(network_throughput.bytes_sent)} TX')
-    print('---')
+    plugin.print_menu_title(f'{network_throughput.interface} {util.process_bytes(network_throughput.bytes_recv)} RX / {util.process_bytes(network_throughput.bytes_sent)} TX')
+    plugin.print_menu_separator()
+    interface_output = OrderedDict()
     if interface_data.flags:
-        print(f'Flags: {interface_data.flags}')
+        interface_output['Flags'] = interface_data.flags
     if interface_data.mac:
-        print(f'Hardware Address: {interface_data.mac}')
+        interface_output['Hardware Address'] = interface_data.mac
     if interface_data.inet:
-        print(f'IPv4 Address: {interface_data.inet}')
-    if interface_data.mac:
-        print(f'IPv6 Address: {interface_data.inet6}')
+        interface_output['IPv4 Address'] = interface_data.inet
+    if interface_data.inet6:
+        interface_output['IPv6 Address'] = interface_data.inet6
     if public_ip:
-        print(f'Public Address: {public_ip}')
-    if verbose:
+        interface_output['Public IP'] = public_ip
+    if vebose_enabled:
         if network_throughput.dropin is not None:
-            print(f'Inbound Packets Dropped/sec: {network_throughput.dropin}')
+            interface_output['Inbound Packets Dropped/sec'] = network_throughput.dropin
         if network_throughput.dropout is not None:
-            print(f'Outbound Packets Dropped/sec: {network_throughput.dropout}')
+            interface_output['Outbound Packets Dropped/sec'] = network_throughput.dropout
         if network_throughput.errin is not None:
-            print(f'Inbound Errors/sec: {network_throughput.errin}')
+            interface_output['Inbound Errors/sec'] = network_throughput.errin
         if network_throughput.errout is not None:
-            print(f'Outbound Errors/sec: {network_throughput.errout}')
+            interface_output['Outbound Errors/sec'] = network_throughput.errout
         if second_sample.dropin is not None:
-            print(f'Inbound Packets Dropped (total): {second_sample.dropin}')
+            interface_output['Inbound Packets Dropped (total)'] = second_sample.dropin
         if second_sample.dropout is not None:
-            print(f'Outbound Packets Dropped (total): {second_sample.dropout}')
+            interface_output['Outbound Packets Dropped (total)'] = second_sample.dropout
         if second_sample.errin is not None:
-            print(f'Inbound Errors (total): {second_sample.errin}')
+            interface_output['Inbound Errors (total)'] = second_sample.errin
         if second_sample.errout is not None:
-            print(f'Outbound Errors (total): {second_sample.errout}')
+            interface_output['Outbound Errors (total)'] = second_sample.errout
+    plugin.print_ordered_dict(interface_output, justify='left')
+    plugin.print_menu_separator()
+    plugin.print_menu_item('Settings')
+    plugin.print_menu_item(
+        f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+        cmd=[plugin.plugin_name, '--debug'],
+        terminal=False,
+        refresh=True,
+    )
+    plugin.print_menu_item(
+        f'{"--Disable" if vebose_enabled else "--Enable"} verbose mode',
+        cmd=[plugin.plugin_name, '--verbose'],
+        terminal=False,
+        refresh=True,
+    )
+    plugin.print_menu_item('--Interface')
+    for ifname in find_valid_interfaces():
+        color = 'blue' if ifname == interface else 'black'
+        plugin.print_menu_item(
+            f'----{ifname}',
+            color=color,
+            cmd=[plugin.plugin_name, '--interface', ifname],
+            refresh=True,
+            terminal=False,
+        )
+    if debug_enabled:
+        plugin.display_debug_data()
 
 if __name__ == '__main__':
     main()
