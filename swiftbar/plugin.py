@@ -135,16 +135,16 @@ class Plugin:
         params_str = ' '.join(f'{k}={v}' for k, v in params.items())
         print(f'{text} | {params_str}', file=out)
 
-    def print_ordered_dict(self, data: OrderedDict, justify: str='right', indent:int=0, *, out: Writer=sys.stdout, **params: Params) ->None:
+    def print_ordered_dict(self, data: OrderedDict, justify: str='right', delimiter: str = '=', indent: int=0, *, out: Writer=sys.stdout, **params: Params) ->None:
         indent_str = indent * '-'
         longest = max(len(key) for key, _ in data.items())
         params['trim'] = False
         params_str = ' '.join(f'{k}={v}' for k, v in params.items())
         for k, v in data.items():
             if justify == 'left':
-                self.print_menu_item(f'{indent_str}{k.ljust(longest)} = {v} | {params_str}', **params)
+                self.print_menu_item(f'{indent_str}{k.ljust(longest)} {delimiter} {v} | {params_str}', **params)
             elif justify == 'right':
-                self.print_menu_item(f'{indent_str}{k.rjust(longest)} = {v} | {params_str}', **params)
+                self.print_menu_item(f'{indent_str}{k.rjust(longest)} {delimiter} {v} | {params_str}', **params)
 
     def print_menu_item(self, text: str, *, out: Writer=sys.stdout, **params: Params) ->None:
         # https://github.com/tmzane/swiftbar-plugins
