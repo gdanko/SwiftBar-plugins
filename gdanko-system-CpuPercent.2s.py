@@ -179,7 +179,7 @@ def main():
 
     plugin.print_menu_title(f'CPU: user {util.pad_float(combined_cpu_pct[0].user)}%, sys {util.pad_float(combined_cpu_pct[0].system)}%, idle {util.pad_float(combined_cpu_pct[0].idle)}%')
     plugin.print_menu_separator()
-    plugin.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
+    plugin.print_update_time()
     plugin.print_menu_separator()
     if cpu_type is not None:
         processor = cpu_type

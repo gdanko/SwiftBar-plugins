@@ -4,6 +4,7 @@ from swiftbar import util
 import json
 import os
 import sys
+import time
 import typing
 
 class Params(typing.TypedDict, total=False):
@@ -169,6 +170,9 @@ class Plugin:
 
     def print_menu_separator(self, *, out: Writer = sys.stdout) -> None:
         print('---', file=out)
+    
+    def print_update_time(self, *, out: Writer = sys.stdout) -> None:
+        self.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
 
     def display_debug_data(self):
         self.print_menu_item('Debugging')

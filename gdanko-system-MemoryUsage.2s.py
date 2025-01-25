@@ -163,7 +163,7 @@ def main():
         total = util.format_number(mem.total)
         plugin.print_menu_title(f'Memory: {used} / {total}')
         plugin.print_menu_separator()
-        plugin.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
+        plugin.print_update_time()
         plugin.print_menu_separator()
         memory_output = OrderedDict()
         if not err:

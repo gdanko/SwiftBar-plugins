@@ -29,7 +29,7 @@ def get_update_tuple(title=None, version=None, size=0, recommended=False, action
 
 def find_software_updates():
     updates = []
-    returncode, stdout, _ = util.execute_command('softwareupdate --list')
+    returncode, stdout, stderr = util.execute_command('softwareupdate --list')
     if returncode == 0 and stdout:
         pattern = r'Title.*'
         matches = re.findall(pattern, stdout)
@@ -54,7 +54,9 @@ def find_software_updates():
                     recommended=(True if update_dict['recommended'].lower() == 'yes' else False),
                     action=(update_dict['action'].title() if 'action' in update_dict else 'N/A'),
                 ))
-    return updates
+        return updates, None
+    else:
+        return updates, stderr
 
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
@@ -72,11 +74,11 @@ def main():
 
     plugin.read_config(defaults_dict)
     debug_enabled = plugin.configuration['VAR_SYSTEM_UPDATES_DEBUG_ENABLED']
-    updates = find_software_updates()
+    updates, error = find_software_updates()
     if len(updates) > 0:
         plugin.print_menu_title(f'Updates: {len(updates)}')
         plugin.print_menu_separator()
-        plugin.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
+        plugin.print_update_time()
         plugin.print_menu_separator()
         update_output = OrderedDict()
         for update in updates:
