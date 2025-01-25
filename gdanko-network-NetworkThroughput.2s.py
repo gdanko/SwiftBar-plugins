@@ -37,13 +37,6 @@ def configure():
     args = parser.parse_args()
     return args
 
-def find_valid_interfaces():
-    returncode, stdout, _ = util.execute_command('ifconfig')
-    if returncode == 0  and stdout:
-        pattern = r'([a-z0-9]+):\s*flags='
-        matches = re.findall(pattern, stdout)
-        return sorted(matches) if (matches and type(matches) == list) else ['l']
-
 def get_io_counter_tuple(interface=None, bytes_sent=0, bytes_recv=0, packets_sent=0, packets_recv=0, errin=0, errout=0, dropin=0, dropout=0):
     net_io = namedtuple('net_io', 'interface bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')
     return net_io(interface=interface, bytes_sent=bytes_sent, bytes_recv=bytes_recv, packets_sent=packets_sent, packets_recv=packets_recv, errin=errin, errout=errout, dropin=dropin, dropout=dropout)
@@ -104,7 +97,7 @@ def main():
         },
         'VAR_NET_THROUGHPUT_INTERFACE': {
             'default_value': 'en0',
-            'valid_values': find_valid_interfaces(),
+            'valid_values': util.find_valid_interfaces(),
         },
         'VAR_NET_THROUGHPUT_VERBOSE': {
             'default_value': False,
@@ -189,7 +182,7 @@ def main():
         refresh=True,
     )
     plugin.print_menu_item('--Interface')
-    for ifname in find_valid_interfaces():
+    for ifname in util.find_valid_interfaces():
         color = 'blue' if ifname == interface else 'black'
         plugin.print_menu_item(
             f'----{ifname}',
