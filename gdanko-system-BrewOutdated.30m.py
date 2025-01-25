@@ -27,19 +27,19 @@ def get_brew_data():
         return None, 'Homebrew isn\'t installed'
 
     command = 'brew update'
-    retcode, _, _ = util.execute_command(command)
-    if retcode > 0:
+    returncode, _, _ = util.execute_command(command)
+    if returncode > 0:
         return None, f'Failed to execute "{command}"'
     
     command = 'brew list --installed-on-request'
-    retcode, stdout, _ = util.execute_command(command)
-    if retcode > 0:
+    returncode, stdout, _ = util.execute_command(command)
+    if returncode > 0:
         return None, f'Failed to execute "{command}"'
     manually_installed = {line for line in stdout.splitlines()}
 
     command = 'brew outdated --json'
-    retcode, stdout, _ = util.execute_command(command)
-    if retcode > 0:
+    returncode, stdout, _ = util.execute_command(command)
+    if returncode > 0:
         return None, f'Failed to execute "{command}"'
     
     try:
@@ -68,12 +68,12 @@ def main() -> None:
     if plugin.invoked_by == 'SwiftBar':
         data, err = get_brew_data()
         if err:
-            plugin.print_menu_item('Brew Outdated: Failure')
+            plugin.print_menu_title('Brew Outdated: Failure')
             plugin.print_menu_separator()
             plugin.print_menu_item(err)
         else:
             total = len(data['Formulae']) + len(data['Casks'])
-            plugin.print_menu_item(f'Brew Outdated: {total}')
+            plugin.print_menu_title(f'Brew Outdated: {total}')
             if total > 0:
                 plugin.print_menu_separator()
                 plugin.print_menu_item(
@@ -101,7 +101,7 @@ def main() -> None:
             plugin.display_debug_data()
         plugin.print_menu_item('Refresh', refresh=True)
     elif plugin.invoked_by == 'xbar':
-        plugin.print_menu_item(title='Brew Outdated: Failure')
+        plugin.print_menu_title('Brew Outdated: Failure')
         plugin.print_menu_separator()
         plugin.print_menu_item('I do not yet support xbar')
 
