@@ -26,9 +26,10 @@
 
 # arm64 aarch
 
+from swiftbar import util
+from swiftbar.plugin import Plugin
 import argparse
 import os
-import plugin
 import shutil
 import sys
 
@@ -51,13 +52,13 @@ def setup():
         return 'stoken not installed - brew install stoken'
 
 def refresh_token():
-    returncode, stdout, stderr = plugin.execute_command('security find-generic-password -w -s rsatoken | stoken --stdin')
+    _, stdout, stderr = util.execute_command('security find-generic-password -w -s rsatoken | stoken --stdin')
     if stderr:
         return None, stderr
     return stdout, None
 
 def get_item(key):
-    returncode, stdout, stderr = plugin.execute_command(f'security find-generic-password -w -s {key}')
+    _, stdout, stderr = util.execute_command(f'security find-generic-password -w -s {key}')
     if stderr:
         return None, stderr
     return stdout, None
@@ -76,26 +77,32 @@ def get_data():
     return output, errors
 
 def pbcopy(text):
-    plugin.execute_command('pbcopy', input=text)
+    util.execute_command('pbcopy', input=text)
     
 def main():
     os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
-    invoker, config_dir = plugin.get_config_dir()
-    plugin_name = os.path.abspath(sys.argv[0])
-    emojize = ' | emojize=true symbolize=false' if invoker == 'SwiftBar' else ''
+    plugin = Plugin()
+
+    defaults_dict = {
+        'VAR_RSA_TOKEN_DEBUG_ENABLED': {
+            'default_value': False,
+            'valid_values': [True, False],
+        },
+    }
+    plugin.read_config(defaults_dict)
+    debug_enabled = plugin.configuration['VAR_RSA_TOKEN_DEBUG_ENABLED']
     error = setup()
     if error:
-        print('RSA Token Error')
-        print('---')
-        print(error)
-        print(os.environ['PATH'])
+        plugin.print_menu_title('RSA Token Error')
+        plugin.print_menu_separator()
+        plugin.print_menu_item(error)
     else:
         output, errors = get_data()
         if len(errors) > 0:
-            print('RSA Token Error')
-            print('---')
+            plugin.print_menu_title('RSA Token Error')
+            plugin.print_menu_separator()
             for error in errors:
-                print(error)
+                plugin.print_menu_item(error)
         else:
             args = get_args()
             if args.token:
@@ -107,19 +114,41 @@ def main():
             elif args.next:
                 refresh_token()
 
-            print('RSA Token')
-            print('---')
-            print(output['token'])
-            print('---')
-            print(f':scissors: | bash="{plugin_name}" param1="--token" terminal=false refresh=true{emojize}')
-            print('---')
-            print(f':fast_forward: | bash="{plugin_name}" param1="--refresh" terminal=false refresh=true{emojize}')
-            print('---')
-            print(f':man: | bash="{plugin_name}" param1="--snad" terminal=false refresh=true{emojize}')
-            print('---')
-            print(f':key: | bash="{plugin_name}" param1="--ldap" terminal=false refresh=true{emojize}')
-            print('---')
-            print('Refresh | refresh=true')
+            plugin.print_menu_title('RSA Token')
+            plugin.print_menu_separator()
+            plugin.print_menu_item(output['token'])
+            plugin.print_menu_separator()
+            plugin.print_menu_item(
+                'Copy PIN + token',
+                cmd=[plugin.plugin_name, '--token'],
+                terminal=False,
+                refresh=True,
+            )
+            plugin.print_menu_separator()
+            plugin.print_menu_item(
+                'Cycle token',
+                cmd=[plugin.plugin_name, '--refresh'],
+                terminal=False,
+                refresh=True,
+            )
+            plugin.print_menu_separator()
+            plugin.print_menu_item(
+                'Copy AD password',
+                cmd=[plugin.plugin_name, '--snad'],
+                terminal=False,
+                refresh=True,
+            )
+            plugin.print_menu_separator()
+            plugin.print_menu_item(
+                'Copy LDAP password',
+                cmd=[plugin.plugin_name, '--ldap'],
+                terminal=False,
+                refresh=True,
+            )
+            plugin.print_menu_separator()
+            plugin.print_menu_item('Refresh | refresh=true')
+            if debug_enabled:
+                plugin.display_debug_data()
 
 if __name__ == '__main__':
     main()
