@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Uptime</xbar.title>
-# <xbar.version>v0.2.0</xbar.version>
+# <xbar.version>v0.3.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show system uptime</xbar.desc>
@@ -11,9 +11,16 @@
 from collections import namedtuple
 from swiftbar import util
 from swiftbar.plugin import Plugin
+import argparse
 import datetime
 import re
 import time
+
+def configure():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
+    args = parser.parse_args()
+    return args
 
 def get_duration(seconds):
     try:
@@ -48,6 +55,20 @@ def get_duration_tuple():
 
 def main():
     plugin = Plugin()
+    defaults_dict = {
+        'VAR_SYSTEM_UPTIME_DEBUG_ENABLED': {
+            'default_value': False,
+            'valid_values': [True, False],
+        },
+    }
+    plugin.read_config(defaults_dict)
+    args = configure()
+    if args.debug:
+        plugin.update_setting('VAR_SYSTEM_UPTIME_DEBUG_ENABLED', True if plugin.configuration['VAR_SYSTEM_UPTIME_DEBUG_ENABLED'] == False else False)
+
+    plugin.read_config(defaults_dict)
+    debug_enabled = plugin.configuration['VAR_SYSTEM_UPTIME_DEBUG_ENABLED']
+
     boot_time, duration_tuple = get_duration_tuple()
     if duration_tuple:
         uptime = []
@@ -61,6 +82,15 @@ def main():
         plugin.print_menu_item('Uptime: N/A')
         plugin.print_menu_separator()
         plugin.print_menu_item('Failed to determine boot time')
-
+    plugin.print_menu_separator()
+    plugin.print_menu_item('Settings')
+    plugin.print_menu_item(
+        f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+        cmd=[plugin.plugin_name, '--debug'],
+        terminal=False,
+        refresh=True,
+    )
+    if debug_enabled:
+        plugin.display_debug_data()
 if __name__ == '__main__':
     main()
