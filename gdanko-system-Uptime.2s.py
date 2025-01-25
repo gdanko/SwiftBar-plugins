@@ -9,8 +9,8 @@
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-Uptime.2s.py</xbar.abouturl>
 
 from collections import namedtuple
+from swiftbar import util
 import datetime
-import plugin
 import re
 import time
 
@@ -28,7 +28,7 @@ def get_duration(seconds):
         return None
 
 def get_boot_time():
-    returncode, stdout, stderr = plugin.execute_command('sysctl -n kern.boottime')
+    returncode, stdout, stderr = util.execute_command('sysctl -n kern.boottime')
     if stderr:
         return None
     pattern = re.compile(r'sec = ([0-9]{10,13})')

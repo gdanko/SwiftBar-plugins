@@ -15,9 +15,7 @@ from collections import namedtuple
 from swiftbar import util
 from swiftbar.plugin import Plugin
 import argparse
-import json
 import os
-import plugin
 import re
 import subprocess
 import sys
@@ -114,7 +112,7 @@ def combine_stats(cpu_time_stats, cpu_type):
 def get_top_cpu_usage():
     cpu_info = []
     command = f'ps -axm -o %cpu,pid,user,comm | tail -n+2'
-    retcode, stdout, _ = plugin.execute_command(command)
+    retcode, stdout, _ = util.execute_command(command)
     if retcode == 0:
         lines = stdout.strip().split('\n')
         for line in lines:

@@ -16,10 +16,8 @@ from collections import namedtuple
 from swiftbar.plugin import Plugin
 from swiftbar import util
 import os
-import plugin
 import re
 import shutil
-import sys
 import time
 
 def get_partion_tuple(device=None, mountpoint=None, fstype=None, opts=None):
@@ -28,7 +26,7 @@ def get_partion_tuple(device=None, mountpoint=None, fstype=None, opts=None):
 
 def get_partition_info():
     partitions = []
-    returncode, stdout, _ = plugin.execute_command('mount')
+    returncode, stdout, _ = util.execute_command('mount')
     if returncode == 0:
         entries = stdout.split('\n')
         for entry in entries:
