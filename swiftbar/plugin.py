@@ -132,13 +132,19 @@ class Plugin:
                     contents[key] = value
                     self.write_config(contents)
 
+    def find_longest(self, input) ->int:
+        if type(input) == list:
+            return max(len(key) for key in input)
+        elif type(input) == dict or type(input) == OrderedDict:
+            return max(len(key) for key in input.keys())
+
     def print_menu_title(self, text: str, *, out: Writer=sys.stdout, **params: Params) ->None:
         params_str = ' '.join(f'{k}={v}' for k, v in params.items())
         print(f'{text} | {params_str}', file=out)
 
     def print_ordered_dict(self, data: OrderedDict, justify: str='right', delimiter: str = '=', indent: int=0, *, out: Writer=sys.stdout, **params: Params) ->None:
         indent_str = indent * '-'
-        longest = max(len(key) for key, _ in data.items())
+        longest = self.find_longest(data)
         params['trim'] = False
         params_str = ' '.join(f'{k}={v}' for k, v in params.items())
         for k, v in data.items():
