@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 
 # <xbar.title>System Updates</xbar.title>
-# <xbar.version>v0.3.0</xbar.version>
+# <xbar.version>v0.3.1</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the number of available system updates</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-SystemUpdates.15m.py</xbar.abouturl>
 
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 from swiftbar import util
 from swiftbar.plugin import Plugin
 import argparse
 import os
 import re
-import time
 from pprint import pprint
 
 def configure():
@@ -23,37 +22,41 @@ def configure():
     args = parser.parse_args()
     return args
 
-def get_update_tuple(title=None, version=None, size=0, recommended=False, action=None):
-    update = namedtuple('update', 'title version size recommended action')
-    return update(title=title, version=version, size=size, recommended=recommended, action=action)
+def get_update_tuple(label=None, title=None, version=None, size=0, recommended=False, action=None):
+    system_update = namedtuple('system_update', 'label title version size recommended action')
+    return system_update(label=label, title=title, version=version, size=size, recommended=recommended, action=action)
+
+def generate_update_tuple(entry: tuple) ->tuple:
+    items = re.split(r'\s*,\s*', entry[1].strip().rstrip(','))
+    attributes = dict(re.split(r'\s*:\s*', pair) for pair in items)
+    attributes = {k.lower(): v for k, v in attributes.items()}
+    if 'size' in attributes:
+        match = re.search(r'(\d+)', attributes['size'])
+        if match:
+            attributes['size'] = match.group(1)
+    attributes['title'] = attributes['title'].replace(attributes['version'], '', -1).strip()
+ 
+    return get_update_tuple(
+        label=entry[0],
+        title=attributes['title'],
+        version=attributes['version'],
+        size=attributes['size'],
+        recommended=(True if attributes['recommended'].lower() == 'yes' else False),
+        action=(attributes['action'].title() if 'action' in attributes else 'N/A'),
+    )
 
 def find_software_updates():
     updates = []
     returncode, stdout, stderr = util.execute_command('softwareupdate --list')
     if returncode == 0 and stdout:
-        pattern = r'Title.*'
+        pattern = r'\* Label:\s*(.*)\n\s*(.*)'
         matches = re.findall(pattern, stdout)
         if matches:
             for match in matches:
-                match = match.strip().rstrip(',')
-                update_dict = {}
-                match_bits = re.split(r'\s*,\s*', match)
-                for match_bit in match_bits:
-                    item_bits = re.split(r'\s*:\s', match_bit)
-                    key = item_bits[0]
-                    value = item_bits[1]
-                    if key == 'Size':
-                        match = re.search(r'(\d+)', value)
-                        if match:
-                            value = int(match.group(1))
-                    update_dict[key.lower()] = value
-                updates.append(get_update_tuple(
-                    title=update_dict['title'],
-                    version=update_dict['version'],
-                    size=update_dict['size'],
-                    recommended=(True if update_dict['recommended'].lower() == 'yes' else False),
-                    action=(update_dict['action'].title() if 'action' in update_dict else 'N/A'),
-                ))
+                if len(match) == 2:
+                    update_tuple = generate_update_tuple(match)
+                    if str(type(update_tuple)) == "<class '__main__.system_update'>":
+                        updates.append(update_tuple)
         return updates, None
     else:
         return updates, stderr
@@ -80,10 +83,16 @@ def main():
         plugin.print_menu_separator()
         plugin.print_update_time()
         plugin.print_menu_separator()
-        update_output = OrderedDict()
+        longest = max(len(item.title) for item in updates)
         for update in updates:
-            update_output[update.title] = update.version
-        plugin.print_ordered_dict(update_output, justify='left', delimiter='', sfimage='shippingbox')
+            plugin.print_menu_item(
+                f'{update.title.ljust(longest)}  {update.version}',
+                cmd=['softwareupdate', '--install', f'"{update.label}"'],
+                refresh=True,
+                sfimage='shippingbox',
+                terminal=True,
+                trim=False,
+            )
         plugin.print_menu_separator()
     else:
         plugin.print_menu_title('Updates: Unknown')
