@@ -50,6 +50,13 @@ def execute_command(command, input=None):
             input = stdout
     return p.returncode, stdout, stderr
 
+def find_valid_interfaces():
+    returncode, stdout, _ = execute_command('ifconfig')
+    if returncode == 0  and stdout:
+        pattern = r'([a-z0-9]+):\s*flags='
+        matches = re.findall(pattern, stdout)
+        return sorted(matches) if (matches and type(matches) == list) else ['l']
+
 def get_process_icon(process_owner, click_to_kill):
     if click_to_kill:
         if process_owner == getpass.getuser():
