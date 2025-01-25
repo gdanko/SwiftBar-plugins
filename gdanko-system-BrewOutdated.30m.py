@@ -68,12 +68,12 @@ def main() -> None:
     if plugin.invoked_by == 'SwiftBar':
         data, err = get_brew_data()
         if err:
-            plugin.print_menu_item(title='Brew Outdated: Failure')
+            plugin.print_menu_item('Brew Outdated: Failure')
             plugin.print_menu_separator()
-            plugin.print_menu_item(err, font='AndaleMono', size=13)
+            plugin.print_menu_item(err)
         else:
             total = len(data['Formulae']) + len(data['Casks'])
-            plugin.print_menu_item(title=f'Brew Outdated: {total}')
+            plugin.print_menu_item(f'Brew Outdated: {total}')
             if total > 0:
                 plugin.print_menu_separator()
                 plugin.print_menu_item(
@@ -87,7 +87,7 @@ def main() -> None:
                 if len(formulae) > 0:
                     longest_name_length = max(len(formula.name) for formula in formulae)
                     plugin.print_menu_separator()
-                    plugin.print_menu_item(key, font='AndaleMono', size=13)
+                    plugin.print_menu_item(key)
                     for formula in formulae:
                         plugin.print_menu_item(
                             f'Update {formula.name:<{longest_name_length}}    {formula.installed_version.rjust(7)} > {formula.current_version}',
@@ -99,7 +99,7 @@ def main() -> None:
         plugin.print_menu_separator()
         if debug_enabled:
             plugin.display_debug_data()
-        plugin.print_menu_item('Refresh', font='AndaleMono', size=13, refresh=True)
+        plugin.print_menu_item('Refresh', refresh=True)
     elif plugin.invoked_by == 'xbar':
         plugin.print_menu_item(title='Brew Outdated: Failure')
         plugin.print_menu_separator()
