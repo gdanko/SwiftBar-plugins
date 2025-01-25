@@ -233,9 +233,7 @@ def main():
             terminal=False,
             refresh=True,
         )
-        plugin.print_menu_item(
-            '--Kill Signal',
-        )
+        plugin.print_menu_item('--Kill Signal')
         for key, _ in util.get_signal_map().items():
             color = 'blue' if key == signal else 'black'
             plugin.print_menu_item(
@@ -245,9 +243,7 @@ def main():
                 refresh=True,
                 terminal=False,
             )
-        plugin.print_menu_item(
-            '--Maximum Number of Top Consumers',
-        )
+        plugin.print_menu_item('--Maximum Number of Top Consumers')
         for number in range(1, 51):
             if number %5 == 0:
                 color = 'blue' if number == max_consumers else 'black'
