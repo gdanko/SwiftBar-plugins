@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Weather WeatherAPI</xbar.title>
-# <xbar.version>v0.2.0</xbar.version>
+# <xbar.version>v0.3.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the weather using weatherapi.com</xbar.desc>
@@ -18,60 +18,53 @@
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 
+from collections import OrderedDict
+from swiftbar.plugin import Plugin
+from swiftbar import util
+import argparse
 import datetime
 import dateutil.parser
+import http.client
 import json
 import os
-import plugin
-import subprocess
 import re
-import sys
-import time
+import urllib.parse
 
-try:
-    import requests
-except ModuleNotFoundError:
-    print('Error: missing "requests" library.')
-    print('---')
-    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install requests')
-    print('Fix copied to clipboard. Paste on terminal and run.')
-    exit(1)
-
-def get_defaults(config_dir, plugin_name):
-    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
-    default_values = {
-        'VAR_WEATHER_WAPI_LOCATION': 'Los Angeles, CA, US',
-        'VAR_WEATHER_WAPI_API_KEY': '',
-        'VAR_WEATHER_WAPI_UNITS': 'F',
-        'VAR_WEATHER_WAPI_SHOW_FORECAST': 'true',
-    }
-    defaults = plugin.read_config(vars_file, default_values)
-    valid_units = ['C', 'F']
-    return defaults['VAR_WEATHER_WAPI_LOCATION'], \
-        defaults['VAR_WEATHER_WAPI_API_KEY'], \
-        defaults['VAR_WEATHER_WAPI_UNITS'] if defaults['VAR_WEATHER_WAPI_UNITS'] in valid_units else 'F', \
-        True if defaults['VAR_WEATHER_WAPI_SHOW_FORECAST'] == 'true' else False
+def configure():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
+    parser.add_argument('--forecast', help='Toggle viewing the forecast section', required=False, default=False, action='store_true')
+    parser.add_argument('--unit', help='Select the unit to use', required=False)
+    args = parser.parse_args()
+    return args
 
 def fetch_data(url=None):
     response = None
+    json_data = None
+    parsed = urllib.parse.urlparse(url)
+    host = parsed.hostname
+    path = parsed.path
+    query = dict(re.split(r'\s*=\s*', pair) for pair in re.split('&', parsed.query))
+    conn = http.client.HTTPSConnection(host)
     try:
-        response = requests.get(url)
+        conn.request('GET', f'{path}?{util.encode_query_string(query)}')
+        response = conn.getresponse()
     except Exception as e:
         return None, f'Request failed: {e}'
+    
+    try:
+        json_data = json.loads(response.read().decode())
+    except Exception as e:
+        return None, e
 
-    if response.status_code == 200:
-        try:
-            data = json.loads(response.content)
-            return data, None
-        except Exception as e:
-            return None, e
+    if response.status == 200:
+        return json_data, None
     else:
-        try:
-            error_data = json.loads(response.content)
-            error_message = error_data['error']['message']
-        except:
-            error_message = 'no further detail'    
-        return None, f'Non-200 status code {response.status_code}: {error_message}'
+        if 'error' in json_data and 'message' in json_data['error']:
+            error_message = json_data['error']['message']
+        else:
+            'no further detail'
+        return None, f'Non-200 status code {response.status}: {error_message}'
 
 def get_uv_index(uv_index):
     uv_index = float(uv_index)
@@ -113,112 +106,178 @@ def pluralize(count, word):
 
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
-    invoker, config_dir = plugin.get_config_dir()
-    plugin_name = os.path.abspath(sys.argv[0])
+    plugin = Plugin()
+    defaults_dict = {
+        'VAR_WEATHER_WAPI_DEBUG_ENABLED': {
+            'default_value': False,
+            'valid_values': [True, False],
+        },
+        'VAR_WEATHER_WAPI_LOCATION': {
+            'default_value': 'Los Angeles, CA, US',
+        },
+        'VAR_WEATHER_WAPI_API_KEY': {
+            'default_value': '',
+        },
+        'VAR_WEATHER_WAPI_UNIT': {
+            'default_value': 'F',
+            'valid_values': util.valid_weather_units(),
+        },
+        'VAR_WEATHER_WAPI_SHOW_FORECAST': {
+            'default_value': True,
+            'valid_values': [True, False],
+        }
+    }
+    plugin.read_config(defaults_dict)
+    args = configure()
+    if args.debug:
+        plugin.update_setting('VAR_WEATHER_WAPI_DEBUG_ENABLED', True if plugin.configuration['VAR_WEATHER_WAPI_DEBUG_ENABLED'] == False else False)
+    elif args.forecast:
+        plugin.update_setting('VAR_WEATHER_WAPI_SHOW_FORECAST', True if plugin.configuration['VAR_WEATHER_WAPI_SHOW_FORECAST'] == False else False)
+    elif args.unit:
+        plugin.update_setting('VAR_WEATHER_WAPI_UNIT', 'C' if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else 'F')
+
+    plugin.read_config(defaults_dict)
+    api_key = plugin.configuration['VAR_WEATHER_WAPI_API_KEY']
+    debug_enabled = plugin.configuration['VAR_WEATHER_WAPI_DEBUG_ENABLED']
+    location = plugin.configuration['VAR_WEATHER_WAPI_LOCATION']
+    show_forecast = plugin.configuration['VAR_WEATHER_WAPI_SHOW_FORECAST']
+    unit = plugin.configuration['VAR_WEATHER_WAPI_UNIT']
+
     alert_format = '%a, %B %-d, %Y %H:%M:%S'
     forecast_format = '%a, %B %-d, %Y'
-    location, api_key, units, show_forecast = get_defaults(config_dir, os.path.basename(plugin_name))
     if api_key == '':
-        print('Failed to fetch the weather')
-        print('---')
-        print('Missing API key')
+        plugin.error_messages.append('Missing API key')
     else:
         url = f'http://api.weatherapi.com/v1/current.json?key={api_key}&q={location}&aqi=yes'
         weather_data, err = fetch_data(url)
         if err:
-            print('Failed to fetch the weather')
-            print('---')
-            print(f'Failed to fetch weather data: {err}')
+            plugin.error_messages.append(f'Failed to fetch weather data: {err}')
         else:
             forecast_days = 8
             url = f'http://api.weatherapi.com/v1/forecast.json?key={api_key}&q={location}&days={forecast_days}&aqi=yes&alerts=yes'
             forecast_data, err = fetch_data(url=url)
             if err:
-                print('Failed to fetch the weather')
-                print('---')
-                print(f'Failed to fetch forecast data: {err}')
-            else:
-                forecast = forecast_data['forecast']['forecastday']
-                today = forecast[0]
+                plugin.error_messages.append(f'Failed to fetch forecast data: {err}')
 
-                # low_temp = today["day"]["mintemp_f"] if units == 'F' else today["day"]["mintemp_c"]
-                # high_temp = today["day"]["maxtemp_f"] if units == 'F' else today["day"]["maxtemp_c"]
-                current_temp = weather_data["current"]["temp_f"] if units == 'F' else weather_data["current"]["temp_c"]
-                feels_like = weather_data["current"]["feelslike_f"] if units == 'F' else weather_data["current"]["feelslike_c"]
-                precipitation = f'{round(weather_data["current"]["precip_in"])} in' if units == 'F' else f'{round(weather_data["current"]["precip_in"])} mm'
-                visibility = f'{float(weather_data["current"]["vis_miles"])} miles' if units == 'F' else f'{float(weather_data["current"]["vis_km"])} km'
-                wind_speed = f'{round(weather_data["current"]["wind_mph"])} mph' if units == 'F' else f'{round(weather_data["current"]["wind_kph"])} kph'
-                wind_chill = weather_data["current"]["windchill_f"] if units == 'F' else weather_data["current"]["windchill_c"]
-                heat_index = weather_data["current"]["heatindex_f"] if units == 'F' else weather_data["current"]["heatindex_c"]
-                dew_point = weather_data["current"]["dewpoint_f"] if units == 'F' else weather_data["current"]["dewpoint_c"]
-                pressure = f'{round(weather_data["current"]["pressure_in"])} in' if units == 'F' else f'{round(weather_data["current"]["pressure_mb"])} mb'
-                print(f'{location} {round(current_temp)}°{units}')
-                print('---')
-                print(f'Updated {plugin.get_timestamp(int(time.time()))}')
-                print('---')
-                # print(f'Low / High: {round(low_temp)}°{units} / {round(high_temp)}°{units}')
-                print(f'Feels Like: {round(feels_like)}°{units}')
-                print(f'Pressure: {pressure}')
-                print(f'Visibility: {visibility}')
-                print(f'Condition: {weather_data["current"]["condition"]["text"].title()}')
-                print(f'Dew Point: {round(dew_point)}°{units}')
-                print(f'Humidity: {round(weather_data["current"]["humidity"])}%')
-                print(f'Precipitation: {precipitation}')
-                print(f'Wind: {weather_data["current"]["wind_dir"]} {wind_speed}')
-                print(f'Wind Chill: {round(wind_chill)}°{units}')
-                print(f'Heat Index: {round(heat_index)}°{units}')
-                print(f'UV Index: {get_uv_index(weather_data["current"]["uv"])} - {weather_data["current"]["uv"]}')
-                # print(f'Sunrise: {today["astro"]["sunrise"]}')
-                # print(f'Sunset: {today["astro"]["sunset"]}')
-                # print(f'Moonrise: {today["astro"]["moonrise"]}')
-                # print(f'Moonset: {today["astro"]["moonset"]}')
-                # print(f'Moon Phase: {today["astro"]["moon_phase"]}')
+    if len(plugin.error_messages) == 0:
+        forecast = forecast_data['forecast']['forecastday']
+        today = forecast[0]
 
-                if "alerts" in forecast_data:
-                    if "alert" in forecast_data["alerts"]:
-                        if len(forecast_data["alerts"]["alert"]) > 0:
-                            alerts = forecast_data["alerts"]["alert"]
-                            print(f'{len(alerts)} {pluralize(len(alerts), "Alert")}')
-                            for alert in alerts:
-                                desc = process_description(alert["desc"])
-                                print(f'--{alert["event"]}')
-                                print(f'----Category: {alert["category"]}')
-                                print(f'----Effective: {prettify_timestamp(alert["effective"], alert_format)}')
-                                print(f'----Expires: {prettify_timestamp(alert["expires"], alert_format)}')
-                                for k, v in desc.items():
-                                    print(f'----{k}: {v}')
+        # low_temp = today["day"]["mintemp_f"] if unit == 'F' else today["day"]["mintemp_c"]
+        # high_temp = today["day"]["maxtemp_f"] if unit == 'F' else today["day"]["maxtemp_c"]
+        current_temp = weather_data["current"]["temp_f"] if unit == 'F' else weather_data["current"]["temp_c"]
+        feels_like = weather_data["current"]["feelslike_f"] if unit == 'F' else weather_data["current"]["feelslike_c"]
+        precipitation = f'{round(weather_data["current"]["precip_in"])} in' if unit == 'F' else f'{round(weather_data["current"]["precip_in"])} mm'
+        visibility = f'{float(weather_data["current"]["vis_miles"])} miles' if unit == 'F' else f'{float(weather_data["current"]["vis_km"])} km'
+        wind_speed = f'{round(weather_data["current"]["wind_mph"])} mph' if unit == 'F' else f'{round(weather_data["current"]["wind_kph"])} kph'
+        wind_chill = weather_data["current"]["windchill_f"] if unit == 'F' else weather_data["current"]["windchill_c"]
+        heat_index = weather_data["current"]["heatindex_f"] if unit == 'F' else weather_data["current"]["heatindex_c"]
+        dew_point = weather_data["current"]["dewpoint_f"] if unit == 'F' else weather_data["current"]["dewpoint_c"]
+        pressure = f'{round(weather_data["current"]["pressure_in"])} in' if unit == 'F' else f'{round(weather_data["current"]["pressure_mb"])} mb'
 
-                if show_forecast:
-                    print(f'{len(forecast)} Day Forecast')
-                    for daily in forecast:
-                        daily_low = daily["day"]["mintemp_f"] if units == 'F' else daily["day"]["mintemp_c"]
-                        daily_high = daily["day"]["maxtemp_f"] if units == 'F' else daily["day"]["maxtemp_c"]
-                        daily_average = daily["day"]["avgtemp_f"] if units == 'F' else daily["day"]["avgtemp_c"]
-                        daily_will_it_rain = "Yes" if daily["day"]["daily_will_it_rain"] == 1 else "No"
-                        daily_will_it_snow = "Yes" if daily["day"]["daily_will_it_snow"] == 1 else "No"
-                        total_precipitation = f'{round(daily["day"]["totalprecip_in"])} in' if units == 'F' else f'{round(daily["day"]["totalprecip_mm"])} mm'
-                        avg_visibility = f'{float(daily["day"]["avgvis_miles"])} miles' if units == 'F' else f'{float(daily["day"]["avgvis_km"])} km'
-                        print(f'--{prettify_timestamp(daily["date"], forecast_format)}')
-                        print(f'----Low / High: {round(daily_low)}°{units} / {round(daily_high)}°{units}')
-                        print(f'----Average Temperature: {round(daily_average)}°{units}')
-                        print(f'----Average Visibility: {avg_visibility}')
-                        print(f'----Condition: {daily["day"]["condition"]["text"].title()}')
-                        print(f'----Average Humidity: {round(daily["day"]["avghumidity"])}%')
-                        print(f'----Total Precipitation: {total_precipitation}')
-                        print(f'----Rain: {daily_will_it_rain}')
-                        if daily_will_it_rain == 'Yes':
-                            print(f'----Chance of Rain: {daily["day"]["daily_chance_of_rain"]}%')
-                        print(f'----Snow: {daily_will_it_snow}')
-                        if daily_will_it_snow == 'Yes':
-                            print(f'----Chance of Snow: {daily["day"]["daily_chance_of_snow"]}%')
-                        print(f'----UV Index: {get_uv_index(daily["day"]["uv"])} - {daily["day"]["uv"]}')
-                        print(f'----Sunrise: {daily["astro"]["sunrise"]}')
-                        print(f'----Sunset: {daily["astro"]["sunset"]}')
-                        print(f'----Moonrise: {daily["astro"]["moonrise"]}')
-                        print(f'----Moonset: {daily["astro"]["moonset"]}')
-                        print(f'----Moon Phase: {daily["astro"]["moon_phase"]}')
+        plugin.print_menu_title(f'{location} {round(current_temp)}°{unit}')
+        plugin.print_menu_separator()
+        plugin.print_update_time()
+        plugin.print_menu_separator()
+        current = OrderedDict()
+        # current['Low / High'] = f'{round(low_temp)}°{unit} / {round(high_temp)}°{unit}'
+        current['Feels Like'] = f'{round(feels_like)}°{unit}'
+        current['Pressure'] = pressure
+        current['Visibility'] = visibility
+        current['Condition'] = f'{weather_data["current"]["condition"]["text"].title()}'
+        current['Dew Point'] = f'{round(dew_point)}°{unit}'
+        current['Humidity'] = f'{round(weather_data["current"]["humidity"])}%'
+        current['Precipitation'] = precipitation
+        current['Wind'] = f'{weather_data["current"]["wind_dir"]} {wind_speed}'
+        current['Wind Chill'] = f'{round(wind_chill)}°{unit}'
+        current['Heat Index'] = f'{round(heat_index)}°{unit}'
+        current['UV Index'] = f'{get_uv_index(weather_data["current"]["uv"])} - {weather_data["current"]["uv"]}'
+        # current['Sunrise'] = f'{today["astro"]["sunrise"]}'
+        # current['Sunset'] = f'{today["astro"]["sunset"]}'
+        # current['Moonrise'] = f'{today["astro"]["moonrise"]}'
+        # current['Moonset'] = f'{today["astro"]["moonset"]}'
+        # current['Moon Phase'] = f'{today["astro"]["moon_phase"]}'
+        plugin.print_ordered_dict(current, justify='left', delimiter='')
 
-                print('Refresh weather data | refresh=true')
+        if 'alerts' in forecast_data:
+            if 'alert' in forecast_data['alerts']:
+                if len(forecast_data['alerts']['alert']) > 0:
+                    alerts = forecast_data['alerts']['alert']
+                    plugin.print_menu_item(f'{len(alerts)} {pluralize(len(alerts), "Alert")}')
+                    for alert in alerts:
+                        desc = process_description(alert['desc'])
+                        plugin.print_menu_item(f'--{alert["event"]}')
+                        alert = OrderedDict()
+                        alert['Category'] = alert['category']
+                        alert['Effective'] = prettify_timestamp(alert['effective'], alert_format)
+                        alert['Expires'] = prettify_timestamp(alert['expires'], alert_format)
+                        for k, v in desc.items():
+                            alert[k] = v
+                        plugin.print_ordered_dict(alert, justify='left', delimiter='')
+        
+        if show_forecast:
+            plugin.print_menu_item(f'{len(forecast)} Day Forecast')
+            for daily in forecast:
+                daily_low = daily['day']['mintemp_f'] if unit == 'F' else daily['day']['mintemp_c']
+                daily_high = daily['day']['maxtemp_f'] if unit == 'F' else daily['day']['maxtemp_c']
+                daily_average = daily['day']['avgtemp_f'] if unit == 'F' else daily['day']['avgtemp_c']
+                daily_will_it_rain = 'Yes' if daily['day']['daily_will_it_rain'] == 1 else 'No'
+                daily_will_it_snow = 'Yes' if daily['day']['daily_will_it_snow'] == 1 else 'No'
+                total_precipitation = f'{round(daily["day"]["totalprecip_in"])} in' if unit == 'F' else f'{round(daily["day"]["totalprecip_mm"])} mm'
+                avg_visibility = f'{float(daily["day"]["avgvis_miles"])} miles' if unit == 'F' else f'{float(daily["day"]["avgvis_km"])} km'
+
+                plugin.print_menu_item(f'--{prettify_timestamp(daily["date"], forecast_format)}')
+                daily_section = OrderedDict()
+                daily_section['Low / High'] = f'{round(daily_low)}°{unit} / {round(daily_high)}°{unit}'
+                daily_section['Average Temperature'] = f'{round(daily_average)}°{unit}'
+                daily_section['Average Visibility'] = avg_visibility
+                daily_section['Condition'] = f'{daily["day"]["condition"]["text"].title()}'
+                daily_section['Average Humidity'] = f'{round(daily["day"]["avghumidity"])}%'
+                daily_section['Total Precipitation'] = total_precipitation
+                daily_section['Rain'] = daily_will_it_rain
+                if daily_will_it_rain == 'Yes':
+                    daily_section['Chance of Rain'] = f'{daily["day"]["daily_chance_of_rain"]}%'
+                if daily_will_it_snow == 'Yes':
+                    daily_section['Chance of Snow'] = f'{daily["day"]["daily_chance_of_snow"]}%'
+                daily_section['UV Index'] = f'{get_uv_index(daily["day"]["uv"])} - {daily["day"]["uv"]}'
+                daily_section['Sunrise'] = daily['astro']['sunrise']
+                daily_section['Sunset'] = daily['astro']['sunset']
+                daily_section['Moonrise'] = daily['astro']['moonrise']
+                daily_section['Moonset'] = daily['astro']['moonset']
+                daily_section['Moon Phase'] = daily['astro']['moon_phase']
+                plugin.print_ordered_dict(daily_section, justify='left', delimiter='', indent=4)
+    else:
+        plugin.print_menu_title('Failed to fetch the weather')
+        plugin.print_menu_separator()
+        for error_message in plugin.error_messages:
+            plugin.print_menu_item(error_message)
+    plugin.print_menu_separator()
+    plugin.print_menu_item('Settings')
+    plugin.print_menu_item(
+        f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+        cmd=[plugin.plugin_name, '--debug'],
+        refresh=True,
+        terminal=False,
+    )
+    plugin.print_menu_item(
+        f'{"--Hide" if show_forecast else "--Show"} forecast data',
+        cmd=[plugin.plugin_name, '--forecast'],
+        refresh=True,
+        terminal=False,
+    )
+    plugin.print_menu_item('--Unit')
+    for valid_weather_unit in util.valid_weather_units():
+        color = 'blue' if valid_weather_unit == unit else 'black'
+        plugin.print_menu_item(
+            f'----{valid_weather_unit}',
+            cmd=[plugin.plugin_name, '--unit', valid_weather_unit],
+            color=color,
+            refresh=True,
+            terminal=False,
+        )
+    plugin.print_menu_item('Refresh weather data', refresh=True)
+    if debug_enabled:
+        plugin.display_debug_data()
 
 if __name__ == '__main__':
     main()
