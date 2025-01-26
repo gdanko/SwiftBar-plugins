@@ -25,6 +25,7 @@ def configure():
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     parser.add_argument('--mountpoint', help='Select the mountpoint to view', required=False)
+    parser.add_argument('--unit', help='Select the unit to use', required=False)
     args = parser.parse_args()
     return args
 
@@ -65,7 +66,7 @@ def main():
         },
         'VAR_DISK_USAGE_UNIT': {
             'default_value': 'Gi',
-            'valid_values': ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei'],
+            'valid_values': util.valid_storage_units(),
         },
     }
     plugin.read_config(defaults_dict)
@@ -74,17 +75,16 @@ def main():
         plugin.update_setting('VAR_DISK_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED'] == False else False)
     elif args.mountpoint:
         plugin.update_setting('VAR_DISK_USAGE_MOUNTPOINT', args.mountpoint)
+    elif args.unit:
+        plugin.update_setting('VAR_DISK_USAGE_UNIT', args.unit)
     
     plugin.read_config(defaults_dict)
     debug_enabled = plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED']
     mountpoint = plugin.configuration['VAR_DISK_USAGE_MOUNTPOINT']
     unit = plugin.configuration['VAR_DISK_USAGE_UNIT']
 
-    partition_data = {}
-    for partition in partitions:
-        partition_data[partition.mountpoint] = partition
-
-    from pprint import pprint
+    # from pprint import pprint
+    partition = next((p for p in partitions if p.mountpoint == mountpoint), None)
     try:
         total, used, _ = shutil.disk_usage(mountpoint)
         if total and used:
@@ -94,10 +94,10 @@ def main():
             plugin.print_menu_separator()
             plugin.print_menu_item(mountpoint)
             mountpoint_output = OrderedDict()
-            mountpoint_output['mountpoint'] = partition_data[mountpoint].mountpoint
-            mountpoint_output['device'] = partition_data[mountpoint].device
-            mountpoint_output['type'] = partition_data[mountpoint].fstype
-            mountpoint_output['options'] = partition_data[mountpoint].opts
+            mountpoint_output['mountpoint'] = partition.mountpoint
+            mountpoint_output['device'] = partition.device
+            mountpoint_output['type'] = partition.fstype
+            mountpoint_output['options'] = partition.opts
             plugin.print_ordered_dict(mountpoint_output, justify='left', indent=2)
     except:
         plugin.print_menu_item('Disk: Not found')
@@ -116,6 +116,16 @@ def main():
             f'----{mountpoint_name}',
             color=color,
             cmd=[plugin.plugin_name, '--mountpoint', f'"{mountpoint_name}"'],
+            refresh=True,
+            terminal=False,
+        )
+    plugin.print_menu_item('--Unit')
+    for valid_storage_unit in util.valid_storage_units():
+        color = 'blue' if valid_storage_unit == unit else 'black'
+        plugin.print_menu_item(
+            f'----{valid_storage_unit}',
+            color=color,
+            cmd=[plugin.plugin_name, '--unit', valid_storage_unit],
             refresh=True,
             terminal=False,
         )
