@@ -24,6 +24,7 @@ import time
 def configure():
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
+    parser.add_argument('--mountpoint', help='Select the mountpoint to view', required=False)
     args = parser.parse_args()
     return args
 
@@ -51,14 +52,16 @@ def get_partition_info():
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
+    partitions = get_partition_info()
+    valid_mountpoints = [partition.mountpoint for partition in partitions]
     defaults_dict = {
         'VAR_DISK_USAGE_DEBUG_ENABLED': {
             'default_value': False,
             'valid_values': [True, False],
         },
-        'VAR_DISK_USAGE_MOUNTPOINTS': {
+        'VAR_DISK_USAGE_MOUNTPOINT': {
             'default_value': '/',
-            'split_value': True,
+            'valid_values': ','.join(valid_mountpoints),
         },
         'VAR_DISK_USAGE_UNIT': {
             'default_value': 'Gi',
@@ -68,55 +71,54 @@ def main():
     plugin.read_config(defaults_dict)
     args = configure()
     if args.debug:
-            plugin.update_setting('VAR_DISK_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED'] == False else False)
+        plugin.update_setting('VAR_DISK_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED'] == False else False)
+    elif args.mountpoint:
+        plugin.update_setting('VAR_DISK_USAGE_MOUNTPOINT', args.mountpoint)
     
     plugin.read_config(defaults_dict)
     debug_enabled = plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED']
-    mountpoints_list = re.split(r'\s*,\s*', plugin.configuration['VAR_DISK_USAGE_MOUNTPOINTS'])
+    mountpoint = plugin.configuration['VAR_DISK_USAGE_MOUNTPOINT']
     unit = plugin.configuration['VAR_DISK_USAGE_UNIT']
 
-    plugin_output = []
     partition_data = {}
-    valid_mountpoints = []
-    partitions = get_partition_info()
-
     for partition in partitions:
         partition_data[partition.mountpoint] = partition
 
-    for mountpoint in mountpoints_list:
-        try:
-            total, used, _ = shutil.disk_usage(mountpoint)
-            if total and used:
-                valid_mountpoints.append(mountpoint)
-                total = util.byte_converter(total, unit)
-                used = util.byte_converter(used, unit)
-                plugin_output.append(f'"{mountpoint}" {used} / {total}')
-        except:
-            pass
-
-    if len(plugin_output) > 0:
-        plugin.print_menu_title(f'Disk: {"; ".join(plugin_output)}')
-        plugin.print_menu_separator()
-        plugin.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
-        plugin.print_menu_separator()
-        for valid_mountpoint in valid_mountpoints:
-            plugin.print_menu_title(valid_mountpoint)
+    from pprint import pprint
+    try:
+        total, used, _ = shutil.disk_usage(mountpoint)
+        if total and used:
+            total = util.byte_converter(total, unit)
+            used = util.byte_converter(used, unit)
+            plugin.print_menu_title(f'Disk: "{mountpoint}" {used} / {total}')
+            plugin.print_menu_separator()
+            plugin.print_menu_item(mountpoint)
             mountpoint_output = OrderedDict()
-            mountpoint_output['--mountpoint'] = partition_data[valid_mountpoint].mountpoint
-            mountpoint_output['--device'] = partition_data[valid_mountpoint].device
-            mountpoint_output['--type'] = partition_data[valid_mountpoint].fstype
-            mountpoint_output['--options'] = partition_data[valid_mountpoint].opts
-            plugin.print_ordered_dict(mountpoint_output, justify='left')
-        plugin.print_menu_separator()
-        plugin.print_menu_item('Settings')
-        plugin.print_menu_item(
-            f'{"--Disable" if debug_enabled else "--Enable"} debug data',
-            cmd=[plugin.plugin_name, '--debug'],
-            terminal=False,
-            refresh=True,
-        )
-    else:
+            mountpoint_output['mountpoint'] = partition_data[mountpoint].mountpoint
+            mountpoint_output['device'] = partition_data[mountpoint].device
+            mountpoint_output['type'] = partition_data[mountpoint].fstype
+            mountpoint_output['options'] = partition_data[mountpoint].opts
+            plugin.print_ordered_dict(mountpoint_output, justify='left', indent=2)
+    except:
         plugin.print_menu_item('Disk: Not found')
+    plugin.print_menu_separator()
+    plugin.print_menu_item('Settings')
+    plugin.print_menu_item(
+        f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+        cmd=[plugin.plugin_name, '--debug'],
+        terminal=False,
+        refresh=True,
+    )
+    plugin.print_menu_item('--Mountpoint')
+    for mountpoint_name in valid_mountpoints:
+        color = 'blue' if mountpoint_name == mountpoint else 'black'
+        plugin.print_menu_item(
+            f'----{mountpoint_name}',
+            color=color,
+            cmd=[plugin.plugin_name, '--mountpoint', f'"{mountpoint_name}"'],
+            refresh=True,
+            terminal=False,
+        )
     if debug_enabled:
         plugin.display_debug_data()
 
