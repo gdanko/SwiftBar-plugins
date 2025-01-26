@@ -11,6 +11,12 @@
 # <xbar.var>string(VAR_CPU_USAGE_KILL_SIGNAL=<int>): The Darwin kill signal to use when killing a process</xbar.var>
 # <xbar.var>string(VAR_CPU_USAGE_MAX_CONSUMERS=<int>): Maximum number of offenders to display</xbar.var>
 
+# <swiftbar.hideAbout>true</swiftbar.hideAbout>
+# <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
+# <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
+# <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
+# <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
+
 from collections import namedtuple
 from swiftbar import util
 from swiftbar.plugin import Plugin

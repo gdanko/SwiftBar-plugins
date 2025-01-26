@@ -10,7 +10,11 @@
 # <xbar.var>string(VAR_DISK_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
 # <xbar.var>string(VAR_DISK_USAGE_MOUNTPOINTS="/"): A comma-delimited list of mount points</xbar.var>
 
-# "Run in Terminal..."" currently uses the default values, not reading the config file
+# <swiftbar.hideAbout>true</swiftbar.hideAbout>
+# <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
+# <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
+# <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
+# <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 
 from collections import namedtuple, OrderedDict
 from swiftbar.plugin import Plugin
@@ -19,7 +23,6 @@ import argparse
 import os
 import re
 import shutil
-import time
 
 def configure():
     parser = argparse.ArgumentParser()
