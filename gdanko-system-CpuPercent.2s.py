@@ -25,7 +25,6 @@ import os
 import re
 import subprocess
 import sys
-import time
 
 try:
     from psutil import cpu_freq, cpu_times_percent
@@ -230,22 +229,22 @@ def main():
         plugin.print_menu_item(
             f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill"',
             cmd=[plugin.plugin_name, '--click-to-kill'],
-            terminal=False,
             refresh=True,
+            terminal=False,
         )
         plugin.print_menu_item(
             f'{"--Disable" if debug_enabled else "--Enable"} debug data',
             cmd=[plugin.plugin_name, '--debug'],
-            terminal=False,
             refresh=True,
+            terminal=False,
         )
         plugin.print_menu_item('--Kill Signal')
         for key, _ in util.get_signal_map().items():
             color = 'blue' if key == signal else 'black'
             plugin.print_menu_item(
                 f'----{key}',
-                color=color,
                 cmd=[plugin.plugin_name, '--signal', key],
+                color=color,
                 refresh=True,
                 terminal=False,
             )
@@ -255,8 +254,8 @@ def main():
                 color = 'blue' if number == max_consumers else 'black'
                 plugin.print_menu_item(
                     f'----{number}',
-                    color=color,
                     cmd=[plugin.plugin_name, '--max-consumers', number],
+                    color=color,
                     refresh=True,
                     terminal=False,
                 )
