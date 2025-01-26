@@ -3,6 +3,7 @@ from pathlib import Path
 from swiftbar import util
 import json
 import os
+import shutil
 import sys
 import time
 import typing
@@ -181,15 +182,25 @@ class Plugin:
         self.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
 
     def display_debug_data(self):
+        pv = sys.version_info
+        os_version = util.get_macos_version()
+        total_mem = util.get_sysctl('hw.memsize')
+
         self.print_menu_item('Debugging')
         debug_data = OrderedDict()
-        debug_data['--Plugin path'] = self.plugin_name
-        debug_data['--Invoked by'] = f'{self.invoked_by_full} (PID {self.invoker_pid})'
-        debug_data['--Default font family'] = self.font
-        debug_data['--Default font size'] = self.size
-        debug_data['--Configuration directory'] = self.config_dir
-        debug_data['--Variables file'] = self.vars_file
-        self.print_ordered_dict(debug_data, justify='left')
+        if os_version:
+            debug_data['OS Version'] = os_version
+        if total_mem:
+            debug_data['Memory'] = util.format_number(int(total_mem))
+        debug_data['Python'] = shutil.which('python3')
+        debug_data['Python Version'] = f'{pv.major}.{pv.minor}.{pv.micro}-{pv.releaselevel}'
+        debug_data['Plugin path'] = self.plugin_name
+        debug_data['Invoked by'] = f'{self.invoked_by_full} (PID {self.invoker_pid})'
+        debug_data['Default font family'] = self.font
+        debug_data['Default font size'] = self.size
+        debug_data['Configuration directory'] = self.config_dir
+        debug_data['Variables file'] = self.vars_file
+        self.print_ordered_dict(debug_data, justify='left', indent=2, delimiter='')
         self.print_menu_item('--Variables')
         variables = OrderedDict()
         for key, value in self.configuration.items():
