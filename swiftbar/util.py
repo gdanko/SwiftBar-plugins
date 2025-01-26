@@ -69,6 +69,9 @@ def find_valid_mountpoints():
 def valid_storage_units() -> list[str]:
     return ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
 
+def valid_weather_units() -> list[str]:
+    return ['C', 'F']
+
 def get_process_icon(process_owner, click_to_kill):
     if click_to_kill:
         if process_owner == getpass.getuser():
@@ -138,3 +141,24 @@ def unix_to_human(timestamp):
 
 def float_to_pct(number):
     return f'{number:.2%}'
+
+# Functions to encode a query string
+def percent_encode(string):
+    hex_digits = '0123456789ABCDEF'
+    result = []
+    for char in string:
+        # Check if the character is unreserved (alphanumeric or -._~)
+        if char.isalnum() or char in '-._~':
+            result.append(char)
+        else:
+            # Convert the character to its percent-encoded form
+            result.append(f'%{hex_digits[ord(char) >> 4]}{hex_digits[ord(char) & 0xF]}')
+    return ''.join(result)
+
+def encode_query_string(params):
+    encoded_pairs = []
+    for key, value in params.items():
+        encoded_key = percent_encode(str(key))
+        encoded_value = percent_encode(str(value))
+        encoded_pairs.append(f"{encoded_key}={encoded_value}")
+    return '&'.join(encoded_pairs)
