@@ -197,7 +197,7 @@ def main():
         # current['Moonrise'] = f'{today["astro"]["moonrise"]}'
         # current['Moonset'] = f'{today["astro"]["moonset"]}'
         # current['Moon Phase'] = f'{today["astro"]["moon_phase"]}'
-        plugin.print_ordered_dict(current, justify='left', delimiter='')
+        plugin.print_ordered_dict(current, justify='left')
 
         if 'alerts' in forecast_data:
             if 'alert' in forecast_data['alerts']:
@@ -213,7 +213,7 @@ def main():
                         alert['Expires'] = prettify_timestamp(alert['expires'], alert_format)
                         for k, v in desc.items():
                             alert[k] = v
-                        plugin.print_ordered_dict(alert, justify='left', delimiter='')
+                        plugin.print_ordered_dict(alert, justify='left')
         
         if show_forecast:
             plugin.print_menu_item(f'{len(forecast)} Day Forecast')
@@ -245,7 +245,7 @@ def main():
                 daily_section['Moonrise'] = daily['astro']['moonrise']
                 daily_section['Moonset'] = daily['astro']['moonset']
                 daily_section['Moon Phase'] = daily['astro']['moon_phase']
-                plugin.print_ordered_dict(daily_section, justify='left', delimiter='', indent=4)
+                plugin.print_ordered_dict(daily_section, justify='left', indent=4)
     else:
         plugin.print_menu_title('Failed to fetch the weather')
         plugin.print_menu_separator()
