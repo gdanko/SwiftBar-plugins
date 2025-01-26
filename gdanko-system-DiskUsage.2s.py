@@ -73,6 +73,7 @@ def main():
         },
     }
     plugin.read_config(defaults_dict)
+    plugin.invoked_by = 'xbar'
     args = configure()
     if args.debug:
         plugin.update_setting('VAR_DISK_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED'] == False else False)
@@ -86,7 +87,6 @@ def main():
     mountpoint = plugin.configuration['VAR_DISK_USAGE_MOUNTPOINT']
     unit = plugin.configuration['VAR_DISK_USAGE_UNIT']
 
-    # from pprint import pprint
     partition = next((p for p in partitions if p.mountpoint == mountpoint), None)
     try:
         total, used, _ = shutil.disk_usage(mountpoint)
@@ -118,7 +118,7 @@ def main():
         plugin.print_menu_item(
             f'----{mountpoint_name}',
             color=color,
-            cmd=[plugin.plugin_name, '--mountpoint', f'"{mountpoint_name}"'],
+            cmd=[plugin.plugin_name, '--mountpoint', f'{mountpoint_name}'],
             refresh=True,
             terminal=False,
         )
