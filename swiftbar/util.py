@@ -55,7 +55,16 @@ def find_valid_interfaces():
     if returncode == 0  and stdout:
         pattern = r'([a-z0-9]+):\s*flags='
         matches = re.findall(pattern, stdout)
-        return sorted(matches) if (matches and type(matches) == list) else ['l']
+        return sorted(matches) if (matches and type(matches) == list) else ['lo0']
+    return ['lo0']
+
+def find_valid_mountpoints():
+    returncode, stdout, _ = execute_command('mount')
+    if returncode == 0  and stdout:
+        pattern = r'/dev/disk[s0-9]+ on\s+([^\)]+)\s+\('
+        matches = re.findall(pattern, stdout)
+        return sorted(matches) if (matches and type(matches) == list) else ['/']
+    return ['/']
 
 def get_process_icon(process_owner, click_to_kill):
     if click_to_kill:
