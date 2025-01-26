@@ -134,6 +134,7 @@ def main():
         )
     if debug_enabled:
         plugin.display_debug_data()
+    plugin.print_menu_item('Refresh', refresh=True)
 
 if __name__ == '__main__':
     main()
