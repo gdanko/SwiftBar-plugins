@@ -23,6 +23,7 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
 ## Features
 * Plugins that support environment variables will automatically create the `.vars.json` file if one doesn't exist in the config path
 * Some plugins allow you to modify settings on the fly
+* Every plugin has a debugging menu that can be toggled via the plugin's `Settings` menu
 
 ## Plugins
 * [Network](#network)
@@ -45,6 +46,8 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
     * Quality
 
 ### System
+* gdanko-stystem-BrewOutdated.30m.py - This plugin shows a list of outdated homebrew packages. When you click on the menu bar item you can then see:
+    * A list of available updates and their version numbers. You can click on an item to execute the update.
 * gdanko-system-CpuPercent.2s.py - This plugin shows average user, system, and idle times for the CPU. When you click on the menu bar item you can then see:
     * CPU type
     * user, system, and idle times for each individual core
@@ -55,7 +58,7 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
         * Configure how many "Top Consumers" to display in the list
 * gdanko-system-DiskConsumers.5m.py - This plugin reads a configured list of paths and shows the top disk consumers under directory. When you click on the menu bar item you can then see:
     * An entry for each configured path. You can click on any of the items in the list to attempt to open it.
-* gdanko-system-DiskUsage.2s.py - This plugin reads a configured list of mountpoints and shows used/total space for each. When you click on the menu bar item you can then see:
+* gdanko-system-DiskUsage.2s.py - This plugin reads a configured mountpoint and shows its used/total space. When you click on the menu bar item you can then see:
     * An entry for each configured mountpoint. Under each mountpoint you will see:
         * The mountpoint, e.g., /Volumes/Foo
         * The device name, e.g., /dev/disk1s1
@@ -76,7 +79,8 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
         * Select the signal to be used when attempting to kill a process
         * Configure how many "Top Consumers" to display in the list
 * gdanko-system-SwapUsage.2s.py - This plugin shows used/total swap memory.
-* gdanko-system-SystemUpdates.15m.py - This plugin shows the number of available system updates.
+* gdanko-system-SystemUpdates.15m.py - This plugin shows the number of available system updates. When you click on the menu bar item you can see:
+    * A list of available updates and their version numbers. You can click on an item to execute the update.
 * gdanko-system-Uptime.2s.py - This plugin shows system uptimes. When you click on the menu bar item you can then see:
     * Last boot time
 
