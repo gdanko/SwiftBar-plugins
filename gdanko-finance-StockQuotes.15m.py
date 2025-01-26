@@ -183,19 +183,19 @@ def main():
 
         if len(company_info) > 0:
             plugin.print_menu_item('--Company Info')
-            plugin.print_ordered_dict(company_info, delimiter='', justify='left', indent=4)
+            plugin.print_ordered_dict(company_info, justify='left', indent=4)
 
         if len(key_stats) > 0:
             plugin.print_menu_item('--Key Stats')
-            plugin.print_ordered_dict(key_stats, delimiter='', justify='left', indent=4)
+            plugin.print_ordered_dict(key_stats, justify='left', indent=4)
 
         if len(ratios_and_profitability) > 0:
             plugin.print_menu_item('--Ratios and Profitability')
-            plugin.print_ordered_dict(ratios_and_profitability, delimiter='', justify='left', indent=4)
+            plugin.print_ordered_dict(ratios_and_profitability, justify='left', indent=4)
 
         if len(events) > 0:
             plugin.print_menu_item('--Events')
-            plugin.print_ordered_dict(events, delimiter='', justify='left', indent=4)
+            plugin.print_ordered_dict(events, justify='left', indent=4)
 
     plugin.print_menu_separator()
     plugin.print_menu_item('Settings')
