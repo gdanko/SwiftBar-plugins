@@ -139,11 +139,26 @@ class Plugin:
         elif type(input) == dict or type(input) == OrderedDict:
             return max(len(key) for key in input.keys())
 
+    def sanitize_for_xbar(self, params: dict={}) ->dict:
+        to_remove = []
+        invalid = [
+            'emojize',
+            'sfimage',
+            'symbolize',
+        ]
+        for param in params:
+            if param in invalid:
+                to_remove.append(param)
+        if len(to_remove) > 0:
+            for param in to_remove:
+                params.pop(param)
+        return params
+
     def print_menu_title(self, text: str, *, out: Writer=sys.stdout, **params: Params) ->None:
         params_str = ' '.join(f'{k}={v}' for k, v in params.items())
         print(f'{text} | {params_str}', file=out)
 
-    def print_ordered_dict(self, data: OrderedDict, justify: str='right', delimiter: str = '=', indent: int=0, *, out: Writer=sys.stdout, **params: Params) ->None:
+    def print_ordered_dict(self, data: OrderedDict, justify: str='right', delimiter: str = '', indent: int=0, *, out: Writer=sys.stdout, **params: Params) ->None:
         indent_str = indent * '-'
         longest = self.find_longest(data)
         params['trim'] = False
@@ -167,11 +182,15 @@ class Plugin:
             params['size'] = self.size
 
         if 'cmd' in params and type(params['cmd']) == list and len(params['cmd']) > 0:
-            params['bash'] = params['cmd'][0]
+            params['bash'] = f'"{params["cmd"][0]}"'
             for i, arg in enumerate(params['cmd'][1:]):
-                params[f'param{i}'] = arg
+                params[f'param{i + 1}'] = f'"{arg}"'
         if 'cmd' in params:
             params.pop('cmd')
+
+        # Special handling for xbar
+        if self.invoked_by == 'xbar':
+            params = self.sanitize_for_xbar(params)
         params_str = ' '.join(f'{k}={v}' for k, v in params.items())
         print(f'{text} | {params_str}', file=out)
 
@@ -200,9 +219,9 @@ class Plugin:
         debug_data['Default font size'] = self.size
         debug_data['Configuration directory'] = self.config_dir
         debug_data['Variables file'] = self.vars_file
-        self.print_ordered_dict(debug_data, justify='left', indent=2, delimiter='')
+        self.print_ordered_dict(debug_data, justify='left', indent=2)
         self.print_menu_item('--Variables')
         variables = OrderedDict()
         for key, value in self.configuration.items():
             variables[key] = value
-        self.print_ordered_dict(variables, justify='right', indent=4)
+        self.print_ordered_dict(variables, justify='right', indent=4, delimiter = '=')
