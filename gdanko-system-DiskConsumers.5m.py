@@ -55,7 +55,7 @@ def main():
             'valid_values': [True, False],
         },
         'VAR_DISK_CONSUMERS_PATHS': {
-            'default_value': '~,~/Library',
+            'default_value': '~',
             'split_values': True,
         },
     }
