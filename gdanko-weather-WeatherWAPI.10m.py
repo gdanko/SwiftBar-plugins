@@ -275,9 +275,9 @@ def main():
             refresh=True,
             terminal=False,
         )
-    plugin.print_menu_item('Refresh weather data', refresh=True)
     if debug_enabled:
         plugin.display_debug_data()
+    plugin.print_menu_item('Refresh weather data', refresh=True)
 
 if __name__ == '__main__':
     main()
