@@ -156,7 +156,7 @@ def main():
     plugin.read_config(defaults_dict)
     args = configure()
     if args.click_to_kill:
-        plugin.update_setting('VAR_CPU_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_CPU_USAGE_DEBUG_ENABLED'] == False else False)
+        plugin.update_setting('VAR_CPU_USAGE_CLICK_TO_KILL', True if plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL'] == False else False)
     elif args.debug:
         plugin.update_setting('VAR_CPU_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_CPU_USAGE_DEBUG_ENABLED'] == False else False)
     elif args.signal:
