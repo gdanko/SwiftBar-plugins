@@ -66,6 +66,9 @@ def find_valid_mountpoints():
         return sorted(matches) if (matches and type(matches) == list) else ['/']
     return ['/']
 
+def valid_storage_units() -> list[str]:
+    return ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
+
 def get_process_icon(process_owner, click_to_kill):
     if click_to_kill:
         if process_owner == getpass.getuser():
