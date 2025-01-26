@@ -60,7 +60,7 @@ def main():
 
     plugin.read_config(defaults_dict)
     debug_enabled = plugin.configuration['VAR_STOCK_QUOTES_DEBUG_ENABLED']
-    symbols = re.split(r'\*,\*', plugin.configuration['VAR_STOCK_QUOTES_SYMBOLS'])
+    symbols = re.split(r'\s*,\s*', plugin.configuration['VAR_STOCK_QUOTES_SYMBOLS'])
     plugin_output = []
     info_dict = {}
     metadata_dict = {}
