@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Disk Consumers</xbar.title>
-# <xbar.version>v0.2.0</xbar.version>
+# <xbar.version>v0.3.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show files and directories using the most disk space for a given path</xbar.desc>
@@ -15,24 +15,23 @@
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 
+from swiftbar import util
+from swiftbar.plugin import Plugin
+import argparse
 import os
-import plugin
 import re
-import sys
 import time
 
-def get_defaults(config_dir, plugin_name):
-    vars_file = os.path.join(config_dir, plugin_name) + '.vars.json'
-    default_values = {
-        'VAR_DISK_CONSUMERS_PATHS': '~,~/Library',
-    }
-    defaults = plugin.read_config(vars_file, default_values)
-    return re.split(r'\s*,\s*', defaults['VAR_DISK_CONSUMERS_PATHS'])
+def configure():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
+    args = parser.parse_args()
+    return args
 
 def get_consumers(path):
     consumers = []
     command = f'find {path} -depth 1 -exec du -sk {{}} \;'
-    returncode, stdout, _ = plugin.execute_command(command)
+    _, stdout, _ = util.execute_command(command)
     if stdout:
         lines = stdout.strip().split('\n')
         for line in lines:
@@ -47,20 +46,34 @@ def get_consumers(path):
     return sorted(consumers, key=lambda item: item['bytes'], reverse=True)
 
 def main():
-    start_time = plugin.unix_time_in_ms()
+    start_time = util.unix_time_in_ms()
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
-    invoker, config_dir = plugin.get_config_dir()
-    plugin_name = os.path.abspath(sys.argv[0])
-    paths_list = get_defaults(config_dir, os.path.basename(plugin_name))
-    font_name = 'Andale Mono'
-    font_size = 13
-    font_data = f'size="{font_size}" font="{font_name}"'
+    plugin = Plugin()
+    defaults_dict = {
+        'VAR_DISK_CONSUMERS_DEBUG_ENABLED': {
+            'default_value': False,
+            'valid_values': [True, False],
+        },
+        'VAR_DISK_CONSUMERS_PATHS': {
+            'default_value': '~,~/Library',
+            'split_values': True,
+        },
+    }
 
-    print('Disk Consumption')
-    print('---')
+    plugin.read_config(defaults_dict)
+    args = configure()
+    if args.debug:
+        plugin.update_setting('VAR_DISK_CONSUMERS_DEBUG_ENABLED', True if plugin.configuration['VAR_DISK_CONSUMERS_DEBUG_ENABLED'] == False else False)
+
+    plugin.read_config(defaults_dict)
+    debug_enabled = plugin.configuration['VAR_DISK_CONSUMERS_DEBUG_ENABLED']
+    paths_list = re.split(r'\s*,\s*', plugin.configuration['VAR_DISK_CONSUMERS_PATHS'])
+
+    plugin.print_menu_title('Disk Consumption')
+    plugin.print_menu_separator()
     if len(paths_list) > 0:
         for path in paths_list:
-            print(os.path.expanduser(path))
+            plugin.print_menu_item(os.path.expanduser(path))
             total = 0
             consumers = get_consumers(path)
             for consumer in consumers:
@@ -69,21 +82,30 @@ def main():
                 total += bytes
                 padding_width = 12
                 icon = ':file_folder:' if os.path.isdir(path) else ':page_facing_up:'
-                bits = [
-                    f'--{icon}' + f'{plugin.format_number(bytes).rjust(padding_width)} - {path}',
-                    f'bash=open param1=""{path}"" terminal=false',
-                    font_data,
-                    'trim=false',
-                ]
-                if invoker == 'SwiftBar':
-                    bits.append('emojize=true symbolize=false')
-                print(' | '.join(bits))
-            print(f'--Total: {plugin.format_number(total)} | {font_data}')
+                plugin.print_menu_item(
+                    f'--{icon}' + f'{util.format_number(bytes).rjust(padding_width)} - {path}',
+                    cmd=['open', f'"{path}"'],
+                    emojize=True,
+                    symbolize=False,
+                    terminal=False,
+                    trim=False,
+                )
+            plugin.print_menu_item(f'--Total: {util.format_number(total)}')
     else:
-        print('N/A')
-    end_time = plugin.unix_time_in_ms()
-    print(f'Data fetched at {plugin.get_timestamp(int(time.time()))} in {end_time - start_time}ms')
-    print('Refresh data | refresh=true')
+        plugin.print_menu_item('N/A')
+    end_time = util.unix_time_in_ms()
+    plugin.print_menu_item(f'Data fetched at {util.get_timestamp(int(time.time()))} in {end_time - start_time}ms')
+    plugin.print_menu_separator()
+    plugin.print_menu_item('Refresh data', refresh=True)
+    plugin.print_menu_item('Settings')
+    plugin.print_menu_item(
+        f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+        cmd=[plugin.plugin_name, '--debug'],
+        terminal=False,
+        refresh=True,
+    )
+    if debug_enabled:
+        plugin.display_debug_data()
 
 if __name__ == '__main__':
     main()
