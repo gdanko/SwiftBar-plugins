@@ -1,5 +1,7 @@
+from collections import namedtuple
 import datetime
 import getpass
+import platform
 import re
 import signal
 import subprocess
@@ -40,6 +42,37 @@ def get_signal_map():
         'SIGUSR2': signal.SIGUSR2,
     }
 
+def get_macos_version():
+    os_version = parse_version(platform.mac_ver()[0])
+    macos_families = {
+        '10.0': 'Cheetah',
+        '10.1': 'Puma',
+        '10.2': 'Jaguar',
+        '10.3': 'Panther',
+        '10.4': 'Tiger',
+        '10.5': 'Leopard',
+        '10.6': 'Snow Leopard',
+        '10.7': 'Lion',
+        '10.8': 'Mountain Lion',
+        '10.9': 'Mavericks',
+        '10.10': 'Yosemite',
+        '10.11': 'El Capitan',
+        '10.12': 'Sierra',
+        '10.13': 'High Sierra',
+        '10.14': 'Mojave',
+        '10.15': 'Catalina',
+        '11': 'Big Sur',
+        '12': 'Monterey',
+        '13': 'Ventura',
+        '14': 'Sonoma',
+        '15': 'Sequoia',
+    }
+    if os_version.part1 == 10:
+        version_string = f'{os_version.part1}.{os_version.part2}'
+    elif os_version.part1 > 10:
+        version_string = f'{os_version.part1}'
+    return f'macOS {macos_families[version_string]} {os_version.part1}.{os_version.part2}'
+
 def execute_command(command, input=None):
     for command in re.split(r'\s*\|\s*', command):
         p = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -71,6 +104,12 @@ def valid_storage_units() -> list[str]:
 
 def valid_weather_units() -> list[str]:
     return ['C', 'F']
+
+def parse_version(version_string: str=''):
+    fields = [f'part{i + 1}' for i in range(len(version_string.split('.')))]
+    version = namedtuple('version', fields)
+    parts = map(int, version_string.split('.'))
+    return version(*parts)
 
 def get_process_icon(process_owner, click_to_kill):
     if click_to_kill:
