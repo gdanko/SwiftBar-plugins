@@ -33,8 +33,9 @@ import os
 import shutil
 import sys
 
-def get_args():
+def configure():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     parser.add_argument('--snad', help='Copy AD password to the clipboard', required=False, default=False, action='store_true')
     parser.add_argument('--ldap', help='Copy LDAP password to the clipboard', required=False, default=False, action='store_true')
     parser.add_argument('--token', help='Copy {pin}{token} to the clipboard', required=False, default=False, action='store_true')
@@ -90,6 +91,11 @@ def main():
         },
     }
     plugin.read_config(defaults_dict)
+    args = configure()
+    if args.debug:
+        plugin.update_setting('VAR_RSA_TOKEN_DEBUG_ENABLED', True if plugin.configuration['VAR_RSA_TOKEN_DEBUG_ENABLED'] == False else False)
+
+    plugin.read_config(defaults_dict)
     debug_enabled = plugin.configuration['VAR_RSA_TOKEN_DEBUG_ENABLED']
     error = setup()
     if error:
@@ -104,7 +110,6 @@ def main():
             for error in errors:
                 plugin.print_menu_item(error)
         else:
-            args = get_args()
             if args.token:
                 pbcopy(f'{output["rsatoken-pin"]}{output["token"]}')
             elif args.snad:
@@ -146,9 +151,16 @@ def main():
                 refresh=True,
             )
             plugin.print_menu_separator()
-            plugin.print_menu_item('Refresh | refresh=true')
+            plugin.print_menu_item('Settings')
+            plugin.print_menu_item(
+                f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+                cmd=[plugin.plugin_name, '--debug'],
+                terminal=False,
+                refresh=True,
+            )
             if debug_enabled:
                 plugin.display_debug_data()
+            plugin.print_menu_item('Refresh', refresh=True)
 
 if __name__ == '__main__':
     main()
