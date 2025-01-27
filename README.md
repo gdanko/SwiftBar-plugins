@@ -40,7 +40,7 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
     * Features
         * Show lots and lots of detail about one or more stock symbols.
     * Settings
-        * Toggle the "Debugging" menu
+        * Toggle the `Debugging` menu
 
 ### Network
 * `gdanko-network-NetworkThroughput.2s.py`
@@ -48,7 +48,7 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
         * Display the TX/RX rate for the specified interface.
         * Display interface flags, hardware address, IPV4 address, IPV6 address, and public IP address (if applicable).
     * Settings
-        * Toggle the "Debugging" menu
+        * Toggle the `Debugging` menu
         * Toggle verbose mode, which shows information about errors and dropped packets
         * Select the interface to view
 * `gdanko-network-WifiSignal.30s.py`
@@ -56,7 +56,7 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
         * Display the specified interface's connection strength to its configured SSID.
         * Display device name, channel number, WiFi mode, signal, noise, and signal quality.
     * Settings
-        * Toggle the "Debugging" menu
+        * Toggle the `Debugging` menu
         * Select the interface to view
 
 ### System
@@ -64,14 +64,14 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
     * Features
         * Display a list of outdated homebrew packages with an option to install one or all of them.
     * Settings
-        * Toggle the "Debugging" menu
+        * Toggle the `Debugging` menu
 * `gdanko-system-CpuPercent.2s.py`
     * Features
         * Display average user, system, and idle times for the CPU.
         * Display user, system, and idle times for each individual core.
         * Display top CPU consumers with an option to attempt to kill those owned by you.
     * Settings
-        * Toggle the "Debugging" menu
+        * Toggle the `Debugging` menu
         * Toggle "Click to Kill" functionality
         * Set the kill signal to use when attempting to kill a process
         * Set the maximum number of top CPU consumers to display
@@ -79,22 +79,22 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
     * Features
         * Display the largest disk consumers for one or more paths, with the ability to open the selected item.
     * Settings
-        * Toggle the "Debugging" menu
+        * Toggle the `Debugging` menu
 * `gdanko-system-DiskUsage.2s.py`
     * Features
         * Display used/total disk space for the specified mountpoint.
         * Display the mountpoint, device name, filesystem type, and mount options as shown by `mount (8)`.
     * Settings
-        * Toggle the "Debugging" menu
+        * Toggle the `Debugging` menu
         * Select the mountpoint to view
-        * Select the unit for displaying the data, e.g., "Mi", "Gi"
+        * Select the unit for displaying the data, e.g., `M` or `Gi`
 * `gdanko-system-MemoryUsage.2s.py`
     * Features
         * Display used/total system memory.
         * Display memory manufacturer and type (if possible), total memory, available memory, used memory, free memory, active memory, inactive memory, wired memory, and speculative memory.
         * Display top memory consumers with an option to attempt to kill those owned by you.
     * Settings
-        * Toggle the "Debugging" menu
+        * Toggle the `Debugging` menu
         * Toggle "Click to Kill" functionality
         * Set the kill signal to use when attempting to kill a process
         * Set the maximum number of top memory consumers to display
@@ -102,19 +102,19 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
     * Features
         * Display used/total swap memory.
     * Settings
-        * Toggle the "Debugging" menu
-        * Select the unit for displaying the data, e.g., "Mi", "Gi"
+        * Toggle the `Debugging` menu
+        * Select the unit for displaying the data, e.g., `M` or `Gi`
 * `gdanko-system-SystemUpdates.15m.py`
     * Features
         * Display a list of available system updates and their version numbers, with an option to install them individually.
     * Settings
-        * Toggle the "Debugging" menu
+        * Toggle the `Debugging` menu
 * `gdanko-system-Uptime.2s.py`
     * Features
         * Display system uptime.
         * Display last boot time.
     * Settings
-        * Toggle the "Debugging" menu
+        * Toggle the `Debugging` menu
 
 ### Weather
 * `gdanko-weather-WeatherWAPI.10m.py`
@@ -123,9 +123,9 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
         * Display "feels like" temperaure, pressure, visibility, condition, dew point, humidity, precipitation, wind, wind chill, heat index, UV index.
         * Display up to an eight day forecast, showing low/high temperature, average temperature, average visibility, condition, average humidity, total precipitation, chance of rain, chance of snow, UV index, sunrise time, sunset time, moonrise time, moonset time, and moon phase.
     * Settings
-        * Toggle the "Debugging" menu
-        * Toggle displaying the "x Day Forecast" menu
-        * Set the units in either "C" ot "F"
+        * Toggle the `Debugging` menu
+        * Toggle displaying the `x Day Forecast` menu
+        * Set the units in either `C` or `F`
 
 ### Other
 * `gdanko-other-Earthquakes.15m.py`
@@ -133,11 +133,11 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
         * Display a list of recent earthquakes based on your location as calculated by geolocating your public IP address.
         * Display the magnitude, time of occurence, updated time, status, as well as a clickable link for the quake's details page at usgs.gov.
     * Settings
-        * Toggle the "Debugging" menu
+        * Toggle the `Debugging` menu
         * Set the limit for the number of results to display
         * Set the minimum magnitude
         * Set the radius based on your location
-        * Set the unit in either "km" or "m"
+        * Set the unit in either `km` or `m`
 
 ## How Do the Settings Toggles Work?
 * Each plugin first determines the path to the config directory and the name of the plugin.
