@@ -7,11 +7,12 @@
 # <xbar.desc>Show information about earthquakes nearby</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-other-Earthquakes.15m.py</xbar.abouturl>
-# <xbar.var>string(VAR_EARTHQUAKES_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
-# <xbar.var>string(VAR_EARTHQUAKES_LIMIT=20"): The maximum number of quakes to display</xbar.var>
-# <xbar.var>string(VAR_EARTHQUAKES_MIN_MAGNITUDE=-90"): The minimum magnitude for quakes</xbar.var>
-# <xbar.var>string(VAR_EARTHQUAKES_RADIUS_MILES=50"): Radius in miles</xbar.var>
-# <xbar.var>string(VAR_EARTHQUAKES_RADIUS_UNIT=m"): miles or kilometers</xbar.var>
+# <xbar.var>string(VAR_EARTHQUAKES_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(VAR_EARTHQUAKES_LIMIT=20): The maximum number of quakes to display</xbar.var>
+# <xbar.var>string(VAR_EARTHQUAKES_MIN_MAGNITUDE=0): The minimum magnitude for quakes</xbar.var>
+# <xbar.var>string(VAR_EARTHQUAKES_RADIUS_MILES=50): Radius in miles</xbar.var>
+# <xbar.var>string(VAR_EARTHQUAKES_RADIUS_UNIT=m): miles or kilometers</xbar.var>
+# <swiftbar.environment>[VAR_EARTHQUAKES_DEBUG_ENABLED=false, VAR_EARTHQUAKES_LIMIT=20, VAR_EARTHQUAKES_MIN_MAGNITUDE=0, VAR_EARTHQUAKES_RADIUS_MILES=50, VAR_EARTHQUAKES_RADIUS_UNIT=m]</swiftbar.environment>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>false</swiftbar.hideRunInTerminal>

@@ -7,14 +7,15 @@
 # <xbar.desc>Show system swap usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-SwapUsage.2s.py</xbar.abouturl>
-# <xbar.var>string(VAR_SWAP_USAGE_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
-# <xbar.var>string(VAR_SWAP_USAGE_UNIT="auto"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
+# <xbar.var>string(VAR_SWAP_USAGE_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(VAR_SWAP_USAGE_UNIT=auto): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
+# <swiftbar.environment>[VAR_SWAP_USAGE_DEBUG_ENABLED=false, VAR_SWAP_USAGE_UNIT=auto]</swiftbar.environment>
 
 from collections import namedtuple
 from swiftbar import util

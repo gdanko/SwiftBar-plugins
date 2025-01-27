@@ -7,14 +7,15 @@
 # <xbar.desc>Display the current WiFi signal strength</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/gdanko-network-WifiSignal.30s.py</xbar.abouturl>
-# <xbar.var>string(VAR_WIFI_STATUS_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
-# <xbar.var>string(VAR_WIFI_STATUS_INTERFACE="en0"): The network interface to measure.</xbar.var>
+# <xbar.var>string(VAR_WIFI_STATUS_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(VAR_WIFI_STATUS_INTERFACE=en0): The network interface to measure.</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
+# <swiftbar.environment>[VAR_WIFI_STATUS_DEBUG_ENABLED=false, VAR_WIFI_STATUS_INTERFACE=en0]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import util

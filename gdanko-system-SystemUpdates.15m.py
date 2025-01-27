@@ -7,13 +7,14 @@
 # <xbar.desc>Display the number of available system updates</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-SystemUpdates.15m.py</xbar.abouturl>
-# <xbar.var>string(VAR_SYSTEM_UPDATES_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
+# <xbar.var>string(VAR_SYSTEM_UPDATES_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
+# <swiftbar.environment>[VAR_SYSTEM_UPDATES_DEBUG_ENABLED=false]</swiftbar.environment>
 
 from collections import namedtuple
 from swiftbar import util

@@ -7,15 +7,16 @@
 # <xbar.desc>Show disk usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-MemoryUsage.2s.py</xbar.abouturl>
-# <xbar.var>string(VAR_DISK_USAGE_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
-# <xbar.var>string(VAR_DISK_USAGE_MOUNTPOINTS="/"): A comma-delimited list of mount points</xbar.var>
-# <xbar.var>string(VAR_DISK_USAGE_UNIT="auto"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
+# <xbar.var>string(VAR_DISK_USAGE_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(VAR_DISK_USAGE_MOUNTPOINT=/): A valid mountpoint</xbar.var>
+# <xbar.var>string(VAR_DISK_USAGE_UNIT=auto): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
+# <swiftbar.environment>[VAR_DISK_USAGE_DEBUG_ENABLED=false, VAR_DISK_USAGE_MOUNTPOINT=/, VAR_DISK_USAGE_UNIT=auto]</swiftbar.environment>
 
 from collections import namedtuple, OrderedDict
 from swiftbar.plugin import Plugin

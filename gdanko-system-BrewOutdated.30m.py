@@ -7,13 +7,14 @@
 # <xbar.desc>Display the number upgradeable Homebrew packages</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-BrewOutdated.30m.py</xbar.abouturl>
-# <xbar.var>string(VAR_BREW_OUTDATED_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
+# <xbar.var>string(VAR_BREW_OUTDATED_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
+# <swiftbar.environment>[VAR_BREW_OUTDATED_DEBUG_ENABLED=false]</swiftbar.environment>
 
 from dataclasses import dataclass
 from swiftbar import util

@@ -7,7 +7,7 @@
 # <xbar.desc>Show info about the specified stock symbols</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-finance-StockQuotes.15m.py</xbar.abouturl>
-# <xbar.var>string(VAR_STOCK_QUOTES_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
+# <xbar.var>string(VAR_STOCK_QUOTES_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_STOCK_SYMBOLS="AAPL"): A comma-delimited list of stock symbols</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
@@ -15,6 +15,7 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
+# <swiftbar.environment>[VAR_STOCK_QUOTES_DEBUG_ENABLED=false, VAR_STOCK_SYMBOLS=AAPL]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import util

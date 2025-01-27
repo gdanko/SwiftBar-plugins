@@ -7,12 +7,14 @@
 # <xbar.desc>Show info about the DOW, NASDAQ, S&P indexes</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-finance-StockIndexes.15m.py</xbar.abouturl>
+# <xbar.var>string(VAR_STOCK_INDEXES_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>false</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
+# <swiftbar.environment>[VAR_STOCK_INDEXES_DEBUG_ENABLED=false]</swiftbar.environment>
 
 from swiftbar import util
 from swiftbar.plugin import Plugin

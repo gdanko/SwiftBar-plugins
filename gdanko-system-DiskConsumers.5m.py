@@ -7,14 +7,15 @@
 # <xbar.desc>Show files and directories using the most disk space for a given path</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-DiskConsumers.5m.py</xbar.abouturl>
-# <xbar.var>string(VAR_DISK_CONSUMERS_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
-# <xbar.var>string(VAR_DISK_CONSUMERS_PATHS="/"): A comma-delimited list of mount points</xbar.var>
+# <xbar.var>string(VAR_DISK_CONSUMERS_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(VAR_DISK_CONSUMERS_PATHS=/): A comma-delimited list of paths</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
+# <swiftbar.environment>[VAR_DISK_CONSUMERS_DEBUG_ENABLED=false, VAR_DISK_CONSUMERS_PATHS=/]</swiftbar.environment>
 
 from swiftbar import util
 from swiftbar.plugin import Plugin
