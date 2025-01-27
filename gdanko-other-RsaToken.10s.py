@@ -38,7 +38,6 @@ from swiftbar.plugin import Plugin
 import argparse
 import os
 import shutil
-import sys
 
 def configure():
     parser = argparse.ArgumentParser()

@@ -23,8 +23,6 @@ from collections import OrderedDict
 from swiftbar.plugin import Plugin
 from swiftbar import request, util
 import argparse
-import datetime
-import dateutil.parser
 import os
 import re
 
