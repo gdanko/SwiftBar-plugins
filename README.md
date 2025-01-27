@@ -130,7 +130,8 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
 ### Other
 * `gdanko-other-Earthquakes.15m.py`
     * Features
-        * Display a list of recent earthquakes based on your location as calculated by geolocating your public IP address.
+        * Location based on gelocation of your IP address.
+        * Display a list of recent earthquakes based on your location.
         * Display the magnitude, time of occurence, updated time, status, as well as a clickable link for the quake's details page at usgs.gov.
     * Settings
         * Toggle the `Debugging` menu
