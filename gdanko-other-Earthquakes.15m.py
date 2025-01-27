@@ -100,7 +100,7 @@ def main():
             'minmax': namedtuple('minmax', ['min', 'max'])(0, 20)
         },
         'VAR_EARTHQUAKES_RADIUS_MILES': {
-            'default_value': 50,
+            'default_value': 100,
             'minmax': namedtuple('minmax', ['min', 'max'])(10, 500)
         },
         'VAR_EARTHQUAKES_UNIT': {
