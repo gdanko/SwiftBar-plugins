@@ -105,7 +105,7 @@ def main():
         },
         'VAR_NET_THROUGHPUT_INTERFACE': {
             'default_value': 'en0',
-            'valid_values': util.find_valid_interfaces(),
+            'valid_values': util.find_valid_network_interfaces(),
         },
         'VAR_NET_THROUGHPUT_VERBOSE': {
             'default_value': False,
@@ -192,7 +192,7 @@ def main():
         refresh=True,
     )
     plugin.print_menu_item('--Interface')
-    for ifname in util.find_valid_interfaces():
+    for ifname in util.find_valid_network_interfaces():
         color = 'blue' if ifname == interface else 'black'
         plugin.print_menu_item(
             f'----{ifname}',
