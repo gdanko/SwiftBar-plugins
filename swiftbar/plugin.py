@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from pathlib import Path
+from pprint import pprint
 from swiftbar import util
 import json
 import os
@@ -106,12 +107,18 @@ class Plugin:
                     contents = json.load(fh)
                     for key, value in defaults_dict.items():
                         if key in contents:
+                            # Set it to the default value up front and change only if the value in the json file is valid
                             self.configuration[key] = value['default_value']
                             if 'valid_values' in value:
                                 if contents[key] in value['valid_values']:
                                     self.configuration[key] = contents[key]
                                 else:
                                     invalid_value_found = True
+                            elif 'minmax' in value:
+                                if contents[key] < value['minmax'].min or contents[key] > value['minmax'].max:
+                                    invalid_value_found = True
+                                else:
+                                    self.configuration[key] = contents[key]
                             else:
                                 self.configuration[key] = contents[key]
                 if invalid_value_found:
