@@ -1,5 +1,3 @@
-from pprint import pprint
-from swiftbar import util
 import json
 import http.client
 import re
