@@ -97,7 +97,7 @@ class Plugin:
     
     def _rewrite_vars_file(self):
         with open(self.vars_file, 'w') as fh:
-            fh.write(json.dumps(self.configuration, indent=4))
+            fh.write(json.dumps(sorted(self.configuration), indent=4))
 
     def read_config(self, defaults_dict):
         invalid_value_found = False
@@ -127,6 +127,12 @@ class Plugin:
                 self._write_default_vars_file(defaults_dict)
         else:
             self._write_default_vars_file(defaults_dict)
+        
+        # Populate the configuration file with any missing items
+        for key, value in defaults_dict.items():
+            if not key in self.configuration:
+                self.configuration[key] = value['default_value']
+        self._rewrite_vars_file()
  
     def write_config(self, contents):
         with open(self.vars_file, 'w') as fh:
