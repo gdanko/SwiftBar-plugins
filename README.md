@@ -45,7 +45,7 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
 ### Network
 * `gdanko-network-NetworkThroughput.2s.py`
     * Features
-        * Display the TX/RX for the specified interface.
+        * Display the TX/RX rate for the specified interface.
         * Display interface flags, hardware address, IPV4 address, IPV6 address, and public IP address (if applicable).
     * Settings
         * Toggle the "Debugging" menu
@@ -111,8 +111,8 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
         * Toggle the "Debugging" menu
 * `gdanko-system-Uptime.2s.py`
     * Features
-        * Display system uptime
-        * Display last boot time
+        * Display system uptime.
+        * Display last boot time.
     * Settings
         * Toggle the "Debugging" menu
 
@@ -122,6 +122,10 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
         * Display the current temperature for the specified location.
         * Display "feels like" temperaure, pressure, visibility, condition, dew point, humidity, precipitation, wind, wind chill, heat index, UV index.
         * Display up to an eight day forecast, showing low/high temperature, average temperature, average visibility, condition, average humidity, total precipitation, chance of rain, chance of snow, UV index, sunrise time, sunset time, moonrise time, moonset time, and moon phase.
+    * Settings
+        * Toggle the "Debugging" menu
+        * Toggle displaying the "x Day Forecast" menu
+        * Set the units in either "C" ot "F"
 
 ### Other
 * `gdanko-other-Earthquakes.15m.py`
