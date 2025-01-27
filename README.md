@@ -21,9 +21,21 @@ SwiftBar doesn't know what to do with xbar's `<plugin_name>.vars.json` files. Wi
 When a plugin is executed, it attempts to look for a `.vars.json` file to set its values. If one doesn't exist, it will use the default values specified in the plugin's code. This logic applies to both xbar and SwiftBar. This solution allows you to use a traditional xbar `.vars.json` with SwiftBar. The only caveat to this approach is that when you select the `Run in Terminal` option, the default values are used because of the way the plugin is being invoked. I am looking for a solution to this problem.
 
 ## Features
-* Plugins that support environment variables will automatically create the `.vars.json` file if one doesn't exist in the config path
-* Some plugins allow you to modify settings on the fly
-* Every plugin has a debugging menu that can be toggled via the plugin's `Settings` menu
+* Auto-detect whether or not you are using xbar or SwiftBar and configure the plugin path and configuration path accordingly.
+* Automatically generate a plugin configration file using default values for every plugin that can use one. Its location is based on `plugin.config_dir` and `plugin.plugin_name`. For example, if you're using SwiftBar and your plugin name is `fancy-plugin-DoSomething.10s.py` then your plugin configuration file's path will be `~/.config/SwiftBar/fancy-plugin-DoSomething.10s.py.vars.json`.
+* Most plugins have a `Settings` menu that can modify MOST of the settings. Obviously, things like API keys need to be manually configured by hand editing the JSON.
+* Most plugins have a debugging menu that can be toggled via the plugin's `Settings` menu which shows the following:
+    * OS version, e.g., `macOS 15.2 (Sequoia)`
+    * Installed system memory
+    * Python binary path
+    * Python version
+    * Plugins directory path
+    * Plugin full path
+    * Default font family
+    * Default font size
+    * Plugin configuration path
+    * Plugin JSON variables file path
+    * Variables listed in `VAR_SOMETHING = value` format
 
 ## Plugins
 * [Finance](#finance)
