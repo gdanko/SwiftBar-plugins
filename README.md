@@ -10,9 +10,9 @@ A collection of plugins for [SwiftBar](https://github.com/swiftbar/SwiftBar) (al
 ```
 git clone https://github.com/gdanko/xbar-plugins.git
 ```
-2. Symlink the desired plugins to your [plugins folder](https://github.com/swiftbar/SwiftBar#plugin-folder)
+2. Symlink the desired plugins to your [plugins folder](https://github.com/swiftbar/SwiftBar#plugin-folder) for SwiftBar or `~/Library/Application Support/xbar/plugins` for xbar
 ```
-ln -s /path/to/repo/plugin_name.py $SWIFTBAR_PLUGINS_PATH/plugin_name.py
+ln -s /path/to/repo/plugin_name.py $PLUGINS_PATH/plugin_name.py
 ```
 
 ## How Do I Use the Plugins With SwiftBar?
