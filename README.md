@@ -98,6 +98,7 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
         * Toggle "Click to Kill" functionality
         * Set the kill signal to use when attempting to kill a process
         * Set the maximum number of top memory consumers to display
+        * Select the unit for displaying the data, e.g., `M` or `Gi`
 * `gdanko-system-SwapUsage.2s.py`
     * Features
         * Display used/total swap memory.
