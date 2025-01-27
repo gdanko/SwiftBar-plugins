@@ -20,15 +20,12 @@
 
 from collections import OrderedDict
 from swiftbar.plugin import Plugin
-from swiftbar import util
+from swiftbar import request, util
 import argparse
 import datetime
 import dateutil.parser
-import http.client
-import json
 import os
 import re
-import urllib.parse
 
 def configure():
     parser = argparse.ArgumentParser()
@@ -37,34 +34,6 @@ def configure():
     parser.add_argument('--unit', help='Select the unit to use', required=False)
     args = parser.parse_args()
     return args
-
-def fetch_data(url=None):
-    response = None
-    json_data = None
-    parsed = urllib.parse.urlparse(url)
-    host = parsed.hostname
-    path = parsed.path
-    query = dict(re.split(r'\s*=\s*', pair) for pair in re.split('&', parsed.query))
-    conn = http.client.HTTPSConnection(host)
-    try:
-        conn.request('GET', f'{path}?{util.encode_query_string(query)}')
-        response = conn.getresponse()
-    except Exception as e:
-        return None, f'Request failed: {e}'
-    
-    try:
-        json_data = json.loads(response.read().decode())
-    except Exception as e:
-        return None, e
-
-    if response.status == 200:
-        return json_data, None
-    else:
-        if 'error' in json_data and 'message' in json_data['error']:
-            error_message = json_data['error']['message']
-        else:
-            'no further detail'
-        return None, f'Non-200 status code {response.status}: {error_message}'
 
 def get_uv_index(uv_index):
     uv_index = float(uv_index)
@@ -148,16 +117,29 @@ def main():
     if api_key == '':
         plugin.error_messages.append('Missing API key')
     else:
-        url = f'http://api.weatherapi.com/v1/current.json?key={api_key}&q={location}&aqi=yes'
-        weather_data, err = fetch_data(url)
-        if err:
-            plugin.error_messages.append(f'Failed to fetch weather data: {err}')
-        else:
-            forecast_days = 8
-            url = f'http://api.weatherapi.com/v1/forecast.json?key={api_key}&q={location}&days={forecast_days}&aqi=yes&alerts=yes'
-            forecast_data, err = fetch_data(url=url)
-            if err:
-                plugin.error_messages.append(f'Failed to fetch forecast data: {err}')
+        status_code, weather_data, err = request.swiftbar_request(
+            url='http://api.weatherapi.com/v1/current.json',
+            query={'key': api_key, 'q': location, 'aqi': 'yes'},
+            return_type = 'json'
+        )
+        if status_code != 200:
+            error_message = f'A non-200 {status_code} response code was received'
+            if weather_data:
+                if 'error' in weather_data and 'message' in weather_data['error']:
+                    error_message = weather_data['error']['message']
+            plugin.error_messages.append(f'Failed to fetch weather data: {error_message}')
+
+        status_code, forecast_data, err = request.swiftbar_request(
+            url='http://api.weatherapi.com/v1/forecast.json',
+            query={'key': api_key, 'q': location, 'days': 8, 'aqi': 'yes', 'alerts': 'yes'},
+            return_type = 'json'
+        )
+        if status_code != 200:
+            error_message = f'A non-200 {status_code} response code was received'
+            if forecast_data:
+                if 'error' in forecast_data and 'message' in forecast_data['error']:
+                    error_message = forecast_data['error']['message']
+            plugin.error_messages.append(f'Failed to fetch forecast data: {error_message}')
 
     if len(plugin.error_messages) == 0:
         forecast = forecast_data['forecast']['forecastday']
