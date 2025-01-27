@@ -11,13 +11,14 @@
 # <xbar.var>string(VAR_MEM_USAGE_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_KILL_SIGNAL=SIGQUIT): The BSD kill signal to use when killing a process</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_MAX_CONSUMERS=30): Maximum number of offenders to display</xbar.var>
+# <xbar.var>string(VAR_MEM_USAGE_UNIT=auto): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_MEM_USAGE_CLICK_TO_KILL=false, VAR_MEM_USAGE_DEBUG_ENABLED=false, VAR_MEM_USAGE_KILL_SIGNAL=SIGQUIT, VAR_MEM_USAGE_MAX_CONSUMERS=30]</swiftbar.environment>
+# <swiftbar.environment>[VAR_MEM_USAGE_CLICK_TO_KILL=false, VAR_MEM_USAGE_DEBUG_ENABLED=false, VAR_MEM_USAGE_KILL_SIGNAL=SIGQUIT, VAR_MEM_USAGE_MAX_CONSUMERS=30]</swiftbar.environment, VAR_MEM_USAGE_UNIT=auto>
 
 from collections import namedtuple, OrderedDict
 from swiftbar import util
@@ -145,7 +146,11 @@ def main():
         },
         'VAR_MEM_USAGE_MAX_CONSUMERS': {
             'default_value': 30,
-        }
+        },
+        'VAR_MEM_USAGE_UNIT': {
+            'default_value': 'auto',
+            'valid_values': util.valid_storage_units(),
+        },
     }
     plugin.read_config(defaults_dict)
     args = configure()
@@ -163,12 +168,15 @@ def main():
     debug_enabled = plugin.configuration['VAR_MEM_USAGE_DEBUG_ENABLED']
     signal = plugin.configuration['VAR_MEM_USAGE_KILL_SIGNAL']
     max_consumers = plugin.configuration['VAR_MEM_USAGE_MAX_CONSUMERS']
+    unit = plugin.configuration['VAR_MEM_USAGE_UNIT']
+
     command_length = 125
     memory_type, memory_brand, err = get_memory_details()
     mem = virtual_memory()
     if mem:
-        used = util.format_number(mem.used)
-        total = util.format_number(mem.total)
+        # total = util.format_number(total) if unit == 'auto' else util.byte_converter(total, unit)
+        used = util.format_number(mem.used) if unit == 'auto' else util.byte_converter(mem.used, unit)
+        total = util.format_number(mem.total) if unit == 'auto' else util.byte_converter(mem.total, unit)
         plugin.print_menu_title(f'Memory: {used} / {total}')
         plugin.print_menu_separator()
         plugin.print_update_time()
@@ -176,14 +184,14 @@ def main():
         memory_output = OrderedDict()
         if not err:
             memory_output['Memory'] = f'{memory_brand} {memory_type}'
-        memory_output['Total'] = util.format_number(mem.total)
-        memory_output['Available'] = util.format_number(mem.available)
-        memory_output['Used'] = util.format_number(mem.used)
-        memory_output['Free'] = util.format_number(mem.free)
-        memory_output['Active'] = util.format_number(mem.active)
-        memory_output['Inactive'] = util.format_number(mem.inactive)
-        memory_output['Wired'] = util.format_number(mem.wired)
-        memory_output['Speculative'] = util.format_number(mem.speculative)
+        memory_output['Total'] = util.format_number(mem.total) if unit == 'auto' else util.byte_converter(mem.total, unit)
+        memory_output['Available'] = util.format_number(mem.available) if unit == 'auto' else util.byte_converter(mem.available, unit)
+        memory_output['Used'] = util.format_number(mem.used) if unit == 'auto' else util.byte_converter(mem.used, unit)
+        memory_output['Free'] = util.format_number(mem.free) if unit == 'auto' else util.byte_converter(mem.free, unit)
+        memory_output['Active'] = util.format_number(mem.active) if unit == 'auto' else util.byte_converter(mem.active, unit)
+        memory_output['Inactive'] = util.format_number(mem.inactive) if unit == 'auto' else util.byte_converter(mem.inactive, unit)
+        memory_output['Wired'] = util.format_number(mem.wired) if unit == 'auto' else util.byte_converter(mem.wired, unit)
+        memory_output['Speculative'] = util.format_number(mem.speculative) if unit == 'auto' else util.byte_converter(mem.speculative, unit)
         plugin.print_ordered_dict(memory_output, justify='left')
 
         top_memory_consumers = get_top_memory_usage()
@@ -252,6 +260,16 @@ def main():
                 refresh=True,
                 terminal=False,
             )
+    plugin.print_menu_item('--Unit')
+    for valid_storage_unit in util.valid_storage_units():
+        color = 'blue' if valid_storage_unit == unit else 'black'
+        plugin.print_menu_item(
+            f'----{valid_storage_unit}',
+            color=color,
+            cmd=[plugin.plugin_name, '--unit', valid_storage_unit],
+            refresh=True,
+            terminal=False,
+        )
     if debug_enabled:
         plugin.display_debug_data()
     plugin.print_menu_item('Refresh', refresh=True)
