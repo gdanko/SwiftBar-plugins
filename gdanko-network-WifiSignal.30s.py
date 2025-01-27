@@ -49,7 +49,7 @@ def main():
         },
         'VAR_WIFI_STATUS_INTERFACE': {
             'default_value': 'en0',
-            'valid_values': util.find_valid_interfaces(),
+            'valid_values': util.find_valid_wifi_interfaces(),
         },
     }
     plugin.read_config(defaults_dict)
@@ -152,7 +152,7 @@ def main():
         refresh=True,
     )
     plugin.print_menu_item('--Interface')
-    for ifname in util.find_valid_interfaces():
+    for ifname in util.find_valid_wifi_interfaces():
         color = 'blue' if ifname == interface else 'black'
         plugin.print_menu_item(
             f'----{ifname}',
