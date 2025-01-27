@@ -40,17 +40,26 @@ def configure():
     return args
 
 def get_quake_data(radius: int, magnitude: int, unit: str='m', limit: int=0) ->dict:
-    output = {}
+    location = []
     returncode, public_ip, stdrrr = util.execute_command('curl https://ifconfig.io')
     if returncode != 0 or not public_ip:
-        return output, 'Failed to determine my public IP'
+        return None, {}, 'Failed to determine my public IP'
     
     status_code, geodata, err = request.swiftbar_request(url=f'https://ipinfo.io/{public_ip}/json', return_type='json')
     if status_code != 200:
-        return output, 'Failed to geolocate'
+        return None, {}, 'Failed to geolocate'
     
     if 'loc' not in geodata:
-        return output, 'Failed to geolocate'
+        return None, {}, 'Failed to geolocate'
+    
+    if 'city' in geodata and 'region' in geodata and 'country' in geodata:
+        location = [
+            geodata['city'],
+            geodata['region'],
+            geodata['country']
+        ]
+    if 'postal' in geodata:
+        location.append(geodata['postal'])
     
     now = int(time.time())
     local_8601_start_time = datetime.datetime.fromtimestamp(now - 86400).isoformat('T', 'seconds')
@@ -72,7 +81,7 @@ def get_quake_data(radius: int, magnitude: int, unit: str='m', limit: int=0) ->d
         'orderby': 'time',
     }
     _, data, _ = request.swiftbar_request(url=url, query=query, return_type='json')
-    return data
+    return ', '.join(location) if len(location) >= 3 else None, data, None
 
 def main():
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
@@ -121,12 +130,15 @@ def main():
     unit = plugin.configuration['VAR_EARTHQUAKES_UNIT']
     time_format = '%a, %B %-d, %Y %H:%M:%S'
     
-    quake_data = get_quake_data(radius=radius, magnitude=magnitude, unit=unit, limit=limit)
+    location, quake_data, err = get_quake_data(radius=radius, magnitude=magnitude, unit=unit, limit=limit)
     if quake_data:
         if 'features' in quake_data and type (quake_data['features']) == list:
             features = quake_data['features']
             plugin.print_menu_title(f'Earthquakes: {len(features)}')
             plugin.print_menu_separator()
+            if location:
+                plugin.print_menu_item(location)
+                plugin.print_menu_separator()
             for feature in features:
                 place = feature['properties']['place']
                 
@@ -149,6 +161,10 @@ def main():
                 quake_details['Updated'] = util.unix_to_human((int(feature['properties']['updated'] / 1000)), format=time_format)
                 quake_details['Status'] = feature['properties']['status']
                 plugin.print_ordered_dict(quake_details, justify='left', indent=2)
+    elif err:
+        plugin.print_menu_title('Earthquakes: Error')
+        plugin.print_menu_separator()
+        plugin.print_menu_item(err)
     plugin.print_menu_separator()
     plugin.print_menu_item('Settings')
     plugin.print_menu_item(
