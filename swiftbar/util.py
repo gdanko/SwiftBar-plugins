@@ -84,13 +84,26 @@ def execute_command(command, input=None):
             input = stdout
     return p.returncode, stdout, stderr
 
-def find_valid_interfaces():
+def find_all_network_interfaces():
     returncode, stdout, _ = execute_command('ifconfig')
     if returncode == 0  and stdout:
         pattern = r'([a-z0-9]+):\s*flags='
         matches = re.findall(pattern, stdout)
         return sorted(matches) if (matches and type(matches) == list) else ['lo0']
-    return ['lo0']
+
+def find_valid_network_interfaces():
+    returncode, stdout, _ = execute_command('networksetup -listallhardwareports')
+    if returncode == 0  and stdout:
+        pattern = r'Hardware Port:.*\nDevice:\s+(.*)'
+        matches = re.findall(pattern, stdout)
+        return sorted(matches) if (matches and type(matches) == list) else ['en0']
+
+def find_valid_wifi_interfaces():
+    returncode, stdout, _ = execute_command('networksetup -listallhardwareports')
+    if returncode == 0  and stdout:
+        pattern = r'Hardware Port: Wi-Fi.*\nDevice:\s+(.*)'
+        matches = re.findall(pattern, stdout)
+        return sorted(matches) if (matches and type(matches) == list) else ['en0']
 
 def find_valid_mountpoints():
     returncode, stdout, _ = execute_command('mount')
@@ -98,7 +111,6 @@ def find_valid_mountpoints():
         pattern = r'/dev/disk[s0-9]+ on\s+([^\)]+)\s+\('
         matches = re.findall(pattern, stdout)
         return sorted(matches) if (matches and type(matches) == list) else ['/']
-    return ['/']
 
 def valid_storage_units() -> list[str]:
     return ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei', 'auto']
