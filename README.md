@@ -26,78 +26,114 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
 * Every plugin has a debugging menu that can be toggled via the plugin's `Settings` menu
 
 ## Plugins
+* [Finance](#finance)
 * [Network](#network)
 * [System](#system)
 * [Weather](#weather)
+* [Other](#other)
+
+### Finance
+* `gdanko-finance-StockIndexes.15m.py`
+    * Features
+        * Show the last change for the Dow, Nasdaq, and S&P500 indices.
+* `gdanko-finance-StockQuotes.15m.py`
+    * Features
+        * Show lots and lots of detail about one or more stock symbols.
+    * Settings
+        * Toggle the "Debugging" menu
 
 ### Network
-* gdanko-network-NetworkThroughput.2s.py - This plugin reads a configured interface name and displays received and transmitted data rates. When you click on the menu bar item you can then see:
-    * Interface flags
-    * Hardware address
-    * IPV4 address
-    * IPV6 address
-    * Public IP address (if applicable)
-* gdanko-network-WifiSignal.30s.py - This plugin reads a configured interface name and displays connection strengh for the connected SSID. When you click on the menu bar item you can then see:
-    * Device
-    * Channel
-    * Mode, e.g., 802.11ac
-    * Signal
-    * Noise
-    * Quality
+* `gdanko-network-NetworkThroughput.2s.py`
+    * Features
+        * Display the TX/RX for the specified interface.
+        * Display interface flags, hardware address, IPV4 address, IPV6 address, and public IP address (if applicable).
+    * Settings
+        * Toggle the "Debugging" menu
+        * Toggle verbose mode, which shows information about errors and dropped packets
+        * Select the interface to view
+* `gdanko-network-WifiSignal.30s.py`
+    * Features
+        * Display the specified interface's connection strength to its configured SSID.
+        * Display device name, channel number, WiFi mode, signal, noise, and signal quality.
+    * Settings
+        * Toggle the "Debugging" menu
+        * Select the interface to view
 
 ### System
-* gdanko-stystem-BrewOutdated.30m.py - This plugin shows a list of outdated homebrew packages. When you click on the menu bar item you can then see:
-    * A list of available updates and their version numbers. You can click on an item to execute the update.
-* gdanko-system-CpuPercent.2s.py - This plugin shows average user, system, and idle times for the CPU. When you click on the menu bar item you can then see:
-    * CPU type
-    * user, system, and idle times for each individual core
-    * Top CPU consumers - Show the CPU % and process name for top CPU consumers. If "Click to Kill" is enabled, you can attempt to kill any process in the list if it's owned by you. The process icon will show you those you are able to kill.
+* `gdanko-stystem-BrewOutdated.30m.py`
+    * Features
+        * Display a list of outdated homebrew packages with an option to install one or all of them.
     * Settings
-        * Toggle "Click to Kill"
-        * Select the signal to be used when attempting to kill a process
-        * Configure how many "Top Consumers" to display in the list
-* gdanko-system-DiskConsumers.5m.py - This plugin reads a configured list of paths and shows the top disk consumers under directory. When you click on the menu bar item you can then see:
-    * An entry for each configured path. You can click on any of the items in the list to attempt to open it.
-* gdanko-system-DiskUsage.2s.py - This plugin reads a configured mountpoint and shows its used/total space. When you click on the menu bar item you can then see:
-    * An entry for each configured mountpoint. Under each mountpoint you will see:
-        * The mountpoint, e.g., /Volumes/Foo
-        * The device name, e.g., /dev/disk1s1
-        * The filesystem type, e.g., apfs
-        * The mount options, e.g., apfs, local, nodev, nosuid, journaled
-* gdanko-system-MemoryUsage.2s.py - This plugin shows used/total system memory. When you click on the menu bar item you can then see:
-    * Memory type
-    * Total memory
-    * Available memory
-    * Used memory
-    * Free memory
-    * Active memory
-    * Inactive memory
-    * Wired memory
-    * Top Memory consumers - Show the memory usage and process name for top memory consumers. If "Click to Kill" is enabled, you can attempt to kill any process in the list if it's owned by you. The process icon will show you those you are able to kill.
+        * Toggle the "Debugging" menu
+* `gdanko-system-CpuPercent.2s.py`
+    * Features
+        * Display average user, system, and idle times for the CPU.
+        * Display user, system, and idle times for each individual core.
+        * Display top CPU consumers with an option to attempt to kill those owned by you.
     * Settings
-        * Toggle "Click to Kill"
-        * Select the signal to be used when attempting to kill a process
-        * Configure how many "Top Consumers" to display in the list
-* gdanko-system-SwapUsage.2s.py - This plugin shows used/total swap memory.
-* gdanko-system-SystemUpdates.15m.py - This plugin shows the number of available system updates. When you click on the menu bar item you can see:
-    * A list of available updates and their version numbers. You can click on an item to execute the update.
-* gdanko-system-Uptime.2s.py - This plugin shows system uptimes. When you click on the menu bar item you can then see:
-    * Last boot time
+        * Toggle the "Debugging" menu
+        * Toggle "Click to Kill" functionality
+        * Set the kill signal to use when attempting to kill a process
+        * Set the maximum number of top CPU consumers to display
+* `gdanko-system-DiskConsumers.5m.py`
+    * Features
+        * Display the largest disk consumers for one or more paths, with the ability to open the selected item.
+    * Settings
+        * Toggle the "Debugging" menu
+* `gdanko-system-DiskUsage.2s.py`
+    * Features
+        * Display used/total disk space for the specified mountpoint.
+        * Display the mountpoint, device name, filesystem type, and mount options as shown by `mount (8)`.
+    * Settings
+        * Toggle the "Debugging" menu
+        * Select the mountpoint to view
+        * Select the unit for displaying the data, e.g., "Mi", "Gi"
+* `gdanko-system-MemoryUsage.2s.py`
+    * Features
+        * Display used/total system memory.
+        * Display memory manufacturer and type (if possible), total memory, available memory, used memory, free memory, active memory, inactive memory, wired memory, and speculative memory.
+        * Display top memory consumers with an option to attempt to kill those owned by you.
+    * Settings
+        * Toggle the "Debugging" menu
+        * Toggle "Click to Kill" functionality
+        * Set the kill signal to use when attempting to kill a process
+        * Set the maximum number of top memory consumers to display
+* `gdanko-system-SwapUsage.2s.py`
+    * Features
+        * Display used/total swap memory.
+    * Settings
+        * Toggle the "Debugging" menu
+        * Select the unit for displaying the data, e.g., "Mi", "Gi"
+* `gdanko-system-SystemUpdates.15m.py`
+    * Features
+        * Display a list of available system updates and their version numbers, with an option to install them individually.
+    * Settings
+        * Toggle the "Debugging" menu
+* `gdanko-system-Uptime.2s.py`
+    * Features
+        * Display system uptime
+        * Display last boot time
+    * Settings
+        * Toggle the "Debugging" menu
 
 ### Weather
-* gdanko-weather-WeatherWAPI.10m.py - This plugin reads configuration for API key, location, unit (C/F), and verbose flag and shows the current weather for the specified location. When you click on the menu bar item you can then see:
-    * Feels like temperature
-    * Pressure
-    * Visibility
-    * Condition
-    * Dew point
-    * Humidity
-    * Precipitation
-    * Wind
-    * Wind chill
-    * Heat index
-    * UV index
-    * x Day Forecast - Show weather data for the next few days
+* `gdanko-weather-WeatherWAPI.10m.py`
+    * Features
+        * Display the current temperature for the specified location.
+        * Display "feels like" temperaure, pressure, visibility, condition, dew point, humidity, precipitation, wind, wind chill, heat index, UV index.
+        * Display up to an eight day forecast, showing low/high temperature, average temperature, average visibility, condition, average humidity, total precipitation, chance of rain, chance of snow, UV index, sunrise time, sunset time, moonrise time, moonset time, and moon phase.
+
+### Other
+* `gdanko-other-Earthquakes.15m.py`
+    * Features
+        * Display a list of recent earthquakes based on your location as calculated by geolocating your public IP address.
+        * Display the magnitude, time of occurence, updated time, status, as well as a clickable link for the quake's details page at usgs.gov.
+    * Settings
+        * Toggle the "Debugging" menu
+        * Set the limit for the number of results to display
+        * Set the minimum magnitude
+        * Set the radius based on your location
+        * Set the unit in either "km" or "m"
 
 ## How Do the Settings Toggles Work?
 * Each plugin first determines the path to the config directory and the name of the plugin.
