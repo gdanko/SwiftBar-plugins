@@ -211,47 +211,48 @@ def main():
                     trim=False,
                 )
             plugin.print_menu_item(f'--Total: {util.format_number(consumer_total)}')
-        plugin.print_menu_separator()
-        plugin.print_menu_item('Settings')
-        plugin.print_menu_item(
-            f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill"',
-            cmd=[plugin.plugin_name, '--click-to-kill'],
-            terminal=False,
-            refresh=True,
-        )
-        plugin.print_menu_item(
-            f'{"--Disable" if debug_enabled else "--Enable"} debug data',
-            cmd=[plugin.plugin_name, '--debug'],
-            terminal=False,
-            refresh=True,
-        )
-        plugin.print_menu_item('--Kill Signal')
-        for key, _ in util.get_signal_map().items():
-            color = 'blue' if key == signal else 'black'
-            plugin.print_menu_item(
-                f'----{key}',
-                color=color,
-                cmd=[plugin.plugin_name, '--signal', key],
-                refresh=True,
-                terminal=False,
-            )
-        plugin.print_menu_item('--Maximum Number of Top Consumers')
-        for number in range(1, 51):
-            if number %5 == 0:
-                color = 'blue' if number == max_consumers else 'black'
-                plugin.print_menu_item(
-                    f'----{number}',
-                    color=color,
-                    cmd=[plugin.plugin_name, '--max-consumers', number],
-                    refresh=True,
-                    terminal=False,
-                )
-        if debug_enabled:
-            plugin.display_debug_data()
     else:
         plugin.print_menu_item('Memory: Unknown')
         plugin.print_menu_separator()
         plugin.print_menu_item('Failed to parse vm_stat')
+    plugin.print_menu_separator()
+    plugin.print_menu_item('Settings')
+    plugin.print_menu_item(
+        f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill"',
+        cmd=[plugin.plugin_name, '--click-to-kill'],
+        terminal=False,
+        refresh=True,
+    )
+    plugin.print_menu_item(
+        f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+        cmd=[plugin.plugin_name, '--debug'],
+        terminal=False,
+        refresh=True,
+    )
+    plugin.print_menu_item('--Kill Signal')
+    for key, _ in util.get_signal_map().items():
+        color = 'blue' if key == signal else 'black'
+        plugin.print_menu_item(
+            f'----{key}',
+            color=color,
+            cmd=[plugin.plugin_name, '--signal', key],
+            refresh=True,
+            terminal=False,
+        )
+    plugin.print_menu_item('--Maximum Number of Top Consumers')
+    for number in range(1, 51):
+        if number %5 == 0:
+            color = 'blue' if number == max_consumers else 'black'
+            plugin.print_menu_item(
+                f'----{number}',
+                color=color,
+                cmd=[plugin.plugin_name, '--max-consumers', number],
+                refresh=True,
+                terminal=False,
+            )
+    if debug_enabled:
+        plugin.display_debug_data()
+    plugin.print_menu_item('Refresh', refresh=True)
 
 if __name__ == '__main__':
     main()
