@@ -224,7 +224,7 @@ def main():
         refresh=True,
     )
     plugin.print_menu_item(
-        f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+        f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
         cmd=[plugin.plugin_name, '--debug'],
         terminal=False,
         refresh=True,

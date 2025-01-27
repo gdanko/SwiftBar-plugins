@@ -59,15 +59,6 @@ def process_description(desc):
             output[match.group(1).title()] = match.group(2)
     return output
 
-def prettify_timestamp(timestamp, format):
-    try:
-        parsed = dateutil.parser.parse(timestamp)
-        seconds = parsed.timestamp()
-        new_timestamp = datetime.datetime.fromtimestamp(seconds)
-        return new_timestamp.strftime(format)
-    except Exception as e:
-        return timestamp
-
 def pluralize(count, word):
     if count == 1:
         return word
@@ -191,8 +182,8 @@ def main():
                         plugin.print_menu_item(f'--{alert["event"]}')
                         alert = OrderedDict()
                         alert['Category'] = alert['category']
-                        alert['Effective'] = prettify_timestamp(alert['effective'], alert_format)
-                        alert['Expires'] = prettify_timestamp(alert['expires'], alert_format)
+                        alert['Effective'] = util.prettify_timestamp(alert['effective'], alert_format)
+                        alert['Expires'] = util.prettify_timestamp(alert['expires'], alert_format)
                         for k, v in desc.items():
                             alert[k] = v
                         plugin.print_ordered_dict(alert, justify='left')
@@ -208,7 +199,7 @@ def main():
                 total_precipitation = f'{round(daily["day"]["totalprecip_in"])} in' if unit == 'F' else f'{round(daily["day"]["totalprecip_mm"])} mm'
                 avg_visibility = f'{float(daily["day"]["avgvis_miles"])} miles' if unit == 'F' else f'{float(daily["day"]["avgvis_km"])} km'
 
-                plugin.print_menu_item(f'--{prettify_timestamp(daily["date"], forecast_format)}')
+                plugin.print_menu_item(f'--{util.prettify_timestamp(daily["date"], forecast_format)}')
                 daily_section = OrderedDict()
                 daily_section['Low / High'] = f'{round(daily_low)}°{unit} / {round(daily_high)}°{unit}'
                 daily_section['Average Temperature'] = f'{round(daily_average)}°{unit}'
@@ -236,7 +227,7 @@ def main():
     plugin.print_menu_separator()
     plugin.print_menu_item('Settings')
     plugin.print_menu_item(
-        f'{"--Disable" if debug_enabled else "--Enable"} debug data',
+        f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
         cmd=[plugin.plugin_name, '--debug'],
         refresh=True,
         terminal=False,
