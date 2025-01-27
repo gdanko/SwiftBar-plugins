@@ -7,6 +7,7 @@
 # <xbar.desc>Show the current network throughput for a given interface</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/gdanko-network-NetworkThroughput.2s.py</xbar.abouturl>
+# <xbar.var>string(VAR_NET_THROUGHPUT_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_NET_THROUGHPUT_INTERFACE="en0"): The network interface to measure.</xbar.var>
 # <xbar.var>string(VAR_NET_THROUGHPUT_VERBOSE="false"): Show more verbose detail.</xbar.var>
 

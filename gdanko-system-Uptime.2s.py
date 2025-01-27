@@ -7,6 +7,7 @@
 # <xbar.desc>Show system uptime</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-Uptime.2s.py</xbar.abouturl>
+# <xbar.var>string(VAR_SYSTEM_UPTIME_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>

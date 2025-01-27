@@ -101,7 +101,7 @@ def find_valid_mountpoints():
     return ['/']
 
 def valid_storage_units() -> list[str]:
-    return ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei']
+    return ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei', 'auto']
 
 def valid_weather_units() -> list[str]:
     return ['C', 'F']
@@ -150,16 +150,28 @@ def format_number(size):
     bytes = factor
     megabytes = bytes * factor
     gigabytes = megabytes * factor
-    if size < gigabytes:
-        if size < megabytes:
-            if size < bytes:
-                return f'{size} B'
+    terabytes = gigabytes * factor
+    petabytes = terabytes * factor
+    exabytes = petabytes * factor
+    if size < exabytes:
+        if size < petabytes:
+            if size < terabytes:
+                if size < gigabytes:
+                    if size < megabytes:
+                        if size < bytes:
+                            return f'{size} B'
+                        else:
+                            return byte_converter(size, 'Ki')
+                    else:
+                        return byte_converter(size, 'Mi')
+                else:
+                    return byte_converter(size, 'Gi')
             else:
-                return byte_converter(size, "Ki")
+                return byte_converter(size, 'Ti')
         else:
-            return byte_converter(size, "Mi")
+            return byte_converter(size, 'Pi')
     else:
-        return byte_converter(size, "Gi")
+        return byte_converter(size, 'Ei')
 
 def prettify_timestamp(timestamp, format):
     try:

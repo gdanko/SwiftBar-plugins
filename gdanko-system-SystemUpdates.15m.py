@@ -7,6 +7,7 @@
 # <xbar.desc>Display the number of available system updates</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-SystemUpdates.15m.py</xbar.abouturl>
+# <xbar.var>string(VAR_SYSTEM_UPDATES_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>

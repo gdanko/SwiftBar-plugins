@@ -7,6 +7,7 @@
 # <xbar.desc>Display the number upgradeable Homebrew packages</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-BrewOutdated.30m.py</xbar.abouturl>
+# <xbar.var>string(VAR_BREW_OUTDATED_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>

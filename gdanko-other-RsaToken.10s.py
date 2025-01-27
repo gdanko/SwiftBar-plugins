@@ -7,6 +7,7 @@
 # <xbar.desc>fetches current rsa token, and allows you to copy your pin from keychain to your paste buffer</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-RsaToken.10s.py</xbar.abouturl>
+# <xbar.var>string(VAR_RSA_TOKEN_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>

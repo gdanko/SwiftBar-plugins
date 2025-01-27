@@ -7,6 +7,7 @@
 # <xbar.desc>Show info about the specified stock symbols</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-finance-StockQuotes.15m.py</xbar.abouturl>
+# <xbar.var>string(VAR_STOCK_QUOTES_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_STOCK_SYMBOLS="AAPL"): A comma-delimited list of stock symbols</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>

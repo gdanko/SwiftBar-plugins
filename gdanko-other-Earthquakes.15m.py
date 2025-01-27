@@ -147,7 +147,6 @@ def main():
                 quake_details['Time'] = util.unix_to_human((int(feature['properties']['time'] / 1000)), format=time_format)
                 quake_details['Updated'] = util.unix_to_human((int(feature['properties']['updated'] / 1000)), format=time_format)
                 quake_details['Status'] = feature['properties']['status']
-                quake_details['Tsunami'] = 'Yes' if feature['properties']['tsunami'] == 1 else 'No'
                 plugin.print_ordered_dict(quake_details, justify='left', indent=2)
     plugin.print_menu_separator()
     plugin.print_menu_item('Settings')

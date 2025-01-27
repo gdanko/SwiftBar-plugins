@@ -7,10 +7,11 @@
 # <xbar.desc>Display the weather using weatherapi.com</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-weather-WeatherWAPI.10m.py</xbar.abouturl>
-# <xbar.var>string(VAR_WEATHER_WAPI_LOCATION="San Diego, CA, US"): The location to use</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_API_KEY=""): The OpenWeatherMap API key</xbar.var>
-# <xbar.var>string(VAR_WEATHER_WAPI_UNITS="F"): The unit to use: (C)elsius or (F)ahrenheit</xbar.var>
+# <xbar.var>string(VAR_WEATHER_WAPI_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
+# <xbar.var>string(VAR_WEATHER_WAPI_LOCATION="San Diego, CA, US"): The location to use</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_SHOW_FORECAST="true"): Show the forecast in the drop down menut</xbar.var>
+# <xbar.var>string(VAR_WEATHER_WAPI_UNITS="F"): The unit to use: (C)elsius or (F)ahrenheit</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>

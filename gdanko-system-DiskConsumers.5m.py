@@ -7,6 +7,7 @@
 # <xbar.desc>Show files and directories using the most disk space for a given path</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-DiskConsumers.5m.py</xbar.abouturl>
+# <xbar.var>string(VAR_DISK_CONSUMERS_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_DISK_CONSUMERS_PATHS="/"): A comma-delimited list of mount points</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>

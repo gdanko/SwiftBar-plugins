@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Disk Usage</xbar.title>
-# <xbar.version>v0.2.0</xbar.version>
+# <xbar.version>v0.3.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show disk usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-MemoryUsage.2s.py</xbar.abouturl>
-# <xbar.var>string(VAR_DISK_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
+# <xbar.var>string(VAR_DISK_USAGE_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_DISK_USAGE_MOUNTPOINTS="/"): A comma-delimited list of mount points</xbar.var>
+# <xbar.var>string(VAR_DISK_USAGE_UNIT="auto"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
@@ -68,7 +69,7 @@ def main():
             'valid_values': ','.join(valid_mountpoints),
         },
         'VAR_DISK_USAGE_UNIT': {
-            'default_value': 'Gi',
+            'default_value': 'auto',
             'valid_values': util.valid_storage_units(),
         },
     }
@@ -91,8 +92,8 @@ def main():
     try:
         total, used, _ = shutil.disk_usage(mountpoint)
         if total and used:
-            total = util.byte_converter(total, unit)
-            used = util.byte_converter(used, unit)
+            total = util.format_number(total) if unit == 'auto' else util.byte_converter(total, unit)
+            used = util.format_number(used) if unit == 'auto' else util.byte_converter(used, unit)
             plugin.print_menu_title(f'Disk: "{mountpoint}" {used} / {total}')
             plugin.print_menu_separator()
             plugin.print_menu_item(mountpoint)

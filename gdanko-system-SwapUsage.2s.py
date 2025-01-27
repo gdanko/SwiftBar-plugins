@@ -7,7 +7,8 @@
 # <xbar.desc>Show system swap usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-SwapUsage.2s.py</xbar.abouturl>
-# <xbar.var>string(VAR_SWAP_USAGE_UNIT="Gi"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei]</xbar.var>
+# <xbar.var>string(VAR_SWAP_USAGE_DEBUG_ENABLED=false"): Show debugging menu</xbar.var>
+# <xbar.var>string(VAR_SWAP_USAGE_UNIT="auto"): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
@@ -53,7 +54,7 @@ def main():
             'valid_values': [True, False],
         },
         'VAR_SWAP_USAGE_UNIT': {
-            'default_value': 'Gi',
+            'default_value': 'auto',
             'valid_values': util.valid_storage_units(),
         },
     }
@@ -70,8 +71,8 @@ def main():
 
     swap = get_swap_usage()
     if swap:
-        used = util.byte_converter(swap.used, unit)
-        total = util.byte_converter(swap.total, unit)
+        used = util.format_number(swap.used) if unit == 'auto' else util.byte_converter(swap.used, unit)
+        total = util.format_number(swap.total) if unit == 'auto' else util.byte_converter(swap.total, unit)
         plugin.print_menu_title(f'Swap: {used} / {total}')
     else:
         plugin.print_menu_title('Swap: Failed')
@@ -98,6 +99,7 @@ def main():
         )
     if debug_enabled:
         plugin.display_debug_data()
+    plugin.print_menu_item('Refresh', refresh=True)
 
 if __name__ == '__main__':
     main()
