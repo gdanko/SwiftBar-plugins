@@ -1,5 +1,6 @@
 from collections import namedtuple
 import datetime
+import dateutil
 import getpass
 import platform
 import re
@@ -160,6 +161,15 @@ def format_number(size):
     else:
         return byte_converter(size, "Gi")
 
+def prettify_timestamp(timestamp, format):
+    try:
+        parsed = dateutil.parser.parse(timestamp)
+        seconds = parsed.timestamp()
+        new_timestamp = datetime.datetime.fromtimestamp(seconds)
+        return new_timestamp.strftime(format)
+    except Exception as e:
+        return timestamp
+
 def pad_float(number):
     return '{:.2f}'.format(float(number))
 
@@ -175,8 +185,14 @@ def to_dollar(number):
 def add_commas(number):
     return '{:,.0f}'.format(number)
 
-def unix_to_human(timestamp):
-    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
+def unix_to_human(timestamp, format: str='%Y-%m-%d'):
+    return datetime.datetime.fromtimestamp(timestamp).strftime(format)
 
 def float_to_pct(number):
     return f'{number:.2%}'
+
+def miles_to_kilometers(miles: int=0) ->float:
+    return miles * 1.609344
+
+def kilometers_to_miles(kilometers: int=0) ->float:
+    return kilometers * 0.6213712
