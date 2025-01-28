@@ -12,19 +12,17 @@ class TypedDict:
     def __setitem__(self, key, value):
         """
         Validate the key and value type when setting an item.
+        If the key is param1...n, we will allow it.
         """
-        # We will allow params here
-        if key not in self._schema:
-            if re.match(r'^param[\d+]', key):
-                self._data[key] = value
-            else:
-                raise KeyError(f'Key "{key}" is not allowed.')
-        # if key not in self._schema:
-        #     raise KeyError(f"Key '{key}' is not allowed.")
-        # expected_type = self._schema[key]
-        # if not isinstance(value, expected_type):
-        #     raise TypeError(f"Value for '{key}' must be of type {expected_type.__name__}.")
-        self._data[key] = value
+        if re.match(r'^param[\d+]', key):
+            self._data[key] = value
+        else:
+            if key not in self._schema:
+                raise KeyError(f"Key '{key}' is not allowed.")
+            expected_type = self._schema[key]
+            if not isinstance(value, expected_type):
+                raise TypeError(f"Value for '{key}' must be of type {expected_type.__name__}.")
+            self._data[key] = value
 
     def __getitem__(self, key):
         """
