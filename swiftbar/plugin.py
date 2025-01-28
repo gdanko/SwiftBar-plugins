@@ -92,38 +92,30 @@ class Plugin:
         """
         Read and validate the defaults_dict sent by the plugin
         """
-        # Initially set the configuration to all of the default values, then overwrite from the JSON.
-        for key, value in defaults_dict.items():
-            self.configuration[key] = value['default_value']
-
-        invalid_value_found = False
         if os.path.exists(self.vars_file):
-            try:
-                with open(self.vars_file, 'r') as fh:
-                    contents = json.load(fh)
-                    for key, value in defaults_dict.items():
-                        if key in contents:
-                            if 'valid_values' in value:
-                                if contents[key] in value['valid_values']:
-                                    self.configuration[key] = contents[key]
-                                else:
-                                    invalid_value_found = True
-                            elif 'minmax' in value:
-                                if contents[key] < value['minmax'].min or contents[key] > value['minmax'].max:
-                                    invalid_value_found = True
-                                else:
-                                    self.configuration[key] = contents[key]
-                            else:
+            with open(self.vars_file, 'r') as fh:
+                contents = json.load(fh)
+                for key, value in defaults_dict.items():
+                    if key in contents:
+                        if 'valid_values' in value:
+                            if contents[key] in value['valid_values']:
                                 self.configuration[key] = contents[key]
-                if invalid_value_found:
+                            else:
+                                self.configuration[key] = defaults_dict[key]['default_value']
+                        elif 'minmax' in value:
+                            if contents[key] >= value['minmax'].min and contents[key] <= value['minmax'].max:
+                                self.configuration[key] = contents[key]
+                            else:
+                                self.configuration[key] = defaults_dict[key]['default_value']
+                        else:
+                            self.configuration[key] = contents[key]
+                    else:
+                        self.configuration[key] = defaults_dict[key]['default_value']
+                if contents != self.configuration:
                     self._rewrite_vars_file()
-            except:
-                self._write_default_vars_file(defaults_dict)
         else:
             self._write_default_vars_file(defaults_dict)
-        
-        self._rewrite_vars_file()
- 
+
     def update_setting(self, key, value):
         """
         Update a given setting for a plugin and rewrite the JSON variables file.
