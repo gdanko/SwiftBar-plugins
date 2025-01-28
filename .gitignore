@@ -164,5 +164,5 @@ cython_debug/
 .vscode
 
 # Ignore my test script
-test.py
+test*.py
 
