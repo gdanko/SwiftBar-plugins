@@ -62,6 +62,14 @@ class Plugin:
             except:
                 pass
 
+    def write_config(self, contents):
+        # Let's make sure this is not duplicated
+        """
+        Write the JSON variables file.
+        """
+        with open(self.vars_file, 'w') as fh:
+            fh.write(json.dumps(contents, indent=4))
+
     def _write_default_vars_file(self, defaults_dict):
         """
         Write a new JSON variables file from the contents of the defaults_dict sent by the plugin.
@@ -81,6 +89,9 @@ class Plugin:
             fh.write(json.dumps(self.configuration, indent=4))
 
     def read_config(self, defaults_dict):
+        """
+        Read and validate the defaults_dict sent by the plugin
+        """
         invalid_value_found = False
         if os.path.exists(self.vars_file):
             try:
@@ -118,14 +129,6 @@ class Plugin:
         if missing_keys:
             self._rewrite_vars_file()
  
-    def write_config(self, contents):
-        # Let's make sure this is not duplicated
-        """
-        Write the JSON variables file.
-        """
-        with open(self.vars_file, 'w') as fh:
-            fh.write(json.dumps(contents, indent=4))
-
     def update_setting(self, key, value):
         """
         Update a given setting for a plugin and rewrite the JSON variables file.
@@ -218,7 +221,7 @@ class Plugin:
         """
         self.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
 
-    def display_debug_data(self):
+    def display_debugging_menu(self):
         """
         Create a menu item to display plugin debug information.
         """

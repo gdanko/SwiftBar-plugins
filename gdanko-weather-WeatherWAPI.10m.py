@@ -249,7 +249,7 @@ def main():
             terminal=False,
         )
     if debug_enabled:
-        plugin.display_debug_data()
+        plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh weather data', refresh=True)
 
 if __name__ == '__main__':

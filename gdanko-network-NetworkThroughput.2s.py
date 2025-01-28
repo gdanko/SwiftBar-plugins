@@ -202,7 +202,7 @@ def main():
             terminal=False,
         )
     if debug_enabled:
-        plugin.display_debug_data()
+        plugin.display_debugging_menu()
 
 if __name__ == '__main__':
     main()
