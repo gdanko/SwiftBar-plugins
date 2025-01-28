@@ -18,7 +18,7 @@ class TypedDict:
             if re.match(r'^param[\d+]', key):
                 self._data[key] = value
             else:
-                raise KeyError(f"Key '{key}' is not allowed.")
+                raise KeyError(f'Key "{key}" is not allowed.')
         # if key not in self._schema:
         #     raise KeyError(f"Key '{key}' is not allowed.")
         # expected_type = self._schema[key]
@@ -46,15 +46,18 @@ class TypedDict:
     
     def items(self):
         """
-        Return the dict's items().
+        Return a view object that displays a list of dictionary's key-value tuple pairs.
         """
         return self._data.items()
 
     def pop(self, key):
         """
-        Delete the specified key from the TypedDict.
+        Remove the item with the specified key from the TypedDict.
+        If the key is not present in the data, raise a KeyError.
         """
-        self._data.pop(key)
+        if key not in self._data:
+            raise KeyError(f'Key "{key}" does not exist in the data.')
+        return self._data.pop(key)
 
 class Params(TypedDict):
     def __init__(self):
