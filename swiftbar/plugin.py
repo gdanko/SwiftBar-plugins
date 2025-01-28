@@ -92,6 +92,10 @@ class Plugin:
         """
         Read and validate the defaults_dict sent by the plugin
         """
+        # Initially set the configuration to all of the default values, then overwrite from the JSON.
+        for key, value in defaults_dict.items():
+            self.configuration[key] = value['default_value']
+
         invalid_value_found = False
         if os.path.exists(self.vars_file):
             try:
@@ -99,8 +103,6 @@ class Plugin:
                     contents = json.load(fh)
                     for key, value in defaults_dict.items():
                         if key in contents:
-                            # Set it to the default value up front and change only if the value in the json file is valid
-                            self.configuration[key] = value['default_value']
                             if 'valid_values' in value:
                                 if contents[key] in value['valid_values']:
                                     self.configuration[key] = contents[key]
@@ -120,14 +122,7 @@ class Plugin:
         else:
             self._write_default_vars_file(defaults_dict)
         
-        # Populate the configuration file with any missing items
-        missing_keys = False
-        for key, value in defaults_dict.items():
-            if not key in self.configuration:
-                self.configuration[key] = value['default_key']
-                missing_keys = True
-        if missing_keys:
-            self._rewrite_vars_file()
+        self._rewrite_vars_file()
  
     def update_setting(self, key, value):
         """
