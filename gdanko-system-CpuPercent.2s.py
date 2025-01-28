@@ -214,22 +214,16 @@ def main():
             padding_width = 6
             icon = util.get_process_icon(user, click_to_kill)
             cpu_usage = f'{str(cpu_usage)}%'
-
-            # Need to figure out why this isn't working in xbar
-            if plugin.invoked_by == 'xbar':
-                disabled = False if click_to_kill else True
-                print(f'--{icon}{cpu_usage.rjust(padding_width)} - {command} | length={command_length} | shell=/bin/sh | param1="-c" | param2="kill -{util.get_signal_map()[signal]} {pid}" | size={plugin.size} | font={plugin.font} | disabled={disabled}')
-            else:
-                cmd = ['kill', f'-{util.get_signal_map()[signal]}', pid] if click_to_kill else []
-                plugin.print_menu_item(
-                    f'--{icon}{cpu_usage.rjust(padding_width)} - {command}',
-                    cmd=cmd,
-                    emojize=True,
-                    length=command_length,
-                    symbolize=False,
-                    terminal=False,
-                    trim=False,
-                )
+            cmd = ['kill', f'-{util.get_signal_map()[signal]}', pid] if click_to_kill else []
+            plugin.print_menu_item(
+                f'--{icon}{cpu_usage.rjust(padding_width)} - {command}',
+                cmd=cmd,
+                emojize=True,
+                length=command_length,
+                symbolize=False,
+                terminal=False,
+                trim=False,
+            )
     plugin.print_menu_separator()
     plugin.print_menu_item('Settings')
     plugin.print_menu_item(
