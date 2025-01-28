@@ -3,7 +3,10 @@ import http.client
 import re
 import urllib.parse
 
-def percent_encode(string):
+def percent_encode(string: str) ->str:
+    """
+    Percent encode a string.
+    """
     hex_digits = '0123456789ABCDEF'
     result = []
     for char in string:
@@ -15,7 +18,10 @@ def percent_encode(string):
             result.append(f'%{hex_digits[ord(char) >> 4]}{hex_digits[ord(char) & 0xF]}')
     return ''.join(result)
 
-def encode_query_string(params):
+def encode_query_string(params: dict) ->str:
+    """
+    Encode a query string.
+    """
     encoded_pairs = []
     for key, value in params.items():
         encoded_key = percent_encode(str(key))
@@ -24,6 +30,9 @@ def encode_query_string(params):
     return '&'.join(encoded_pairs)
 
 def swiftbar_request(url: str='', method: str='GET', headers: dict = {}, query: dict={}, data: dict=None, return_type: str='text'):
+    """
+    Handle HTTP basic requests.
+    """
     # Add support for other methods
     response = None
     parsed = urllib.parse.urlparse(url)
