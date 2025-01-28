@@ -9,6 +9,9 @@ import subprocess
 import time
 
 def get_signal_map():
+    """
+    Return a dict containing all valid signals.
+    """
     return {
         'SIHGUP': signal.SIGHUP,
         'SIGINT': signal.SIGINT,
@@ -44,6 +47,9 @@ def get_signal_map():
     }
 
 def get_macos_version():
+    """
+    Determine the current OS version and return it as the full OS string.
+    """
     os_version = parse_version(platform.mac_ver()[0])
     macos_families = {
         '10.0': 'Cheetah',
@@ -75,6 +81,9 @@ def get_macos_version():
     return f'macOS {macos_families[version_string]} {os_version.part1}.{os_version.part2}'
 
 def execute_command(command, input=None):
+    """
+    Execute a system command, returning exit code, stdout, and stderr.
+    """
     for command in re.split(r'\s*\|\s*', command):
         p = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate(input=input.encode('utf-8') if input else None)
@@ -84,28 +93,40 @@ def execute_command(command, input=None):
             input = stdout
     return p.returncode, stdout, stderr
 
-def find_all_network_interfaces():
+def find_all_network_interfaces() -> list[str]:
+    """
+    Find and return a list of all interfaces using ifconfig.
+    """
     returncode, stdout, _ = execute_command('ifconfig')
     if returncode == 0  and stdout:
         pattern = r'([a-z0-9]+):\s*flags='
         matches = re.findall(pattern, stdout)
         return sorted(matches) if (matches and type(matches) == list) else ['lo0']
 
-def find_valid_network_interfaces():
+def find_valid_network_interfaces() ->str:
+    """
+    Find and return a list of all valid interfaces using networksetup.
+    """
     returncode, stdout, _ = execute_command('networksetup -listallhardwareports')
     if returncode == 0  and stdout:
         pattern = r'Hardware Port:.*\nDevice:\s+(.*)'
         matches = re.findall(pattern, stdout)
         return sorted(matches) if (matches and type(matches) == list) else ['en0']
 
-def find_valid_wifi_interfaces():
+def find_valid_wifi_interfaces() ->list[str]:
+    """
+    Find and return a list of all wireless interfaces using networksetup.
+    """
     returncode, stdout, _ = execute_command('networksetup -listallhardwareports')
     if returncode == 0  and stdout:
         pattern = r'Hardware Port: Wi-Fi.*\nDevice:\s+(.*)'
         matches = re.findall(pattern, stdout)
         return sorted(matches) if (matches and type(matches) == list) else ['en0']
 
-def find_valid_mountpoints():
+def find_valid_mountpoints() ->list[str]:
+    """
+    Find and return a list of all mounted filesystems.
+    """
     returncode, stdout, _ = execute_command('mount')
     if returncode == 0  and stdout:
         pattern = r'/dev/disk[s0-9]+ on\s+([^\)]+)\s+\('
@@ -113,18 +134,27 @@ def find_valid_mountpoints():
         return sorted(matches) if (matches and type(matches) == list) else ['/']
 
 def valid_storage_units() -> list[str]:
-    return ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei', 'auto']
+    """
+    Return a list of valid units of storage.
+    """
+    return ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei', 'Z', 'Zi', 'auto']
 
 def valid_weather_units() -> list[str]:
     return ['C', 'F']
 
-def parse_version(version_string: str=''):
+def parse_version(version_string: str):
+    """
+    Parse a version string and return a namedtuple containing all of the bits.
+    """
     fields = [f'part{i + 1}' for i in range(len(version_string.split('.')))]
     version = namedtuple('version', fields)
     parts = map(int, version_string.split('.'))
     return version(*parts)
 
-def get_process_icon(process_owner, click_to_kill):
+def get_process_icon(process_owner: str, click_to_kill: bool):
+    """
+    Return a skull icon if a process can be kill or a no entry sign icon if it cannot.
+    """
     if click_to_kill:
         if process_owner == getpass.getuser():
             return ':skull:'
@@ -133,12 +163,18 @@ def get_process_icon(process_owner, click_to_kill):
     else:
         return ''
 
-def get_sysctl(metric):
+def get_sysctl(metric: str):
+    """
+    Execute sysctl via execute_command() and return the results or None.
+    """
     command = f'sysctl -n {metric}'
     returncode, stdout, _ = execute_command(command)
     return stdout if returncode == 0 else None
 
-def byte_converter(bytes, unit):
+def byte_converter(bytes: int, unit: str) -> str:
+    """
+    Convert bytes to the given unit.
+    """
     suffix = 'B'
     prefix = unit[0]
     divisor = 1000
@@ -149,7 +185,10 @@ def byte_converter(bytes, unit):
     prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
-def process_bytes(num):
+def process_bytes(num: int):
+    """
+    Process the rate of data, e.g., MiB/s.
+    """
     suffix = 'B'
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
@@ -157,66 +196,80 @@ def process_bytes(num):
         num = num / 1024
     return f'{pad_float(num)} Yi{suffix}'
 
-def format_number(size):
-    factor = 1024
-    bytes = factor
-    megabytes = bytes * factor
-    gigabytes = megabytes * factor
-    terabytes = gigabytes * factor
-    petabytes = terabytes * factor
-    exabytes = petabytes * factor
-    if size < exabytes:
-        if size < petabytes:
-            if size < terabytes:
-                if size < gigabytes:
-                    if size < megabytes:
-                        if size < bytes:
-                            return f'{size} B'
-                        else:
-                            return byte_converter(size, 'Ki')
-                    else:
-                        return byte_converter(size, 'Mi')
-                else:
-                    return byte_converter(size, 'Gi')
-            else:
-                return byte_converter(size, 'Ti')
-        else:
-            return byte_converter(size, 'Pi')
-    else:
-        return byte_converter(size, 'Ei')
+def format_number(num: int):
+    """
+    Take a number of bytes and automatically convert to the most logical unit.
+    """
+    suffix = 'B'
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+        if abs(num) < 1024.0:
+            return f'{round(num, 2)} {unit}{suffix}'
+        num = num / 1024
+    return f'{pad_float(num)} Yi{suffix}'
 
 def prettify_timestamp(timestamp, format):
+    """
+    Parse a data-based timestamp and convert it to the specified format.
+    """
     try:
         parsed = dateutil.parser.parse(timestamp)
         seconds = parsed.timestamp()
         new_timestamp = datetime.datetime.fromtimestamp(seconds)
         return new_timestamp.strftime(format)
     except Exception as e:
+        print(e)
         return timestamp
-
-def pad_float(number):
-    return '{:.2f}'.format(float(number))
-
-def get_timestamp(timestamp):
-    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %k:%M:%S')
-
-def unix_time_in_ms():
-    return int(time.time() * 1000)
-
-def to_dollar(number):
-    return '${:,.2f}'.format(number)
-
-def add_commas(number):
-    return '{:,.0f}'.format(number)
-
-def unix_to_human(timestamp, format: str='%Y-%m-%d'):
+    
+def get_timestamp(timestamp: int=0, format: str='%Y-%m-%d %k:%M:%S')->str:
+    """
+    Take a Unix timestamp and convert it to the specified format.
+    """
     return datetime.datetime.fromtimestamp(timestamp).strftime(format)
 
-def float_to_pct(number):
+def unix_to_human(timestamp, format: str='%Y-%m-%d') ->str:
+    """
+    Take a Unix timestamp and convert it to the specified format.
+    """
+    return datetime.datetime.fromtimestamp(timestamp).strftime(format)
+
+def unix_time_in_ms() ->int:
+    """
+    Return the Unix timestamp in millesconds.
+    """
+    return int(time.time() * 1000)
+
+def pad_float(number: int=0):
+    """
+    Pad a float to two decimal places.
+    """
+    return '{:.2f}'.format(float(number))
+
+def to_dollar(number: int=0) ->str:
+    """
+    Convert the specified integer as a dollar based format, e.g., $2,000.
+    """
+    return '${:,.2f}'.format(number)
+
+def add_commas(number: int=0):
+    """
+    Add commas to integers.
+    """
+    return '{:,.0f}'.format(number)
+
+def float_to_pct(number: int=0):
+    """
+    Convert a floating point number to its percent equivalent.
+    """
     return f'{number:.2%}'
 
 def miles_to_kilometers(miles: int=0) ->float:
+    """
+    Convert miles to kilometers.
+    """
     return miles * 1.609344
 
 def kilometers_to_miles(kilometers: int=0) ->float:
+    """
+    Convert kilometers to miles.
+    """
     return kilometers * 0.6213712
