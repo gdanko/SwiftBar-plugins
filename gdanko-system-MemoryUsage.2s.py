@@ -210,16 +210,23 @@ def main():
                 consumer_total += bytes
                 padding_width = 12
                 icon = util.get_process_icon(user, click_to_kill)
-                cmd = ['kill', f'-{util.get_signal_map()[signal]}', pid] if click_to_kill else []
-                plugin.print_menu_item(
-                    f'--{icon}{util.format_number(bytes).rjust(padding_width)} - {command}',
-                    cmd=cmd,
-                    emojize=True,
-                    length=command_length,
-                    symbolize=False,
-                    terminal=False,
-                    trim=False,
-                )
+
+                # Need to figure out why this isn't working in xbar
+                if plugin.invoked_by == 'xbar':
+                    disabled = False if click_to_kill else True
+                    print(f'--{icon}{util.format_number(bytes).rjust(padding_width)} - {command} | length={command_length} | shell=/bin/sh | param1="-c" | param2="kill -{util.get_signal_map()[signal]} {pid}" | size={plugin.size} | font={plugin.font} | disabled={disabled}')
+                else:
+                    cmd = ['kill', f'-{util.get_signal_map()[signal]}', pid] if click_to_kill else []
+                    plugin.print_menu_item(
+                        f'--{icon}{util.format_number(bytes).rjust(padding_width)} - {command}',
+                        cmd=cmd,
+                        emojize=True,
+                        length=command_length,
+                        refresh=True,
+                        symbolize=False,
+                        terminal=True,
+                        trim=False,
+                    )
             plugin.print_menu_item(f'--Total: {util.format_number(consumer_total)}')
     else:
         plugin.print_menu_item('Memory: Unknown')
