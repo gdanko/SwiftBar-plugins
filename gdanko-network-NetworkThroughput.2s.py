@@ -25,8 +25,6 @@ from typing import NamedTuple, Union
 import argparse
 import os
 import re
-import subprocess
-import sys
 import time
 
 class IoCounters(NamedTuple):
@@ -37,8 +35,7 @@ class IoCounters(NamedTuple):
     packets_recv: int
     errin: int
     errout: int
-    dropin: int
-    dropout: int
+    collisions: int
 
 class InterfaceData(NamedTuple):
     interface: str
@@ -46,15 +43,6 @@ class InterfaceData(NamedTuple):
     mac: str
     inet: str
     inet6: str
-
-try:
-    from psutil import net_io_counters
-except ModuleNotFoundError:
-    print('Error: missing "psutil" library.')
-    print('---')
-    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
-    print('Fix copied to clipboard. Paste on terminal and run.')
-    exit(1)
 
 def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -65,19 +53,21 @@ def configure() -> argparse.Namespace:
     return args
 
 def get_data(interface: str=None) -> IoCounters:
-    io_counters = net_io_counters(pernic=True)
-    if interface in io_counters:
-        return IoCounters(
-            interface    = interface,
-            bytes_sent   = io_counters[interface].bytes_sent,
-            bytes_recv   = io_counters[interface].bytes_recv,
-            packets_sent = io_counters[interface].packets_sent,
-            packets_recv = io_counters[interface].packets_recv,
-            errin        = io_counters[interface].errin,
-            errout       = io_counters[interface].errout,
-            dropin       = io_counters[interface].dropin,
-            dropout      = io_counters[interface].dropout,
-        )
+    returncode, stdout, stderr = util.execute_command(f'netstat -bid {interface}')
+    if returncode == 0 and stdout:
+        match = re.search(f'^({interface}\s+.*)', stdout, re.MULTILINE)
+        if match:
+            bits = re.split('\s+', match.group(1))
+            return IoCounters(
+                interface    = interface,
+                bytes_sent   = int(bits[9]),
+                bytes_recv   = int(bits[6]),
+                packets_sent = int(bits[7]),
+                packets_recv = int(bits[4]),
+                errin        = int(bits[5]),
+                errout       = int(bits[8]),
+                collisions   = int(bits[10]),
+            )
     else:
         # DO SOMETHING HERE
         print('oops! interface not found!')
@@ -152,8 +142,7 @@ def main() -> None:
         packets_recv = second_sample.packets_recv - first_sample.packets_recv,
         errin        = second_sample.errin - first_sample.errin,
         errout       = second_sample.errout - first_sample.errout,
-        dropin       = second_sample.dropin - first_sample.dropin,
-        dropout      = second_sample.dropout - first_sample.dropout,
+        collisions   = second_sample.collisions - first_sample.collisions,
     )
     plugin.print_menu_title(f'{network_throughput.interface} {util.process_bytes(network_throughput.bytes_recv)} RX / {util.process_bytes(network_throughput.bytes_sent)} TX')
     interface_output = OrderedDict()
@@ -168,22 +157,19 @@ def main() -> None:
     if public_ip:
         interface_output['Public IP'] = public_ip
     if vebose_enabled:
-        if network_throughput.dropin is not None:
-            interface_output['Inbound Packets Dropped/sec'] = network_throughput.dropin
-        if network_throughput.dropout is not None:
-            interface_output['Outbound Packets Dropped/sec'] = network_throughput.dropout
         if network_throughput.errin is not None:
             interface_output['Inbound Errors/sec'] = network_throughput.errin
         if network_throughput.errout is not None:
             interface_output['Outbound Errors/sec'] = network_throughput.errout
-        if second_sample.dropin is not None:
-            interface_output['Inbound Packets Dropped (total)'] = second_sample.dropin
-        if second_sample.dropout is not None:
-            interface_output['Outbound Packets Dropped (total)'] = second_sample.dropout
+        if network_throughput.collisions is not None:
+            interface_output['Collisions/sec'] = network_throughput.collisions
         if second_sample.errin is not None:
             interface_output['Inbound Errors (total)'] = second_sample.errin
         if second_sample.errout is not None:
             interface_output['Outbound Errors (total)'] = second_sample.errout
+        if second_sample.collisions is not None:
+            interface_output['Collisions (total)'] = second_sample.collisions
+
     plugin.print_ordered_dict(interface_output, justify='left')
     plugin.print_menu_separator()
     plugin.print_menu_item('Settings')
