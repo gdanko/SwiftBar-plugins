@@ -79,10 +79,7 @@ def main() -> None:
         plugin.print_menu_title(f'Swap: {used} / {total}')
     else:
         plugin.print_menu_title('Swap: Failed')
-        plugin.print_menu_separator()
         plugin.print_menu_item('Failed to gather swap information')
-    plugin.print_menu_separator()
-    plugin.print_update_time()
     plugin.print_menu_item('Settings')
     plugin.print_menu_item(
         f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',

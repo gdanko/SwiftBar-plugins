@@ -108,7 +108,6 @@ def main() -> None:
     error = setup()
     if error:
         plugin.print_menu_title('RSA Token Error')
-        plugin.print_menu_separator()
         plugin.print_menu_item(error)
     else:
         output, errors = get_data()
@@ -128,7 +127,6 @@ def main() -> None:
                 refresh_token()
 
             plugin.print_menu_title('RSA Token')
-            plugin.print_menu_separator()
             plugin.print_menu_item(output['token'])
             plugin.print_menu_separator()
             plugin.print_menu_item(

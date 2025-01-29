@@ -135,13 +135,9 @@ def main() -> None:
 
     if plugin.success:
         plugin.print_menu_title(f'WiFI: {ssid} - {rating}')
-        plugin.print_menu_separator()
-        plugin.print_update_time()
-        plugin.print_menu_separator()
         plugin.print_ordered_dict(wifi_output, justify='left')
     else:
         plugin.print_menu_title('WiFi status: N/A')
-        plugin.print_menu_separator()
         for error_message in plugin.error_messages:
             plugin.print_menu_item(error_message)
     plugin.print_menu_separator()

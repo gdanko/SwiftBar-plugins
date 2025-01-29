@@ -115,6 +115,10 @@ class Plugin:
                     self._rewrite_vars_file()
         else:
             self._write_default_vars_file(defaults_dict)
+        
+        for key, value in self.configuration.items():
+            value = 'true' if value == True else 'false'
+            os.environ[key] = value
 
     # def process_input(data: Union[List[int], Dict[str, int]]) -> None:
     def update_setting(self, key: str=None, value: Any=None) -> None:
@@ -157,6 +161,7 @@ class Plugin:
         params = self.sanitize_params(**params)
         params_str = ' '.join(f'{k}={v}' for k, v in params.items())
         print(f'{text} | {params_str}', file=out)
+        self.print_update_time()
 
     def print_ordered_dict(self, data: OrderedDict, justify: str='right', delimiter: str = '', indent: int=0, *, out: Writer=sys.stdout, **params: Params) -> None:
         """
@@ -207,7 +212,9 @@ class Plugin:
         """
         Print the updated time in human format.
         """
+        self.print_menu_separator()
         self.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
+        self.print_menu_separator()
 
     def display_debugging_menu(self):
         """

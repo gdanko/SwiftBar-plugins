@@ -195,9 +195,6 @@ def main() -> None:
     combined_cpu_pct.append(combine_stats(individual_cpu_pct, cpu_type))
 
     plugin.print_menu_title(f'CPU: user {util.pad_float(combined_cpu_pct[0].user)}%, sys {util.pad_float(combined_cpu_pct[0].system)}%, idle {util.pad_float(combined_cpu_pct[0].idle)}%')
-    plugin.print_menu_separator()
-    plugin.print_update_time()
-    plugin.print_menu_separator()
     if cpu_type is not None:
         processor = cpu_type
         if cpu_family:

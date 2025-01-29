@@ -185,9 +185,6 @@ def main() -> None:
         used = util.format_number(mem.used) if unit == 'auto' else util.byte_converter(mem.used, unit)
         total = util.format_number(mem.total) if unit == 'auto' else util.byte_converter(mem.total, unit)
         plugin.print_menu_title(f'Memory: {used} / {total}')
-        plugin.print_menu_separator()
-        plugin.print_update_time()
-        plugin.print_menu_separator()
         memory_output = OrderedDict()
         if not err:
             memory_output['Memory'] = f'{memory_brand} {memory_type}'

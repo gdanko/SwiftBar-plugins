@@ -91,16 +91,10 @@ def main() -> None:
     updates, err = find_software_updates()
     if err:
         plugin.print_menu_title('Updates: Error')
-        plugin.print_menu_separator()
-        plugin.print_update_time()
-        plugin.print_menu_separator()
         plugin.print_menu_item(err)
     else:
         plugin.print_menu_title(f'Updates: {len(updates)}')
-        plugin.print_menu_separator()
-        plugin.print_update_time()
         if len(updates) > 0:
-            plugin.print_menu_separator()
             longest = plugin.find_longest(updates)
             for update in updates:
                 plugin.print_menu_item(

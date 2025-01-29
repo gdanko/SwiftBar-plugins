@@ -136,7 +136,6 @@ def main() -> None:
         if 'features' in quake_data and type (quake_data['features']) == list:
             features = quake_data['features']
             plugin.print_menu_title(f'Earthquakes: {len(features)}')
-            plugin.print_menu_separator()
             if location:
                 plugin.print_menu_item(location)
                 plugin.print_menu_separator()
@@ -164,7 +163,6 @@ def main() -> None:
                 plugin.print_ordered_dict(quake_details, justify='left', indent=2)
     elif err:
         plugin.print_menu_title('Earthquakes: Error')
-        plugin.print_menu_separator()
         plugin.print_menu_item(err)
     plugin.print_menu_separator()
     plugin.print_menu_item('Settings')

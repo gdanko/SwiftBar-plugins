@@ -73,7 +73,6 @@ def main() -> None:
     paths_list = re.split(r'\s*,\s*', plugin.configuration['VAR_DISK_CONSUMERS_PATHS'])
 
     plugin.print_menu_title('Disk Consumption')
-    plugin.print_menu_separator()
     if len(paths_list) > 0:
         for path in paths_list:
             plugin.print_menu_item(os.path.expanduser(path))

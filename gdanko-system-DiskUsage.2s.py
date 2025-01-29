@@ -98,7 +98,6 @@ def main() -> None:
             total = util.format_number(total) if unit == 'auto' else util.byte_converter(total, unit)
             used = util.format_number(used) if unit == 'auto' else util.byte_converter(used, unit)
             plugin.print_menu_title(f'Disk: "{mountpoint}" {used} / {total}')
-            plugin.print_menu_separator()
             plugin.print_menu_item(mountpoint)
             mountpoint_output = OrderedDict()
             mountpoint_output['mountpoint'] = partition.mountpoint

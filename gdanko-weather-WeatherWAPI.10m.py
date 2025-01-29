@@ -150,9 +150,6 @@ def main() -> None:
         pressure = f'{round(weather_data["current"]["pressure_in"])} in' if unit == 'F' else f'{round(weather_data["current"]["pressure_mb"])} mb'
 
         plugin.print_menu_title(f'{location} {round(current_temp)}°{unit}')
-        plugin.print_menu_separator()
-        plugin.print_update_time()
-        plugin.print_menu_separator()
         current = OrderedDict()
         # current['Low / High'] = f'{round(low_temp)}°{unit} / {round(high_temp)}°{unit}'
         current['Feels Like'] = f'{round(feels_like)}°{unit}'
@@ -222,7 +219,6 @@ def main() -> None:
                 plugin.print_ordered_dict(daily_section, justify='left', indent=4)
     else:
         plugin.print_menu_title('Failed to fetch the weather')
-        plugin.print_menu_separator()
         for error_message in plugin.error_messages:
             plugin.print_menu_item(error_message)
     plugin.print_menu_separator()

@@ -88,8 +88,6 @@ def main() -> None:
     data, err = get_brew_data()
     if err:
         plugin.print_menu_title('Brew Outdated: Failure')
-        plugin.print_menu_separator()
-        plugin.print_menu_item(err)
     else:
         total = len(data['Formulae']) + len(data['Casks'])
         plugin.print_menu_title(f'Brew Outdated: {total}')

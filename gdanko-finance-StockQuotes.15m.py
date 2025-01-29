@@ -90,9 +90,6 @@ def main() -> None:
 
         plugin_output.append(f'{symbol} {util.pad_float(price)} {updown} {updown_amount} ({pct_change}%)')
     plugin.print_menu_title('; '.join(plugin_output))
-    plugin.print_menu_separator()
-    plugin.print_update_time()
-    plugin.print_menu_separator()
     for i in range (len(symbols)):
         symbol = symbols[i]
         symbol_info = info_dict[symbol]

@@ -59,8 +59,6 @@ def main() -> None:
 
         plugin_output.append(f'{key} {updown} {pct_change}')
     plugin.print_menu_title('; '.join(plugin_output))
-    plugin.print_menu_separator()
-    plugin.print_update_time()
 
 if __name__ == '__main__':
     main()

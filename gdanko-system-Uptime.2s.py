@@ -88,7 +88,6 @@ def main() -> None:
             uptime.append(f'{duration_tuple.days} {"day" if duration_tuple.days == 1 else "days"}')
         uptime.append(f'{str(duration_tuple.hours).zfill(2)}:{str(duration_tuple.minutes).zfill(2)}')
         plugin.print_menu_title(f'up {" ".join(uptime)}')
-        plugin.print_menu_separator()
         plugin.print_menu_item(f'Last boot: {datetime.datetime.fromtimestamp(boot_time).strftime("%Y-%m-%d %H:%M:%S")}')
     else:
         plugin.print_menu_item('Uptime: N/A')

@@ -156,9 +156,6 @@ def main() -> None:
         dropout      = second_sample.dropout - first_sample.dropout,
     )
     plugin.print_menu_title(f'{network_throughput.interface} {util.process_bytes(network_throughput.bytes_recv)} RX / {util.process_bytes(network_throughput.bytes_sent)} TX')
-    plugin.print_menu_separator()
-    plugin.print_update_time()
-    plugin.print_menu_separator()
     interface_output = OrderedDict()
     if interface_data.flags:
         interface_output['Flags'] = interface_data.flags
