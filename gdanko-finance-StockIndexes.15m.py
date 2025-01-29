@@ -10,7 +10,7 @@
 # <xbar.var>string(VAR_STOCK_INDEXES_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
-# <swiftbar.hideRunInTerminal>false</swiftbar.hideRunInTerminal>
+# <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
