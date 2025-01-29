@@ -1,11 +1,12 @@
 import re
 
 class TypedDict:
-    def __init__(self, schema: dict):
+    def __init__(self, enforce_typing: bool=True, schema: dict={}):
         """
         Initialize with a schema where keys are the expected fields and
         values are the expected types.
         """
+        self._enforce_typing = enforce_typing
         self._schema = schema
         self._data = {}
 
@@ -19,9 +20,10 @@ class TypedDict:
         else:
             if key not in self._schema:
                 raise KeyError(f"Key '{key}' is not allowed.")
-            expected_type = self._schema[key]
-            if not isinstance(value, expected_type):
-                raise TypeError(f"Value for '{key}' must be of type {expected_type.__name__}.")
+            if self._enforce_typing:
+                expected_type = self._schema[key]
+                if not isinstance(value, expected_type):
+                    raise TypeError(f"Value for '{key}' must be of type {expected_type.__name__}.")
             self._data[key] = value
 
     def __getitem__(self, key):
@@ -58,8 +60,8 @@ class TypedDict:
         return self._data.pop(key)
 
 class Params(TypedDict):
-    def __init__(self):
-        super().__init__({
+    def __init__(self, enforce_typing: bool=True):
+        super().__init__(enforce_typing=enforce_typing, schema={
         'ansi': bool,
         'color': str,
         'emojize': bool,
@@ -92,8 +94,8 @@ class Params(TypedDict):
     })
 
 class ParamsXbar(TypedDict):
-    def __init__(self):
-        super().__init__({
+    def __init__(self, enforce_typing: bool=True):
+        super().__init__(enforce_typing=enforce_typing, schema={
         'ansi': bool,
         'color': str,
         'emojize': bool,
@@ -118,8 +120,8 @@ class ParamsXbar(TypedDict):
     })
 
 class ParamsSwiftBar(TypedDict):
-    def __init__(self):
-       super().__init__({
+    def __init__(self, enforce_typing: bool=True):
+       super().__init__(enforce_typing=enforce_typing, schema={
         'ansi': bool,
         'color': str,
         'emojize': bool,
