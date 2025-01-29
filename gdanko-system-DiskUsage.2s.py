@@ -78,7 +78,6 @@ def main() -> None:
         },
     }
     plugin.read_config(defaults_dict)
-    plugin.invoked_by = 'xbar'
     args = configure()
     if args.debug:
         plugin.update_setting('VAR_DISK_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED'] == False else False)
