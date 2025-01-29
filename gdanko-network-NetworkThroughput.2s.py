@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Network Throughput</xbar.title>
-# <xbar.version>v0.3.0</xbar.version>
+# <xbar.version>v0.3.1</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show the current network throughput for a given interface</xbar.desc>
@@ -52,7 +52,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def get_data(interface: str=None) -> IoCounters:
+def get_data(interface: str=None) -> Union[IoCounters, None]:
     returncode, stdout, stderr = util.execute_command(f'netstat -bid {interface}')
     if returncode == 0 and stdout:
         match = re.search(f'^({interface}\s+.*)', stdout, re.MULTILINE)
@@ -68,6 +68,9 @@ def get_data(interface: str=None) -> IoCounters:
                 errout       = int(bits[8]),
                 collisions   = int(bits[10]),
             )
+        else:
+            # We need to handle this here
+            return None
     else:
         # DO SOMETHING HERE
         print('oops! interface not found!')
