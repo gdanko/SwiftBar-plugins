@@ -15,7 +15,7 @@
 # <swiftbar.environment>[VAR_EARTHQUAKES_DEBUG_ENABLED=false, VAR_EARTHQUAKES_LIMIT=20, VAR_EARTHQUAKES_MIN_MAGNITUDE=0, VAR_EARTHQUAKES_RADIUS_MILES=50, VAR_EARTHQUAKES_RADIUS_UNIT=m]</swiftbar.environment>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
-# <swiftbar.hideRunInTerminal>false</swiftbar.hideRunInTerminal>
+# <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
