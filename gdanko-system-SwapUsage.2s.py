@@ -19,7 +19,7 @@
 
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
-from typing import NamedTuple
+from typing import NamedTuple, Union
 import argparse
 import os
 import re
@@ -37,10 +37,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def get_swap_usage_tuple(total=0, used=0, free=0) -> SwapUsage:
-    return SwapUsage(total=total, free=free, used=used)
-
-def get_swap_usage():
+def get_swap_usage() -> Union[SwapUsage, None]:
     output = util.get_sysctl('vm.swapusage')
     if output:
         match = re.search(r'^total = (\d+\.\d+)M\s+used = (\d+\.\d+)M\s+free = (\d+\.\d+)M\s+', output)
@@ -48,10 +45,10 @@ def get_swap_usage():
             total = int(float(match.group(1))) * 1024 * 1024
             used = int(float(match.group(2))) * 1024 * 1024
             free = int(float(match.group(3))) * 1024 * 1024
-            return get_swap_usage_tuple(total=total, free=free, used=used)
+            return SwapUsage(total=total, free=free, used=used)
     return None
 
-def main():
+def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     defaults_dict = {

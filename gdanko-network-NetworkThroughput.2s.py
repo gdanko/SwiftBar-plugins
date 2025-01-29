@@ -21,7 +21,7 @@
 from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
-from typing import NamedTuple
+from typing import NamedTuple, Union
 import argparse
 import os
 import re
@@ -64,7 +64,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def get_data(interface=None) -> IoCounters:
+def get_data(interface: str=None) -> IoCounters:
     io_counters = net_io_counters(pernic=True)
     if interface in io_counters:
         return IoCounters(
@@ -83,7 +83,7 @@ def get_data(interface=None) -> IoCounters:
         print('oops! interface not found!')
         exit(1)
 
-def get_interface_data(interface) -> InterfaceData:
+def get_interface_data(interface: str=None) -> InterfaceData:
     flags, mac, inet, inet6 = None, None, None, None
     command = f'ifconfig {interface}'
     returncode, stdout, _ = util.execute_command(command)
@@ -102,7 +102,7 @@ def get_interface_data(interface) -> InterfaceData:
             inet6 = match[0]
     return InterfaceData(interface=interface, flags=flags, mac=mac, inet=inet, inet6=inet6)
 
-def get_public_ip() -> str:
+def get_public_ip() -> Union[str, None]:
     returncode, stdout, _ = util.execute_command('curl https://ifconfig.io')
     return stdout if stdout else None
  

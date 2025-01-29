@@ -18,7 +18,7 @@
 
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
-from typing import NamedTuple
+from typing import NamedTuple, Union
 import argparse
 import datetime
 import re
@@ -36,7 +36,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def get_duration(seconds):
+def get_duration(seconds: int=0) -> Union[Duration, None]:
     try:
         seconds = int(seconds)
         days = int(seconds / 86400)
@@ -47,7 +47,7 @@ def get_duration(seconds):
     except:
         return None
 
-def get_boot_time():
+def get_boot_time() -> Union[int, None]:
     returncode, stdout, _ = util.execute_command('sysctl -n kern.boottime')
     if returncode != 0:
         return None
@@ -58,14 +58,14 @@ def get_boot_time():
         return timestamp
     return None
 
-def get_duration_tuple():
+def get_duration_tuple() -> Union[int, Duration, None]:
     boot_time = get_boot_time()
     if boot_time:
         return boot_time, get_duration(int(time.time()) - boot_time)
     else:
         return None, None
 
-def main():
+def main() -> None:
     plugin = Plugin()
     defaults_dict = {
         'VAR_SYSTEM_UPTIME_DEBUG_ENABLED': {

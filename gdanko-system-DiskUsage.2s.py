@@ -21,7 +21,7 @@
 from collections import OrderedDict
 from swiftbar.plugin import Plugin
 from swiftbar import images, util
-from typing import NamedTuple
+from typing import List, NamedTuple
 import argparse
 import os
 import re
@@ -41,7 +41,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def get_partition_info():
+def get_partition_info() -> List[MountpointData]:
     partitions = []
     returncode, stdout, _ = util.execute_command('mount')
     if returncode == 0:
@@ -58,7 +58,7 @@ def get_partition_info():
                 partitions.append(MountpointData(device=device, mountpoint=mountpoint, fstype=fstype, opts=opts))
     return partitions
 
-def main():
+def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     partitions = get_partition_info()

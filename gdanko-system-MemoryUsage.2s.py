@@ -23,7 +23,7 @@
 from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
-from typing import NamedTuple
+from typing import Any, Dict, List, NamedTuple, Tuple, Union
 import argparse
 import json
 import os
@@ -49,11 +49,11 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def get_memory_pressure_value(pagesize, pattern, string):
+def get_memory_pressure_value(pagesize: int=0, pattern: str=None, string: str=None) -> Union[int, None]:
     match = re.search(pattern, string)
     return int(match.group(1)) * pagesize if match else None
 
-def get_memory_details():
+def get_memory_details() -> Tuple[str, ...]:
     command = f'system_profiler SPMemoryDataType -json'
     returncode, stdout, _ = util.execute_command(command)
     if returncode == 0:
@@ -66,7 +66,7 @@ def get_memory_details():
     else:
         return '', '', e
 
-def virtual_memory():
+def virtual_memory() -> SystemMemory:
     # https://github.com/giampaolo/psutil/blob/master/psutil/_psosx.py
     round_ = 1
     returncode, stdout, _ = util.execute_command('memory_pressure')
@@ -118,7 +118,7 @@ def virtual_memory():
         speculative=memory_pressure_output['speculative'],
     )
 
-def get_top_memory_usage():
+def get_top_memory_usage() -> List[Dict[str, Any]]:
     memory_info = []
     command = f'ps -axm -o rss,pid,user,comm | tail -n+2'
     returncode, stdout, _ = util.execute_command(command)
@@ -136,7 +136,7 @@ def get_top_memory_usage():
 
     return sorted(memory_info, key=lambda item: item['bytes'], reverse=True)
 
-def main():
+def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     defaults_dict = {

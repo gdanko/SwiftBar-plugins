@@ -1,4 +1,5 @@
 from collections import namedtuple
+from typing import Any, Dict, List, Optional, Union
 import datetime
 import dateutil
 import getpass
@@ -8,7 +9,7 @@ import signal
 import subprocess
 import time
 
-def get_signal_map():
+def get_signal_map() -> Dict[str, signal.Signals]:
     """
     Return a dict containing all valid signals.
     """
@@ -46,7 +47,7 @@ def get_signal_map():
         'SIGUSR2': signal.SIGUSR2,
     }
 
-def get_macos_version():
+def get_macos_version() -> str:
     """
     Determine the current OS version and return it as the full OS string.
     """
@@ -80,7 +81,7 @@ def get_macos_version():
         version_string = f'{os_version.part1}'
     return f'macOS {macos_families[version_string]} {os_version.part1}.{os_version.part2}'
 
-def execute_command(command, input=None):
+def execute_command(command: str=None, input: Optional[Any]=None):
     """
     Execute a system command, returning exit code, stdout, and stderr.
     """
@@ -93,7 +94,7 @@ def execute_command(command, input=None):
             input = stdout
     return p.returncode, stdout, stderr
 
-def find_all_network_interfaces() -> list[str]:
+def find_all_network_interfaces() -> List[str]:
     """
     Find and return a list of all interfaces using ifconfig.
     """
@@ -113,7 +114,7 @@ def find_valid_network_interfaces() -> str:
         matches = re.findall(pattern, stdout)
         return sorted(matches) if (matches and type(matches) == list) else ['en0']
 
-def find_valid_wifi_interfaces() -> list[str]:
+def find_valid_wifi_interfaces() -> List[str]:
     """
     Find and return a list of all wireless interfaces using networksetup.
     """
@@ -123,7 +124,7 @@ def find_valid_wifi_interfaces() -> list[str]:
         matches = re.findall(pattern, stdout)
         return sorted(matches) if (matches and type(matches) == list) else ['en0']
 
-def find_valid_mountpoints() ->list[str]:
+def find_valid_mountpoints() -> List[str]:
     """
     Find and return a list of all mounted filesystems.
     """
@@ -133,16 +134,16 @@ def find_valid_mountpoints() ->list[str]:
         matches = re.findall(pattern, stdout)
         return sorted(matches) if (matches and type(matches) == list) else ['/']
 
-def valid_storage_units() -> list[str]:
+def valid_storage_units() -> List[str]:
     """
     Return a list of valid units of storage.
     """
     return ['K', 'Ki', 'M', 'Mi', 'G', 'Gi', 'T', 'Ti', 'P', 'Pi', 'E', 'Ei', 'Z', 'Zi', 'auto']
 
-def valid_weather_units() -> list[str]:
+def valid_weather_units() -> List[str]:
     return ['C', 'F']
 
-def parse_version(version_string: str):
+def parse_version(version_string: str=None):
     """
     Parse a version string and return a namedtuple containing all of the bits.
     """
@@ -151,7 +152,7 @@ def parse_version(version_string: str):
     parts = map(int, version_string.split('.'))
     return version(*parts)
 
-def get_process_icon(process_owner: str, click_to_kill: bool):
+def get_process_icon(process_owner: str=None, click_to_kill: bool=False) -> str:
     """
     Return a skull icon if a process can be kill or a no entry sign icon if it cannot.
     """
@@ -163,7 +164,7 @@ def get_process_icon(process_owner: str, click_to_kill: bool):
     else:
         return ''
 
-def get_sysctl(metric: str):
+def get_sysctl(metric: str=None) -> Union[str, None]:
     """
     Execute sysctl via execute_command() and return the results or None.
     """
@@ -171,7 +172,7 @@ def get_sysctl(metric: str):
     returncode, stdout, _ = execute_command(command)
     return stdout if returncode == 0 else None
 
-def byte_converter(bytes: int, unit: str) -> str:
+def byte_converter(bytes: int=0, unit: str=None) -> str:
     """
     Convert bytes to the given unit.
     """
@@ -185,7 +186,7 @@ def byte_converter(bytes: int, unit: str) -> str:
     prefix_map = {'K': 1, 'M': 2, 'G': 3, 'T': 4, 'P': 5, 'E': 6}
     return f'{pad_float(bytes / (divisor ** prefix_map[prefix]))} {unit}{suffix}'
 
-def process_bytes(num: int):
+def process_bytes(num: int=0) -> str:
     """
     Process the rate of data, e.g., MiB/s.
     """
@@ -196,7 +197,7 @@ def process_bytes(num: int):
         num = num / 1024
     return f'{pad_float(num)} Yi{suffix}'
 
-def format_number(num: int):
+def format_number(num: int=0) -> str:
     """
     Take a number of bytes and automatically convert to the most logical unit.
     """
@@ -207,7 +208,7 @@ def format_number(num: int):
         num = num / 1024
     return f'{pad_float(num)} Yi{suffix}'
 
-def prettify_timestamp(timestamp, format):
+def prettify_timestamp(timestamp: str=None, format:str=None):
     """
     Parse a data-based timestamp and convert it to the specified format.
     """
@@ -220,13 +221,13 @@ def prettify_timestamp(timestamp, format):
         print(e)
         return timestamp
     
-def get_timestamp(timestamp: int=0, format: str='%Y-%m-%d %k:%M:%S')-> str:
+def get_timestamp(timestamp: int=0, format: Optional[str]='%Y-%m-%d %k:%M:%S')-> str:
     """
     Take a Unix timestamp and convert it to the specified format.
     """
     return datetime.datetime.fromtimestamp(timestamp).strftime(format)
 
-def unix_to_human(timestamp, format: str='%Y-%m-%d') -> str:
+def unix_to_human(timestamp, format: Optional[str]='%Y-%m-%d') -> str:
     """
     Take a Unix timestamp and convert it to the specified format.
     """

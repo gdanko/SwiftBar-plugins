@@ -19,6 +19,7 @@
 
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
+from typing import Any, Dict, List
 import argparse
 import os
 import re
@@ -30,7 +31,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def get_consumers(path):
+def get_consumers(path: str=None) -> List[Dict[str, Any]]:
     consumers = []
     command = f'find {path} -depth 1 -exec du -sk {{}} \;'
     _, stdout, _ = util.execute_command(command)
@@ -47,7 +48,7 @@ def get_consumers(path):
 
     return sorted(consumers, key=lambda item: item['bytes'], reverse=True)
 
-def main():
+def main() -> None:
     start_time = util.unix_time_in_ms()
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()

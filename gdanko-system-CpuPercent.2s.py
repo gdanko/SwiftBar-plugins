@@ -21,7 +21,7 @@
 
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
-from typing import NamedTuple
+from typing import Any, Dict, List, NamedTuple
 import argparse
 import os
 import re
@@ -51,7 +51,7 @@ class CpuTimes(NamedTuple):
     # guest: float
     # guestnice: float
 
-def get_cpu_family_strings() -> str:
+def get_cpu_family_strings() -> Dict[int, str]:
     # We get this information from /Library/Developer/CommandLineTools/SDKs/MacOSX<version>.sdk/usr/include/mach/machine.h
     # Current: /Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/mach/machine.h
     return {
@@ -107,7 +107,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def combine_stats(cpu_time_stats: list=[], cpu_type: str='') -> CpuTimes:
+def combine_stats(cpu_time_stats: List=None, cpu_type: str=None) -> CpuTimes:
     idle      = 0.0
     nice      = 0.0
     system    = 0.0
@@ -127,7 +127,7 @@ def combine_stats(cpu_time_stats: list=[], cpu_type: str='') -> CpuTimes:
         user=(user / len(cpu_time_stats)),
     )
 
-def get_top_cpu_usage() -> list[dict]:
+def get_top_cpu_usage() -> List[Dict[str, Any]]:
     cpu_info = []
     command = f'ps -axm -o %cpu,pid,user,comm | tail -n+2'
     returncode, stdout, _ = util.execute_command(command)

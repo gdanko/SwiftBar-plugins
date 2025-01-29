@@ -1,7 +1,7 @@
 import re
 
 class TypedDict:
-    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True, schema: dict={}):
+    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True, schema: dict=None):
         """
         Initialize with a schema where keys are the expected fields and
         values are the expected types.

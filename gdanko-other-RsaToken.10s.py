@@ -36,7 +36,7 @@
 
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
-from typing import Union
+from typing import Dict, List, Union
 import argparse
 import os
 import shutil
@@ -66,13 +66,13 @@ def refresh_token() -> Union[str, None]:
         return None, stderr
     return stdout, None
 
-def get_item(key) -> Union[str, None]:
+def get_item(key: str=None) -> Union[str, None]:
     _, stdout, stderr = util.execute_command(f'security find-generic-password -w -s {key}')
     if stderr:
         return None, stderr
     return stdout, None
 
-def get_data() -> Union[dict, list[str]]:
+def get_data() -> Union[Dict[str, str], List[str]]:
     errors = []
     output = {}
     output['token'], error = refresh_token()
@@ -85,7 +85,7 @@ def get_data() -> Union[dict, list[str]]:
             errors.append(f'Failed to retrieve "{key}": {error}')
     return output, errors
 
-def pbcopy(text) -> None:
+def pbcopy(text: str=None) -> None:
     util.execute_command('pbcopy', input=text)
     
 def main() -> None:

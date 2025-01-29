@@ -23,6 +23,7 @@
 from collections import OrderedDict
 from swiftbar.plugin import Plugin
 from swiftbar import images, request, util
+from typing import Dict
 import argparse
 import os
 import re
@@ -35,7 +36,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def get_uv_index(uv_index) -> str:
+def get_uv_index(uv_index: float=0.0) -> str:
     uv_index = float(uv_index)
     if uv_index > 0 and uv_index < 6:
         return 'Moderate'
@@ -46,7 +47,7 @@ def get_uv_index(uv_index) -> str:
     elif uv_index > 11:
         return 'Extreme'
 
-def process_description(desc) ->dict:
+def process_description(desc: str=None) -> Dict[str, str]:
     output = {}
     entries = desc.split("\n\n")
     for x, item in enumerate(entries):
@@ -59,7 +60,7 @@ def process_description(desc) ->dict:
             output[match.group(1).title()] = match.group(2)
     return output
 
-def pluralize(count, word) -> str:
+def pluralize(count: int=0, word: str=None) -> str:
     if count == 1:
         return word
     return f'{word}s'

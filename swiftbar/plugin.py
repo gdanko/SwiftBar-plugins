@@ -1,8 +1,8 @@
 from collections import OrderedDict
 from pathlib import Path
-from pprint import pprint
 from swiftbar import util
 from swiftbar.params import Params, ParamsXbar, ParamsSwiftBar
+from typing import Any, Dict, List, Union
 import json
 import os
 import shutil
@@ -52,7 +52,7 @@ class Plugin:
             else:
                 self.config_dir = os.path.join(Path.home(), 'SwiftBar')
 
-    def _create_config_dir(self):
+    def _create_config_dir(self) -> None:
         """
         Create the configuration directory if it doesn't exist.
         """
@@ -62,7 +62,7 @@ class Plugin:
             except:
                 pass
 
-    def write_config(self, contents):
+    def write_config(self, contents: dict=None) -> None:
         # Let's make sure this is not duplicated
         """
         Write the JSON variables file.
@@ -70,7 +70,7 @@ class Plugin:
         with open(self.vars_file, 'w') as fh:
             fh.write(json.dumps(contents, indent=4))
 
-    def _write_default_vars_file(self, defaults_dict):
+    def _write_default_vars_file(self, defaults_dict: Dict[str, Any]=None) -> None:
         """
         Write a new JSON variables file from the contents of the defaults_dict sent by the plugin.
         """
@@ -81,14 +81,14 @@ class Plugin:
         with open(self.vars_file, 'w') as fh:
             fh.write(json.dumps(config_data, indent=4))
     
-    def _rewrite_vars_file(self):
+    def _rewrite_vars_file(self) -> None:
         """
         Rewrite the JSON variables file from the contents of self.coniguration.
         """
         with open(self.vars_file, 'w') as fh:
             fh.write(json.dumps(self.configuration, indent=4))
 
-    def read_config(self, defaults_dict):
+    def read_config(self, defaults_dict: Dict[str, Any]=None) -> None:
         """
         Read and validate the defaults_dict sent by the plugin
         """
@@ -116,7 +116,8 @@ class Plugin:
         else:
             self._write_default_vars_file(defaults_dict)
 
-    def update_setting(self, key, value):
+    # def process_input(data: Union[List[int], Dict[str, int]]) -> None:
+    def update_setting(self, key: str=None, value: Any=None) -> None:
         """
         Update a given setting for a plugin and rewrite the JSON variables file.
         """
@@ -127,7 +128,7 @@ class Plugin:
                     contents[key] = value
                     self.write_config(contents)
 
-    def find_longest(self, input) ->int:
+    def find_longest(self, input: Union[List[str], Dict[str, Any]]=None) ->int:
         """
         Find the longest item in a list or the longest key in a dict. Used for formatting lists.
         """
@@ -136,7 +137,7 @@ class Plugin:
         elif type(input) == dict or type(input) == OrderedDict:
             return max(len(key) for key in input.keys())
 
-    def sanitize_params(self, **params: Params):
+    def sanitize_params(self, **params: Params) -> Union[ParamsXbar, ParamsSwiftBar]:
         """
         Create a new params object based on the value of self.invoked_by. Both xbar and SwiftBar have some unique
         parameters and this will allow the work to be handled behind the scenes.

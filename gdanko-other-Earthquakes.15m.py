@@ -23,6 +23,7 @@
 from collections import namedtuple, OrderedDict
 from swiftbar import images, request, util
 from swiftbar.plugin import Plugin
+from typing import Any, Dict
 import argparse
 import datetime
 import re
@@ -39,7 +40,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def get_quake_data(radius: int, magnitude: int, unit: str='m', limit: int=0) -> dict:
+def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0) -> Dict[str, Any]:
     location = []
     returncode, public_ip, stdrrr = util.execute_command('curl https://ifconfig.io')
     if returncode != 0 or not public_ip:

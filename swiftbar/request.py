@@ -1,9 +1,10 @@
+from typing import Any, Dict, Optional, Union
 import json
 import http.client
 import re
 import urllib.parse
 
-def percent_encode(string: str) -> str:
+def percent_encode(string: str=None) -> str:
     """
     Percent encode a string.
     """
@@ -18,7 +19,7 @@ def percent_encode(string: str) -> str:
             result.append(f'%{hex_digits[ord(char) >> 4]}{hex_digits[ord(char) & 0xF]}')
     return ''.join(result)
 
-def encode_query_string(params: dict) -> str:
+def encode_query_string(params: Dict[str, str]=None) -> str:
     """
     Encode a query string.
     """
@@ -29,7 +30,7 @@ def encode_query_string(params: dict) -> str:
         encoded_pairs.append(f"{encoded_key}={encoded_value}")
     return '&'.join(encoded_pairs)
 
-def swiftbar_request(url: str='', method: str='GET', headers: dict = {}, query: dict={}, data: dict=None, return_type: str='text'):
+def swiftbar_request(url: str=None, method: Optional[str]='GET', headers: Optional[Dict[str, Any]]=None, query: Optional[Dict[str, Any]]=None, data: Optional[Dict[str, Any]]=None, return_type: str='text') -> Union[int, str, bytes, dict, None]:
     """
     Handle HTTP basic requests.
     """

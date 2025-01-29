@@ -18,7 +18,7 @@
 
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
-from typing import NamedTuple
+from typing import NamedTuple, Tuple, Union
 import argparse
 import os
 import re
@@ -37,7 +37,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def generate_update_data(entry: tuple) ->tuple:
+def generate_update_data(entry: Tuple=None) -> SystemUpdate:
     items = re.split(r'\s*,\s*', entry[1].strip().rstrip(','))
     attributes = dict(re.split(r'\s*:\s*', pair) for pair in items)
     attributes = {k.lower(): v for k, v in attributes.items()}
@@ -56,7 +56,7 @@ def generate_update_data(entry: tuple) ->tuple:
         action=(attributes['action'].title() if 'action' in attributes else 'N/A'),
     )
 
-def find_software_updates():
+def find_software_updates() -> Union[list[SystemUpdate], str, None]:
     updates = []
     returncode, stdout, stderr = util.execute_command('softwareupdate --list')
     if returncode == 0 and stdout:
@@ -72,7 +72,7 @@ def find_software_updates():
     else:
         return updates, stderr
 
-def main():
+def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     defaults_dict = {

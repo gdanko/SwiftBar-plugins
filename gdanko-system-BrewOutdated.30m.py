@@ -19,7 +19,7 @@
 from dataclasses import dataclass
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
-from typing import Union
+from typing import Dict, Union
 import argparse
 import json
 import os
@@ -38,7 +38,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def get_brew_data() -> Union[None, str]:
+def get_brew_data() -> Union[None, str, Dict[str, list[Package]]]:
     if not shutil.which('brew'):
         return None, 'Homebrew isn\'t installed'
 

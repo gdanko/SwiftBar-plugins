@@ -20,6 +20,7 @@
 from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
+from typing import Any, Dict
 import argparse
 import json
 import os
@@ -32,7 +33,7 @@ def configure() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-def get_profiler_data(stdout) -> dict:
+def get_profiler_data(stdout: str=None) -> Dict[str, Any]:
     try:
         profiler_data = json.loads(stdout)
         return profiler_data, None
