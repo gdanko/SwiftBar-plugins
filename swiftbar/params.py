@@ -1,11 +1,12 @@
 import re
 
 class TypedDict:
-    def __init__(self, enforce_typing: bool=True, schema: dict={}):
+    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True, schema: dict={}):
         """
         Initialize with a schema where keys are the expected fields and
         values are the expected types.
         """
+        self._enforce_schema = enforce_schema
         self._enforce_typing = enforce_typing
         self._schema = schema
         self._data = {}
@@ -17,14 +18,15 @@ class TypedDict:
         """
         if re.match(r'^param[\d+]', key):
             self._data[key] = value
-        else:
+            return
+        if self._enforce_schema:
             if key not in self._schema:
                 raise KeyError(f"Key '{key}' is not allowed.")
-            if self._enforce_typing:
-                expected_type = self._schema[key]
-                if not isinstance(value, expected_type):
-                    raise TypeError(f"Value for '{key}' must be of type {expected_type.__name__}.")
-            self._data[key] = value
+        if self._enforce_typing:
+            expected_type = self._schema[key]
+            if not isinstance(value, expected_type):
+                raise TypeError(f"Value for '{key}' must be of type {expected_type.__name__}.")
+        self._data[key] = value
 
     def __getitem__(self, key):
         """
@@ -60,93 +62,105 @@ class TypedDict:
         return self._data.pop(key)
 
 class Params(TypedDict):
-    def __init__(self, enforce_typing: bool=True):
-        super().__init__(enforce_typing=enforce_typing, schema={
-        'ansi': bool,
-        'color': str,
-        'emojize': bool,
-        'font': str,
-        'length': int,
-        'md': bool,
-        'sfcolor': str,
-        'sfsize': int,
-        'size': int,
-        'symbolize': bool,
-        'trim': bool,
+    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True):
+        super().__init__(
+            enforce_schema = enforce_schema,
+            enforce_typing = enforce_typing,
+            schema={
+                'ansi': bool,
+                'color': str,
+                'emojize': bool,
+                'font': str,
+                'length': int,
+                'md': bool,
+                'sfcolor': str,
+                'sfsize': int,
+                'size': int,
+                'symbolize': bool,
+                'trim': bool,
 
-        'alternate': bool,
-        'checked': bool,
-        'dropdown': bool,
-        'image': str,
-        'sfimage': str,
-        'templateImage': str,
-        'tooltip': str,
+                'alternate': bool,
+                'checked': bool,
+                'dropdown': bool,
+                'image': str,
+                'sfimage': str,
+                'templateImage': str,
+                'tooltip': str,
 
-        'bash': str,
-        'cmd': list,
-        'disabled': bool,
-        'href': str,
-        'key': str,
-        'refresh': bool,
-        'shell': str,
-        'shortcut': str,
-        'terminal': bool,
-    })
+                'bash': str,
+                'cmd': list,
+                'disabled': bool,
+                'href': str,
+                'key': str,
+                'refresh': bool,
+                'shell': str,
+                'shortcut': str,
+                'terminal': bool,
+            }
+        )
 
 class ParamsXbar(TypedDict):
-    def __init__(self, enforce_typing: bool=True):
-        super().__init__(enforce_typing=enforce_typing, schema={
-        'ansi': bool,
-        'color': str,
-        'emojize': bool,
-        'font': str,
-        'length': int,
-        'size': int,
-        'trim': bool,
+    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True):
+        super().__init__(
+            enforce_schema = enforce_schema,
+            enforce_typing = enforce_typing,
+            schema={
+                'ansi': bool,
+                'color': str,
+                'emojize': bool,
+                'font': str,
+                'length': int,
+                'size': int,
+                'trim': bool,
 
-        'alternate': bool,
-        'dropdown': bool,
-        'image': str,
-        'templateImage': str,
+                'alternate': bool,
+                'dropdown': bool,
+                'image': str,
+                'templateImage': str,
 
-        'bash': str,
-        'cmd': list,
-        'disabled': bool,
-        'href': str,
-        'key': str,
-        'refresh': bool,
-        'shell': str,
-        'terminal': bool,
-    })
+                'bash': str,
+                'cmd': list,
+                'disabled': bool,
+                'href': str,
+                'key': str,
+                'refresh': bool,
+                'shell': str,
+                'terminal': bool,
+            }
+        )
 
 class ParamsSwiftBar(TypedDict):
-    def __init__(self, enforce_typing: bool=True):
-       super().__init__(enforce_typing=enforce_typing, schema={
-        'ansi': bool,
-        'color': str,
-        'emojize': bool,
-        'font': str,
-        'length': int,
-        'md': bool,
-        'sfcolor': str,
-        'sfsize': int,
-        'size': int,
-        'symbolize': bool,
-        'trim': bool,
+    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True):
+       super().__init__(
+           enforce_schema = enforce_schema,
+           enforce_typing = enforce_typing,
+           schema = {
+            'ansi': bool,
+            'color': str,
+            'emojize': bool,
+            'font': str,
+            'length': int,
+            'md': bool,
+            'sfcolor': str,
+            'sfsize': int,
+            'size': int,
+            'symbolize': bool,
+            'trim': bool,
 
-        'alternate': bool,
-        'checked': bool,
-        'dropdown': bool,
-        'image': str,
-        'sfimage': str,
-        'templateImage': str,
-        'tooltip': str,
+            'alternate': bool,
+            'checked': bool,
+            'dropdown': bool,
+            'image': str,
+            'sfimage': str,
+            'templateImage': str,
+            'tooltip': str,
 
-        'bash': str,
-        'cmd': list,
-        'href': str,
-        'refresh': bool,
-        'shell': str,
-        'shortcut': str,
-        'terminal': bool,
-    })
+            'bash': str,
+            'cmd': list,
+            'href': str,
+            'refresh': bool,
+            'shell': str,
+            'shortcut': str,
+            'terminal': bool,
+        }
+    )
