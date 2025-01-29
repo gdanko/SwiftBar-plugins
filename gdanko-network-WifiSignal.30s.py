@@ -25,21 +25,21 @@ import json
 import os
 import re
 
-def configure():
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     parser.add_argument('--interface', help='The name of the interface to monitor', required=False)
     args = parser.parse_args()
     return args
 
-def get_profiler_data(stdout):
+def get_profiler_data(stdout) -> dict:
     try:
         profiler_data = json.loads(stdout)
         return profiler_data, None
     except Exception as e:
         return None, f'Failed to parse the JSON from system_profiler: {e}'
 
-def main():
+def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     defaults_dict = {

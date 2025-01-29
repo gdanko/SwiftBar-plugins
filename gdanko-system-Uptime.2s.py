@@ -16,15 +16,21 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_SYSTEM_UPTIME_DEBUG_ENABLED=false]</swiftbar.environment>
 
-from collections import namedtuple
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
+from typing import NamedTuple
 import argparse
 import datetime
 import re
 import time
 
-def configure():
+class Duration(NamedTuple):
+    days: int
+    hours: int
+    minutes: int
+    seconds: int
+
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     args = parser.parse_args()
@@ -37,9 +43,7 @@ def get_duration(seconds):
         hours = int(((seconds - (days * 86400)) / 3600))
         minutes = int(((seconds - days * 86400 - hours * 3600) / 60))
         secs = int((seconds - (days * 86400) - (hours * 3600) - (minutes * 60)))
-
-        duration = namedtuple('duration', 'days hours minutes seconds')
-        return duration(days=days, hours=hours, minutes=minutes, seconds=secs)
+        return Duration(days=days, hours=hours, minutes=minutes, seconds=secs)
     except:
         return None
 

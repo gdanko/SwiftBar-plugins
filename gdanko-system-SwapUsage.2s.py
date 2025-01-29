@@ -17,23 +17,28 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_SWAP_USAGE_DEBUG_ENABLED=false, VAR_SWAP_USAGE_UNIT=auto]</swiftbar.environment>
 
-from collections import namedtuple
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
+from typing import NamedTuple
 import argparse
 import os
 import re
 
-def configure():
+class SwapUsage(NamedTuple):
+    total: int
+    free: int
+    used: int
+
+
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     parser.add_argument('--unit', help='Select the unit to use', required=False)
     args = parser.parse_args()
     return args
 
-def get_swap_usage_tuple(total=0, used=0, free=0):
-    swap_usage = namedtuple('swap_usage', 'total free used')
-    return swap_usage(total=total, free=free, used=used)
+def get_swap_usage_tuple(total=0, used=0, free=0) -> SwapUsage:
+    return SwapUsage(total=total, free=free, used=used)
 
 def get_swap_usage():
     output = util.get_sysctl('vm.swapusage')

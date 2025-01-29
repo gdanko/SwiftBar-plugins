@@ -33,7 +33,7 @@ class Plugin:
         self.plugin_basename = os.path.basename(self.plugin_name)
         self.vars_file = os.path.join(self.config_dir, self.plugin_basename) + '.vars.json'
 
-    def _get_config_dir(self) ->None:
+    def _get_config_dir(self) -> None:
         """
         Determine the location of the configuration directory based on self.invoked_by, gotten from the parent PID.
         """
@@ -149,7 +149,7 @@ class Plugin:
                 pass
         return sanitized
 
-    def print_menu_title(self, text: str, *, out: Writer=sys.stdout, **params: Params) ->None:
+    def print_menu_title(self, text: str, *, out: Writer=sys.stdout, **params: Params) -> None:
         """
         Print the plugin title in the menu bar.
         """
@@ -157,7 +157,7 @@ class Plugin:
         params_str = ' '.join(f'{k}={v}' for k, v in params.items())
         print(f'{text} | {params_str}', file=out)
 
-    def print_ordered_dict(self, data: OrderedDict, justify: str='right', delimiter: str = '', indent: int=0, *, out: Writer=sys.stdout, **params: Params) ->None:
+    def print_ordered_dict(self, data: OrderedDict, justify: str='right', delimiter: str = '', indent: int=0, *, out: Writer=sys.stdout, **params: Params) -> None:
         """
         Render an instance of collections.OrderedDict().
         """
@@ -171,7 +171,7 @@ class Plugin:
             elif justify == 'right':
                 self.print_menu_item(f'{indent_str}{k.rjust(longest)} {delimiter} {v} | {params_str}', **params)
 
-    def print_menu_item(self, text: str, *, out: Writer=sys.stdout, **params: Params) ->None:
+    def print_menu_item(self, text: str, *, out: Writer=sys.stdout, **params: Params) -> None:
         """
         Generic wrapper to print all non-title menu items.
         """

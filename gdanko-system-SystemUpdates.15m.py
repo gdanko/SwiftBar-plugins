@@ -16,35 +16,38 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_SYSTEM_UPDATES_DEBUG_ENABLED=false]</swiftbar.environment>
 
-from collections import namedtuple
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
+from typing import NamedTuple
 import argparse
 import os
 import re
-from pprint import pprint
 
-def configure():
+class SystemUpdate(NamedTuple):
+    label: str
+    title: str
+    version: str
+    size: int
+    recommended: bool
+    action: str
+
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     args = parser.parse_args()
     return args
 
-def get_update_tuple(label=None, title=None, version=None, size=0, recommended=False, action=None):
-    system_update = namedtuple('system_update', 'label title version size recommended action')
-    return system_update(label=label, title=title, version=version, size=size, recommended=recommended, action=action)
-
-def generate_update_tuple(entry: tuple) ->tuple:
+def generate_update_data(entry: tuple) ->tuple:
     items = re.split(r'\s*,\s*', entry[1].strip().rstrip(','))
     attributes = dict(re.split(r'\s*:\s*', pair) for pair in items)
     attributes = {k.lower(): v for k, v in attributes.items()}
     if 'size' in attributes:
         match = re.search(r'(\d+)', attributes['size'])
         if match:
-            attributes['size'] = match.group(1)
+            attributes['size'] = int(match.group(1))
     attributes['title'] = attributes['title'].replace(attributes['version'], '', -1).strip()
  
-    return get_update_tuple(
+    return SystemUpdate(
         label=entry[0],
         title=attributes['title'],
         version=attributes['version'],
@@ -62,9 +65,9 @@ def find_software_updates():
         if matches:
             for match in matches:
                 if len(match) == 2:
-                    update_tuple = generate_update_tuple(match)
-                    if str(type(update_tuple)) == "<class '__main__.system_update'>":
-                        updates.append(update_tuple)
+                    update_data = generate_update_data(match)
+                    if type(update_data) == SystemUpdate:
+                        updates.append(update_data)
         return updates, None
     else:
         return updates, stderr

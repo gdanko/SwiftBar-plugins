@@ -29,7 +29,7 @@ import re
 import time
 import os
 
-def configure():
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     parser.add_argument('--limit', help='The maximum number of quakes to display', required=False, type=int)
@@ -39,7 +39,7 @@ def configure():
     args = parser.parse_args()
     return args
 
-def get_quake_data(radius: int, magnitude: int, unit: str='m', limit: int=0) ->dict:
+def get_quake_data(radius: int, magnitude: int, unit: str='m', limit: int=0) -> dict:
     location = []
     returncode, public_ip, stdrrr = util.execute_command('curl https://ifconfig.io')
     if returncode != 0 or not public_ip:
@@ -83,7 +83,7 @@ def get_quake_data(radius: int, magnitude: int, unit: str='m', limit: int=0) ->d
     _, data, _ = request.swiftbar_request(url=url, query=query, return_type='json')
     return ', '.join(location) if len(location) >= 3 else None, data, None
 
-def main():
+def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     defaults_dict = {

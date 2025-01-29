@@ -36,11 +36,12 @@
 
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
+from typing import Union
 import argparse
 import os
 import shutil
 
-def configure():
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     parser.add_argument('--snad', help='Copy AD password to the clipboard', required=False, default=False, action='store_true')
@@ -50,7 +51,7 @@ def configure():
     args = parser.parse_args()
     return args   
 
-def setup():
+def setup() -> str:
     brew = shutil.which('brew')
     if not brew:
         return 'homebrew not installed'
@@ -59,19 +60,19 @@ def setup():
     if not stoken:
         return 'stoken not installed - brew install stoken'
 
-def refresh_token():
+def refresh_token() -> Union[str, None]:
     _, stdout, stderr = util.execute_command('security find-generic-password -w -s rsatoken | stoken --stdin')
     if stderr:
         return None, stderr
     return stdout, None
 
-def get_item(key):
+def get_item(key) -> Union[str, None]:
     _, stdout, stderr = util.execute_command(f'security find-generic-password -w -s {key}')
     if stderr:
         return None, stderr
     return stdout, None
 
-def get_data():
+def get_data() -> Union[dict, list[str]]:
     errors = []
     output = {}
     output['token'], error = refresh_token()
@@ -84,10 +85,10 @@ def get_data():
             errors.append(f'Failed to retrieve "{key}": {error}')
     return output, errors
 
-def pbcopy(text):
+def pbcopy(text) -> None:
     util.execute_command('pbcopy', input=text)
     
-def main():
+def main() -> None:
     os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
 

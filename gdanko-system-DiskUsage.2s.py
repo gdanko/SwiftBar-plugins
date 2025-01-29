@@ -18,25 +18,28 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_DISK_USAGE_DEBUG_ENABLED=false, VAR_DISK_USAGE_MOUNTPOINT=/, VAR_DISK_USAGE_UNIT=auto]</swiftbar.environment>
 
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict
 from swiftbar.plugin import Plugin
 from swiftbar import images, util
+from typing import NamedTuple
 import argparse
 import os
 import re
 import shutil
 
-def configure():
+class MountpointData(NamedTuple):
+    device: str
+    mountpoint: str
+    fstype: str
+    opts: list[str]
+
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     parser.add_argument('--mountpoint', help='Select the mountpoint to view', required=False)
     parser.add_argument('--unit', help='Select the unit to use', required=False)
     args = parser.parse_args()
     return args
-
-def get_partion_tuple(device=None, mountpoint=None, fstype=None, opts=None):
-    sdiskpart = namedtuple('sdiskpart', 'device mountpoint fstype opts')
-    return sdiskpart(device=device, mountpoint=mountpoint, fstype=fstype, opts=opts)
 
 def get_partition_info():
     partitions = []
@@ -51,8 +54,8 @@ def get_partition_info():
                 opts_string = match.group(3)
                 opts_list = re.split('\s*,\s*', opts_string)
                 fstype = opts_list[0]
-                opts = ','.join(opts_list[1:])
-                partitions.append(get_partion_tuple(device=device, mountpoint=mountpoint, fstype=fstype, opts=opts))
+                opts = opts_list[1:]
+                partitions.append(MountpointData(device=device, mountpoint=mountpoint, fstype=fstype, opts=opts))
     return partitions
 
 def main():
@@ -102,7 +105,7 @@ def main():
             mountpoint_output['mountpoint'] = partition.mountpoint
             mountpoint_output['device'] = partition.device
             mountpoint_output['type'] = partition.fstype
-            mountpoint_output['options'] = partition.opts
+            mountpoint_output['options'] = ','.join(partition.opts)
             plugin.print_ordered_dict(mountpoint_output, justify='left', indent=2)
     except:
         plugin.print_menu_item('Disk: Not found')

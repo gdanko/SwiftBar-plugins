@@ -18,15 +18,34 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_NET_THROUGHPUT_DEBUG_ENABLED=false, VAR_NET_THROUGHPUT_INTERFACE=en0, VAR_NET_THROUGHPUT_VERBOSE=false]</swiftbar.environment>
 
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
+from typing import NamedTuple
 import argparse
 import os
 import re
 import subprocess
 import sys
 import time
+
+class IoCounters(NamedTuple):
+    interface: str
+    bytes_sent: int
+    bytes_recv: int
+    packets_sent: int
+    packets_recv: int
+    errin: int
+    errout: int
+    dropin: int
+    dropout: int
+
+class InterfaceData(NamedTuple):
+    interface: str
+    flags: str
+    mac: str
+    inet: str
+    inet6: str
 
 try:
     from psutil import net_io_counters
@@ -37,7 +56,7 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
-def configure():
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     parser.add_argument('--verbose', help='Toggle verbose mode', required=False, default=False, action='store_true')
@@ -45,18 +64,10 @@ def configure():
     args = parser.parse_args()
     return args
 
-def get_io_counter_tuple(interface=None, bytes_sent=0, bytes_recv=0, packets_sent=0, packets_recv=0, errin=0, errout=0, dropin=0, dropout=0):
-    net_io = namedtuple('net_io', 'interface bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')
-    return net_io(interface=interface, bytes_sent=bytes_sent, bytes_recv=bytes_recv, packets_sent=packets_sent, packets_recv=packets_recv, errin=errin, errout=errout, dropin=dropin, dropout=dropout)
-
-def get_interface_data_tuple(interface=None, flags=None, mac=None, inet=None, inet6=None):
-    interface_data = namedtuple('interface_data', 'interface flags mac inet inet6')
-    return interface_data(interface=interface, flags=flags, mac=mac, inet=inet, inet6=inet6)
-
-def get_data(interface=None):
+def get_data(interface=None) -> IoCounters:
     io_counters = net_io_counters(pernic=True)
     if interface in io_counters:
-        return get_io_counter_tuple(
+        return IoCounters(
             interface    = interface,
             bytes_sent   = io_counters[interface].bytes_sent,
             bytes_recv   = io_counters[interface].bytes_recv,
@@ -72,7 +83,7 @@ def get_data(interface=None):
         print('oops! interface not found!')
         exit(1)
 
-def get_interface_data(interface):
+def get_interface_data(interface) -> InterfaceData:
     flags, mac, inet, inet6 = None, None, None, None
     command = f'ifconfig {interface}'
     returncode, stdout, _ = util.execute_command(command)
@@ -89,13 +100,13 @@ def get_interface_data(interface):
         match = re.findall(r'inet6\s+([a-z0-9:]+)', stdout, re.MULTILINE)
         if match:
             inet6 = match[0]
-    return get_interface_data_tuple(interface=interface, flags=flags, mac=mac, inet=inet, inet6=inet6)
+    return InterfaceData(interface=interface, flags=flags, mac=mac, inet=inet, inet6=inet6)
 
-def get_public_ip():
+def get_public_ip() -> str:
     returncode, stdout, _ = util.execute_command('curl https://ifconfig.io')
     return stdout if stdout else None
  
-def main():
+def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     defaults_dict = {
@@ -133,7 +144,7 @@ def main():
     time.sleep(1)
     second_sample = get_data(interface=interface)
 
-    network_throughput = get_io_counter_tuple(
+    network_throughput = IoCounters(
         interface    = interface,
         bytes_sent   = second_sample.bytes_sent - first_sample.bytes_sent,
         bytes_recv   = second_sample.bytes_recv - first_sample.bytes_recv,

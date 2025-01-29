@@ -20,15 +20,27 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_MEM_USAGE_CLICK_TO_KILL=false, VAR_MEM_USAGE_DEBUG_ENABLED=false, VAR_MEM_USAGE_KILL_SIGNAL=SIGQUIT, VAR_MEM_USAGE_MAX_CONSUMERS=30]</swiftbar.environment, VAR_MEM_USAGE_UNIT=auto>
 
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
+from typing import NamedTuple
 import argparse
 import json
 import os
 import re
 
-def configure():
+class SystemMemory(NamedTuple):
+    total: int
+    available: int
+    percent: float
+    used: int
+    free: int
+    active: int
+    inactive: int
+    wired: int
+    speculative: int
+
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--click-to-kill', help='Toggle "Click to kill" functionality', required=False, default=False, action='store_true')
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
@@ -36,10 +48,6 @@ def configure():
     parser.add_argument('--signal', help='The signal level to use when killing a process', required=False)
     args = parser.parse_args()
     return args
-
-def get_memory_tuple(total=None, available=None, percent=None, used=None, free=None, active=None, inactive=None, wired=None, speculative=None):
-    svmem = namedtuple('svmem', 'total available percent used free active inactive wired speculative')
-    return svmem(total=total, available=available, percent=percent, used=used, free=free, active=active, inactive=inactive, wired=wired, speculative=speculative)
 
 def get_memory_pressure_value(pagesize, pattern, string):
     match = re.search(pattern, string)
@@ -99,7 +107,7 @@ def virtual_memory():
         if round_ is not None:
             percent = round(percent, round_)
 
-    return get_memory_tuple(
+    return SystemMemory(
         total=memory_pressure_output['total'],
         available=memory_pressure_output['available'],
         percent=percent, used=memory_pressure_output['used'],

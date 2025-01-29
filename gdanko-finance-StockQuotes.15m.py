@@ -36,13 +36,13 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
-def configure():
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     args = parser.parse_args()
     return args
 
-def main():
+def main() -> None:
     plugin = Plugin()
     defaults_dict = {
         'VAR_STOCK_QUOTES_DEBUG_ENABLED': {

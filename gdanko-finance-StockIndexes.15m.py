@@ -31,7 +31,7 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
-def main():
+def main() -> None:
     plugin = Plugin()
     plugin_output = []
     symbol_map = {

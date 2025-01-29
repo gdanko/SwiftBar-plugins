@@ -19,9 +19,9 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_CPU_USAGE_CLICK_TO_KILL=false, VAR_CPU_USAGE_DEBUG_ENABLED=false, VAR_CPU_USAGE_KILL_SIGNAL=SIGQUIT, VAR_CPU_USAGE_MAX_CONSUMERS=30]</swiftbar.environment>
 
-from collections import namedtuple
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
+from typing import NamedTuple
 import argparse
 import os
 import re
@@ -37,7 +37,21 @@ except ModuleNotFoundError:
     print('Fix copied to clipboard. Paste on terminal and run.')
     exit(1)
 
-def get_cpu_family_strings():
+class CpuTimes(NamedTuple):
+    cpu: str
+    cpu_type: str
+    idle: float
+    nice: float
+    system: float
+    user: float
+    # iowait: float
+    # irq: float
+    # softirq: float
+    # steal: float
+    # guest: float
+    # guestnice: float
+
+def get_cpu_family_strings() -> str:
     # We get this information from /Library/Developer/CommandLineTools/SDKs/MacOSX<version>.sdk/usr/include/mach/machine.h
     # Current: /Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/mach/machine.h
     return {
@@ -84,7 +98,7 @@ def get_cpu_family_strings():
         0x204526d0: 'ARM Tupai',
     }
 
-def configure():
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--click-to-kill', help='Toggle "Click to kill" functionality', required=False, default=False, action='store_true')
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
@@ -93,11 +107,7 @@ def configure():
     args = parser.parse_args()
     return args
 
-def get_time_stats_tuple(cpu='cpu-total', cpu_type=None, user=0.0, system=0.0, idle=0.0, nice=0.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guestnice=0.0):
-    cpu_times = namedtuple('cpu_times', 'cpu cpu_type user system idle nice iowait irq softirq steal guest guestnice')
-    return cpu_times(cpu=cpu, cpu_type=cpu_type, user=user, system=system, idle=idle, nice=nice, iowait=iowait, irq=irq, softirq=softirq, steal=steal, guest=guest, guestnice=guestnice)
-
-def combine_stats(cpu_time_stats, cpu_type):
+def combine_stats(cpu_time_stats: list=[], cpu_type: str='') -> CpuTimes:
     idle      = 0.0
     nice      = 0.0
     system    = 0.0
@@ -108,7 +118,8 @@ def combine_stats(cpu_time_stats, cpu_type):
         nice   += cpu_time_stat.nice
         system += cpu_time_stat.system
         user   += cpu_time_stat.user
-    return get_time_stats_tuple(
+    return CpuTimes(
+        cpu=0,
         cpu_type=cpu_type,
         idle=(idle / len(cpu_time_stats)),
         nice=(nice / len(cpu_time_stats)),
@@ -116,7 +127,7 @@ def combine_stats(cpu_time_stats, cpu_type):
         user=(user / len(cpu_time_stats)),
     )
 
-def get_top_cpu_usage():
+def get_top_cpu_usage() -> list[dict]:
     cpu_info = []
     command = f'ps -axm -o %cpu,pid,user,comm | tail -n+2'
     returncode, stdout, _ = util.execute_command(command)
@@ -131,10 +142,9 @@ def get_top_cpu_usage():
                 command_name = match.group(4)
                 if cpu_usage > 0.0:
                     cpu_info.append({'command': command_name, 'cpu_usage': float(cpu_usage), 'pid': pid, 'user': user})
-
     return sorted(cpu_info, key=lambda item: float(item['cpu_usage']), reverse=True)
 
-def main():
+def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     defaults_dict = {
@@ -181,7 +191,7 @@ def main():
     individual_cpu_percent = cpu_times_percent(interval=1.0, percpu=True)
 
     for i, cpu_instance in enumerate(individual_cpu_percent):
-        individual_cpu_pct.append(get_time_stats_tuple(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
+        individual_cpu_pct.append(CpuTimes(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
     combined_cpu_pct.append(combine_stats(individual_cpu_pct, cpu_type))
 
     plugin.print_menu_title(f'CPU: user {util.pad_float(combined_cpu_pct[0].user)}%, sys {util.pad_float(combined_cpu_pct[0].system)}%, idle {util.pad_float(combined_cpu_pct[0].idle)}%')

@@ -3,7 +3,7 @@ import http.client
 import re
 import urllib.parse
 
-def percent_encode(string: str) ->str:
+def percent_encode(string: str) -> str:
     """
     Percent encode a string.
     """
@@ -18,7 +18,7 @@ def percent_encode(string: str) ->str:
             result.append(f'%{hex_digits[ord(char) >> 4]}{hex_digits[ord(char) & 0xF]}')
     return ''.join(result)
 
-def encode_query_string(params: dict) ->str:
+def encode_query_string(params: dict) -> str:
     """
     Encode a query string.
     """

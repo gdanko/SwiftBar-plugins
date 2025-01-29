@@ -103,7 +103,7 @@ def find_all_network_interfaces() -> list[str]:
         matches = re.findall(pattern, stdout)
         return sorted(matches) if (matches and type(matches) == list) else ['lo0']
 
-def find_valid_network_interfaces() ->str:
+def find_valid_network_interfaces() -> str:
     """
     Find and return a list of all valid interfaces using networksetup.
     """
@@ -113,7 +113,7 @@ def find_valid_network_interfaces() ->str:
         matches = re.findall(pattern, stdout)
         return sorted(matches) if (matches and type(matches) == list) else ['en0']
 
-def find_valid_wifi_interfaces() ->list[str]:
+def find_valid_wifi_interfaces() -> list[str]:
     """
     Find and return a list of all wireless interfaces using networksetup.
     """
@@ -220,55 +220,55 @@ def prettify_timestamp(timestamp, format):
         print(e)
         return timestamp
     
-def get_timestamp(timestamp: int=0, format: str='%Y-%m-%d %k:%M:%S')->str:
+def get_timestamp(timestamp: int=0, format: str='%Y-%m-%d %k:%M:%S')-> str:
     """
     Take a Unix timestamp and convert it to the specified format.
     """
     return datetime.datetime.fromtimestamp(timestamp).strftime(format)
 
-def unix_to_human(timestamp, format: str='%Y-%m-%d') ->str:
+def unix_to_human(timestamp, format: str='%Y-%m-%d') -> str:
     """
     Take a Unix timestamp and convert it to the specified format.
     """
     return datetime.datetime.fromtimestamp(timestamp).strftime(format)
 
-def unix_time_in_ms() ->int:
+def unix_time_in_ms() -> int:
     """
     Return the Unix timestamp in millesconds.
     """
     return int(time.time() * 1000)
 
-def pad_float(number: int=0):
+def pad_float(number: int=0) -> str:
     """
     Pad a float to two decimal places.
     """
     return '{:.2f}'.format(float(number))
 
-def to_dollar(number: int=0) ->str:
+def to_dollar(number: int=0) -> str:
     """
     Convert the specified integer as a dollar based format, e.g., $2,000.
     """
     return '${:,.2f}'.format(number)
 
-def add_commas(number: int=0):
+def add_commas(number: int=0) -> str:
     """
     Add commas to integers.
     """
     return '{:,.0f}'.format(number)
 
-def float_to_pct(number: int=0):
+def float_to_pct(number: int=0) -> str:
     """
     Convert a floating point number to its percent equivalent.
     """
     return f'{number:.2%}'
 
-def miles_to_kilometers(miles: int=0) ->float:
+def miles_to_kilometers(miles: int=0) -> float:
     """
     Convert miles to kilometers.
     """
     return miles * 1.609344
 
-def kilometers_to_miles(kilometers: int=0) ->float:
+def kilometers_to_miles(kilometers: int=0) -> float:
     """
     Convert kilometers to miles.
     """

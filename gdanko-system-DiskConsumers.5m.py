@@ -24,7 +24,7 @@ import os
 import re
 import time
 
-def configure():
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     args = parser.parse_args()

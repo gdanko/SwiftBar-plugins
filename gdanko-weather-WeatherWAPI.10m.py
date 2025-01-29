@@ -27,7 +27,7 @@ import argparse
 import os
 import re
 
-def configure():
+def configure() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
     parser.add_argument('--forecast', help='Toggle viewing the forecast section', required=False, default=False, action='store_true')
@@ -35,7 +35,7 @@ def configure():
     args = parser.parse_args()
     return args
 
-def get_uv_index(uv_index):
+def get_uv_index(uv_index) -> str:
     uv_index = float(uv_index)
     if uv_index > 0 and uv_index < 6:
         return 'Moderate'
@@ -46,7 +46,7 @@ def get_uv_index(uv_index):
     elif uv_index > 11:
         return 'Extreme'
 
-def process_description(desc):
+def process_description(desc) ->dict:
     output = {}
     entries = desc.split("\n\n")
     for x, item in enumerate(entries):
@@ -59,12 +59,12 @@ def process_description(desc):
             output[match.group(1).title()] = match.group(2)
     return output
 
-def pluralize(count, word):
+def pluralize(count, word) -> str:
     if count == 1:
         return word
     return f'{word}s'
 
-def main():
+def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     defaults_dict = {
