@@ -1,4 +1,4 @@
-# xbar-plugins
+# SwiftBar-plugins
 A collection of plugins for [SwiftBar](https://github.com/swiftbar/SwiftBar) (also compatible with [xbar](https://github.com/matryer/xbar)).
 
 ## Prerequisites
@@ -15,10 +15,46 @@ git clone https://github.com/gdanko/xbar-plugins.git
 ln -s /path/to/repo/plugin_name.py $PLUGINS_PATH/plugin_name.py
 ```
 
-## How Do I Use the Plugins With SwiftBar?
-SwiftBar doesn't know what to do with xbar's `<plugin_name>.vars.json` files. With xbar, both the plugin file and its associated JSON vars file both live in `~/Library/Application Support/xbar/plugins`. SwiftBar doesn't like this. It tries unsuccessfully to execute the JSON files as scripts. To get around this, we determine who the name of the calling process, which will be one of `/Applications/xbar.app/Contents/MacOS/xbar` or `/Applications/SwiftBar.app/Contents/MacOS/SwiftBar`. If the caller is xbar, we set the config path to `~/Library/Application Support/xbar/plugins`. If the caller is SwiftBar, we set the config path to `~/.config/SwiftBar`.
+## Issues
+<!-- SwiftBar doesn't know what to do with xbar's `<plugin_name>.vars.json` files. With xbar, both the plugin file and its associated JSON vars file both live in `~/Library/Application Support/xbar/plugins`. SwiftBar doesn't like this. It tries unsuccessfully to execute the JSON files as scripts. To get around this, we determine who the name of the calling process, which will be one of `/Applications/xbar.app/Contents/MacOS/xbar` or `/Applications/SwiftBar.app/Contents/MacOS/SwiftBar`. If the caller is xbar, we set the config path to `~/Library/Application Support/xbar/plugins`. If the caller is SwiftBar, we set the config path to `~/.config/SwiftBar`.
 
-When a plugin is executed, it attempts to look for a `.vars.json` file to set its values. If one doesn't exist, it will use the default values specified in the plugin's code. This logic applies to both xbar and SwiftBar. This solution allows you to use a traditional xbar `.vars.json` with SwiftBar. The only caveat to this approach is that when you select the `Run in Terminal` option, the default values are used because of the way the plugin is being invoked. I am looking for a solution to this problem.
+When a plugin is executed, it attempts to look for a `.vars.json` file to set its values. If one doesn't exist, it will use the default values specified in the plugin's code. This logic applies to both xbar and SwiftBar. This solution allows you to use a traditional xbar `.vars.json` with SwiftBar. The only caveat to this approach is that when you select the `Run in Terminal` option, the default values are used because of the way the plugin is being invoked. I am looking for a solution to this problem. -->
+SwiftBar is a more modern implementation of xbar and it's implied that xbar plugins will just work. This is mostly true. I wanted to create a plugin class that would work with both applications, but I ran into a few issues.
+1. There are some parameters that are unique to each application
+    * SwiftBar
+        * md
+        * sfcolor
+        * sfconfig
+        * sfimage
+        * sfsize
+        * shortcut
+        * tooltip
+        * webview
+        * webviewh
+        * webvieww
+    * xbar
+        * disabled
+        * key
+        * shell
+
+   I wanted to create a `typing.NamedTuple` class that would accommodate all of these, but if my plugin sent the `sfimage`, xbar would complain and the plugin's output would never be rendered. To work around this, I wrote a custom `TypedDict` class which does a few things:
+    * It has 3 subclasses, `Params`, `ParamsXbar`, and `ParamsSwiftBar`. Anytime a plugin method that writes output is called, the `params` dictionary is sanitized. If the invoking application is SwiftBar, an instance of `ParamsSwiftBar` is created and all of the entries from the `Params` instance are inserted into the new `ParamsSwiftBar` object. To avoid any issues, we trap `KeyError` exceptions and just pass on them. The `TypeDict` class also has two options, `enforce_schema` and `enforce_typing`. When you create an instance of `TypedDict`, you pass it a schema in the form of a dict, it looks something like this:
+    ```
+    {
+        'key1': int,
+        'key2': bool,
+        'key3': str,
+        'key4': float,
+    }
+    ```
+
+    If you create an instance of `Params` and try someting like `params['key'] = 'asdf'`, a `TypeError` exception will be thrown because `key1` is typed as an int. If you try something like `params['foo'] = 'bar'`, a `KeyError` exception will be thrown because `foo` is not a part of the schema. Disabling enforcement will allow these situations.
+2. xbar stores its plugins in `~/Library/Application Support/xbar/plugins`. It also stores the JSON vars files in there. If your plugin's name is `my-great-plugin.15m.py` then any custom variables will live in a file named `my-great-plugin.15m.py.vars.json`. If you try something like this with SwiftBar, SwiftBar will try to execute the JSON files as plugins, and while you can add dot files to exclude these JSON files, I've come up with what I think is a more elegant cross-platform solution. If you're using SwiftBar, the plugin framework will create a directory for the JSON files in `~/.config/SwiftBar`. When a the `Plugin` class is instantiated, the `plugin._get_config_dir()` method is called and it does the following:
+    * Determine the parent pid and use that to set the variable `plugin.invoked_by`.
+    * Set the `plugin.config_dir` variable based on the value of `plugin.invoked_by`.
+    * After `plugin._get_config_dir()` has completed, `plugin._create_config_dir()` is called to create the configuration directory if it doesn't exist. This should only ever happen with SwiftBar.
+
+This combination of tweaks and workarounds allows both xbar and SwiftBar to execute plugins happily.
 
 ## Features
 * Auto-detect whether or not you are using xbar or SwiftBar and configure the plugin path and configuration path accordingly.
