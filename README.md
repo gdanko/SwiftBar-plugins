@@ -29,13 +29,18 @@ When a plugin is executed, it attempts to look for a `.vars.json` file to set it
     * Installed system memory
     * Python binary path
     * Python version
-    * Plugins directory path
-    * Plugin full path
+    * Plugins directory
+    * Plugin path
+    * Invoker (xbar or SwiftBar)
+    * Invoker (full path)
+    * Invoker pid
+    * SwiftBar version (SwiftBar only)
     * Default font family
     * Default font size
-    * Plugin configuration path
+    * Plugin configuration directory
     * Plugin JSON variables file path
     * Variables listed in `VAR_SOMETHING = value` format
+    * Environment variables listed in `VAR_SOMETHING = value` format
 
 ## Plugins
 * [Finance](#finance)
