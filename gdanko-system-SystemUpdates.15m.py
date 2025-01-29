@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>System Updates</xbar.title>
-# <xbar.version>v0.3.1</xbar.version>
+# <xbar.version>v0.3.2</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the number of available system updates</xbar.desc>
@@ -17,7 +17,7 @@
 # <swiftbar.environment>[VAR_SYSTEM_UPDATES_DEBUG_ENABLED=false]</swiftbar.environment>
 
 from collections import namedtuple
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.plugin import Plugin
 import argparse
 import os
@@ -85,28 +85,29 @@ def main():
 
     plugin.read_config(defaults_dict)
     debug_enabled = plugin.configuration['VAR_SYSTEM_UPDATES_DEBUG_ENABLED']
-    updates, error = find_software_updates()
-    if len(updates) > 0:
-        plugin.print_menu_title(f'Updates: {len(updates)}')
+    updates, err = find_software_updates()
+    if err:
+        plugin.print_menu_title('Updates: Error')
         plugin.print_menu_separator()
         plugin.print_update_time()
         plugin.print_menu_separator()
-        longest = max(len(item.title) for item in updates)
-        for update in updates:
-            plugin.print_menu_item(
-                f'{update.title.ljust(longest)}  {update.version}',
-                cmd=['softwareupdate', '--install', f'"{update.label}"'],
-                refresh=True,
-                sfimage='shippingbox',
-                terminal=True,
-                trim=False,
-            )
-        plugin.print_menu_separator()
+        plugin.print_menu_item(err)
     else:
-        plugin.print_menu_title('Updates: Unknown')
+        plugin.print_menu_title(f'Updates: {len(updates)}')
         plugin.print_menu_separator()
-        # Need to capture the error
-        plugin.print_menu_title('Failed to find update count')
+        plugin.print_update_time()
+        if len(updates) > 0:
+            plugin.print_menu_separator()
+            longest = plugin.find_longest(updates)
+            for update in updates:
+                plugin.print_menu_item(
+                    f'{update.title.ljust(longest)}  {update.version}',
+                    cmd=['softwareupdate', '--install', f'"{update.label}"'],
+                    refresh=True,
+                    sfimage='shippingbox',
+                    terminal=True,
+                    trim=False,
+                )
     plugin.print_menu_separator()
     plugin.print_menu_item('Settings')
     plugin.print_menu_item(

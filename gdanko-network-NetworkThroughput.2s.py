@@ -19,7 +19,7 @@
 # <swiftbar.environment>[VAR_NET_THROUGHPUT_DEBUG_ENABLED=false, VAR_NET_THROUGHPUT_INTERFACE=en0, VAR_NET_THROUGHPUT_VERBOSE=false]</swiftbar.environment>
 
 from collections import namedtuple, OrderedDict
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.plugin import Plugin
 import argparse
 import os

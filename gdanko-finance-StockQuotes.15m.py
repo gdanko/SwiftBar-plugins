@@ -18,7 +18,7 @@
 # <swiftbar.environment>[VAR_STOCK_QUOTES_DEBUG_ENABLED=false, VAR_STOCK_SYMBOLS=AAPL]</swiftbar.environment>
 
 from collections import OrderedDict
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.plugin import Plugin
 import argparse
 import re

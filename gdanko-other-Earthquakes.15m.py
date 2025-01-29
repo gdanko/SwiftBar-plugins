@@ -21,7 +21,7 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 
 from collections import namedtuple, OrderedDict
-from swiftbar import request, util
+from swiftbar import images, request, util
 from swiftbar.plugin import Plugin
 import argparse
 import datetime

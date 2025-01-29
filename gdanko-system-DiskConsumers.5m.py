@@ -17,7 +17,7 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_DISK_CONSUMERS_DEBUG_ENABLED=false, VAR_DISK_CONSUMERS_PATHS=/]</swiftbar.environment>
 
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.plugin import Plugin
 import argparse
 import os

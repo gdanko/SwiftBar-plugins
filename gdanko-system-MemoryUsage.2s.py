@@ -21,7 +21,7 @@
 # <swiftbar.environment>[VAR_MEM_USAGE_CLICK_TO_KILL=false, VAR_MEM_USAGE_DEBUG_ENABLED=false, VAR_MEM_USAGE_KILL_SIGNAL=SIGQUIT, VAR_MEM_USAGE_MAX_CONSUMERS=30]</swiftbar.environment, VAR_MEM_USAGE_UNIT=auto>
 
 from collections import namedtuple, OrderedDict
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.plugin import Plugin
 import argparse
 import json
@@ -174,7 +174,6 @@ def main():
     memory_type, memory_brand, err = get_memory_details()
     mem = virtual_memory()
     if mem:
-        # total = util.format_number(total) if unit == 'auto' else util.byte_converter(total, unit)
         used = util.format_number(mem.used) if unit == 'auto' else util.byte_converter(mem.used, unit)
         total = util.format_number(mem.total) if unit == 'auto' else util.byte_converter(mem.total, unit)
         plugin.print_menu_title(f'Memory: {used} / {total}')

@@ -17,7 +17,7 @@
 # <swiftbar.environment>[VAR_SYSTEM_UPTIME_DEBUG_ENABLED=false]</swiftbar.environment>
 
 from collections import namedtuple
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.plugin import Plugin
 import argparse
 import datetime

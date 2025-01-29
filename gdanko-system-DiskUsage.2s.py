@@ -20,7 +20,7 @@
 
 from collections import namedtuple, OrderedDict
 from swiftbar.plugin import Plugin
-from swiftbar import util
+from swiftbar import images, util
 import argparse
 import os
 import re

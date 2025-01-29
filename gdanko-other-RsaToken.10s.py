@@ -34,7 +34,7 @@
 
 # arm64 aarch
 
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.plugin import Plugin
 import argparse
 import os

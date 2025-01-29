@@ -18,7 +18,7 @@
 # <swiftbar.environment>[VAR_WIFI_STATUS_DEBUG_ENABLED=false, VAR_WIFI_STATUS_INTERFACE=en0]</swiftbar.environment>
 
 from collections import OrderedDict
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.plugin import Plugin
 import argparse
 import json

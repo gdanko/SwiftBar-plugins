@@ -75,7 +75,7 @@ class Params(TypedDict):
         'alternate': bool,
         'checked': bool,
         'dropdown': bool,
-        'image': bool,
+        'image': str,
         'sfimage': str,
         'templateImage': str,
         'tooltip': str,
@@ -104,7 +104,7 @@ class ParamsXbar(TypedDict):
 
         'alternate': bool,
         'dropdown': bool,
-        'image': bool,
+        'image': str,
         'templateImage': str,
 
         'bash': str,
@@ -135,7 +135,7 @@ class ParamsSwiftBar(TypedDict):
         'alternate': bool,
         'checked': bool,
         'dropdown': bool,
-        'image': bool,
+        'image': str,
         'sfimage': str,
         'templateImage': str,
         'tooltip': str,

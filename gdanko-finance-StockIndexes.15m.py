@@ -16,7 +16,7 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_STOCK_INDEXES_DEBUG_ENABLED=false]</swiftbar.environment>
 
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.plugin import Plugin
 import subprocess
 import sys

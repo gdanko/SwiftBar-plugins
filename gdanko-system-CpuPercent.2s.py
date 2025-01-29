@@ -20,7 +20,7 @@
 # <swiftbar.environment>[VAR_CPU_USAGE_CLICK_TO_KILL=false, VAR_CPU_USAGE_DEBUG_ENABLED=false, VAR_CPU_USAGE_KILL_SIGNAL=SIGQUIT, VAR_CPU_USAGE_MAX_CONSUMERS=30]</swiftbar.environment>
 
 from collections import namedtuple
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.plugin import Plugin
 import argparse
 import os

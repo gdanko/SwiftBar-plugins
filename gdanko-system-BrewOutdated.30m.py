@@ -17,7 +17,7 @@
 # <swiftbar.environment>[VAR_BREW_OUTDATED_DEBUG_ENABLED=false]</swiftbar.environment>
 
 from dataclasses import dataclass
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.plugin import Plugin
 import argparse
 import json

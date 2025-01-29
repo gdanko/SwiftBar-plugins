@@ -22,7 +22,7 @@
 
 from collections import OrderedDict
 from swiftbar.plugin import Plugin
-from swiftbar import request, util
+from swiftbar import images, request, util
 import argparse
 import os
 import re
