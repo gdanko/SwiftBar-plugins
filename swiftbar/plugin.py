@@ -14,7 +14,7 @@ class Writer(typing.Protocol):
     def write(self, _: str, /) -> int: ...
 
 class Plugin:
-    def __init__(self):
+    def __init__(self) -> None:
         self.config_dir = os.path.join(Path.home(), 'SwiftBar')
         self.invoked_by = None
         self.invoked_by_full = None

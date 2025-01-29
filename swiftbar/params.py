@@ -1,7 +1,8 @@
+from typing import Any, Dict
 import re
 
 class TypedDict:
-    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True, schema: dict=None):
+    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True, schema: Dict[str, Any]=None) -> None:
         """
         Initialize with a schema where keys are the expected fields and
         values are the expected types.
@@ -11,7 +12,7 @@ class TypedDict:
         self._schema = schema
         self._data = {}
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str=None, value: Any=None) -> None:
         """
         Validate the key and value type when setting an item.
         If the key is param1...n, we will allow it.
@@ -28,7 +29,7 @@ class TypedDict:
                 raise TypeError(f"Value for '{key}' must be of type {expected_type.__name__}.")
         self._data[key] = value
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str=None) -> Any:
         """
         Retrieve the value for the given key.
         """
@@ -40,7 +41,7 @@ class TypedDict:
         """
         return repr(self._data)
     
-    def __contains__(self, key):
+    def __contains__(self, key: str=None) -> bool:
         """
         Check if a key exists in the TypedDict schema.
         """
@@ -52,7 +53,7 @@ class TypedDict:
         """
         return self._data.items()
 
-    def pop(self, key):
+    def pop(self, key: str=None) -> Dict[str, Any]:
         """
         Remove the item with the specified key from the TypedDict.
         If the key is not present in the data, raise a KeyError.
@@ -62,7 +63,7 @@ class TypedDict:
         return self._data.pop(key)
 
 class Params(TypedDict):
-    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True):
+    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True) -> None:
         super().__init__(
             enforce_schema = enforce_schema,
             enforce_typing = enforce_typing,
@@ -100,7 +101,7 @@ class Params(TypedDict):
         )
 
 class ParamsXbar(TypedDict):
-    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True):
+    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True) -> None:
         super().__init__(
             enforce_schema = enforce_schema,
             enforce_typing = enforce_typing,
@@ -130,7 +131,7 @@ class ParamsXbar(TypedDict):
         )
 
 class ParamsSwiftBar(TypedDict):
-    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True):
+    def __init__(self, enforce_schema: bool=True, enforce_typing: bool=True) -> None:
        super().__init__(
            enforce_schema = enforce_schema,
            enforce_typing = enforce_typing,
