@@ -44,7 +44,7 @@ class Plugin:
             pass
         if stdout:
             self.invoked_by_full = stdout
-            self.invoked_by = os.path.basename(stdout)
+            self.invoked_by = os.path.basename(self.invoked_by_full)
             if stdout == '/Applications/xbar.app/Contents/MacOS/xbar':
                 self.config_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
             elif stdout == '/Applications/SwiftBar.app/Contents/MacOS/SwiftBar':
@@ -227,7 +227,11 @@ class Plugin:
         debug_data['Python version'] = f'{pv.major}.{pv.minor}.{pv.micro}-{pv.releaselevel}'
         debug_data['Plugins directory'] = os.path.dirname(self.plugin_name)
         debug_data['Plugin path'] = self.plugin_name
-        debug_data['Invoked by'] = f'{self.invoked_by_full} (PID {self.invoker_pid})'
+        debug_data['Invoked by'] = self.invoked_by
+        debug_data['Invoked by (full path)'] = self.invoked_by_full
+        debug_data[f'{self.invoked_by} pid'] = self.invoker_pid
+        if self.invoked_by == 'SwiftBar':
+            debug_data['SwiftBar version'] = f'{os.environ.get("SWIFTBAR_VERSION")} build {os.environ.get("SWIFTBAR_BUILD")}'
         debug_data['Default font family'] = self.font
         debug_data['Default font size'] = self.size
         debug_data['Configuration directory'] = self.config_dir
@@ -238,3 +242,8 @@ class Plugin:
         for key, value in self.configuration.items():
             variables[key] = value
         self.print_ordered_dict(variables, justify='right', indent=4, delimiter = '=')
+        self.print_menu_item('--Environment Variables')
+        environment_variables = OrderedDict()
+        for key in sorted(os.environ.keys()):
+            environment_variables[key] = os.environ.get(key)
+        self.print_ordered_dict(environment_variables, justify='right', indent=4, delimiter = '=', length=125)
