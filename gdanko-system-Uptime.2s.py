@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Uptime</xbar.title>
-# <xbar.version>v0.4.0</xbar.version>
+# <xbar.version>v0.5.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show system uptime</xbar.desc>
@@ -16,6 +16,7 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_SYSTEM_UPTIME_DEBUG_ENABLED=false]</swiftbar.environment>
 
+from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import NamedTuple, Union
@@ -60,24 +61,25 @@ def get_duration_tuple() -> Union[int, Duration, None]:
 
 def main() -> None:
     plugin = Plugin()
-    defaults_dict = {
-        'VAR_SYSTEM_UPTIME_DEBUG_ENABLED': {
-            'default_value': False,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--debug',
-                'help': 'Toggle the Debugging menu',
-                'type': bool,
-            },
+    plugin.defaults_dict = OrderedDict()
+    plugin.defaults_dict['VAR_SYSTEM_UPTIME_DEBUG_ENABLED'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--debug',
+            'help': 'Toggle the Debugging menu',
+            'title': 'the "Debugging" menu',
+            'type': bool,
         },
     }
-    plugin.read_config(defaults_dict)
-    args = util.generate_args(defaults_dict)
+
+    plugin.read_config()
+    args = plugin.generate_args()
     if args.debug:
         plugin.update_setting('VAR_SYSTEM_UPTIME_DEBUG_ENABLED', True if plugin.configuration['VAR_SYSTEM_UPTIME_DEBUG_ENABLED'] == False else False)
 
-    plugin.read_config(defaults_dict)
+    plugin.read_config()
     debug_enabled = plugin.configuration['VAR_SYSTEM_UPTIME_DEBUG_ENABLED']
 
     boot_time, duration_tuple = get_duration_tuple()
@@ -93,13 +95,8 @@ def main() -> None:
         plugin.print_menu_separator()
         plugin.print_menu_item('Failed to determine boot time')
     plugin.print_menu_separator()
-    plugin.print_menu_item('Settings')
-    plugin.print_menu_item(
-        f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
-        cmd=[plugin.plugin_name, '--debug'],
-        terminal=False,
-        refresh=True,
-    )
+    if plugin.defaults_dict:
+        plugin.display_settings_menu()
     if debug_enabled:
         plugin.display_debugging_menu()
 if __name__ == '__main__':

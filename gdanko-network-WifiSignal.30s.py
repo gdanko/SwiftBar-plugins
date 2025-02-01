@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>WiFi Signal</xbar.title>
-# <xbar.version>v0.4.0</xbar.version>
+# <xbar.version>v0.5.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the current WiFi signal strength</xbar.desc>
@@ -35,31 +35,32 @@ def get_profiler_data(stdout: str=None) -> Dict[str, Any]:
 def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
-    defaults_dict = {
-        'VAR_WIFI_STATUS_DEBUG_ENABLED': {
-            'default_value': False,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--debug',
-                'help': 'Toggle the Debugging menu',
-                'type': bool,
-            },
-            
-        },
-        'VAR_WIFI_STATUS_INTERFACE': {
-            'default_value': 'en0',
-            'valid_values': util.find_valid_wifi_interfaces(),
-            'setting_configuration': {
-                'default': None,
-                'flag': '--interface',
-                'help': 'Select the interface to view',
-                'type': str,
-            },
+    plugin.defaults_dict = OrderedDict()
+    plugin.defaults_dict['VAR_WIFI_STATUS_DEBUG_ENABLED'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--debug',
+            'help': 'Toggle the Debugging menu',
+            'title': 'the "Debugging" menu',
+            'type': bool,
         },
     }
-    plugin.read_config(defaults_dict)
-    args = util.generate_args(defaults_dict)
+    plugin.defaults_dict['VAR_WIFI_STATUS_INTERFACE'] = {
+        'default_value': 'en0',
+        'valid_values': util.find_valid_wifi_interfaces(),
+        'setting_configuration': {
+            'default': None,
+            'flag': '--interface',
+            'help': 'Select the interface to view',
+            'title': 'Interface',
+            'type': str,
+        },
+    }
+
+    plugin.read_config()
+    args = plugin.generate_args()
     if args.debug:
         plugin.update_setting('VAR_WIFI_STATUS_DEBUG_ENABLED', True if plugin.configuration['VAR_WIFI_STATUS_DEBUG_ENABLED'] == False else False)
     elif args.interface:
@@ -67,7 +68,7 @@ def main() -> None:
 
     my_interface = None
     rating = 'Unknown'
-    plugin.read_config(defaults_dict)
+    plugin.read_config()
     debug_enabled = plugin.configuration['VAR_WIFI_STATUS_DEBUG_ENABLED']
     interface = plugin.configuration['VAR_WIFI_STATUS_INTERFACE']
 
@@ -146,23 +147,8 @@ def main() -> None:
         for error_message in plugin.error_messages:
             plugin.print_menu_item(error_message)
     plugin.print_menu_separator()
-    plugin.print_menu_item('Settings')
-    plugin.print_menu_item(
-        f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
-        cmd=[plugin.plugin_name, '--debug'],
-        terminal=False,
-        refresh=True,
-    )
-    plugin.print_menu_item('--Interface')
-    for ifname in util.find_valid_wifi_interfaces():
-        color = 'blue' if ifname == interface else 'black'
-        plugin.print_menu_item(
-            f'----{ifname}',
-            color=color,
-            cmd=[plugin.plugin_name, '--interface', ifname],
-            refresh=True,
-            terminal=False,
-        )
+    if plugin.defaults_dict:
+        plugin.display_settings_menu()
     if debug_enabled:
         plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh WiFi Data', refresh=True)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Stock Quotes</xbar.title>
-# <xbar.version>v0.5.0</xbar.version>
+# <xbar.version>v0.6.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show info about the specified stock symbols</xbar.desc>
@@ -73,63 +73,68 @@ def get_yf_data(crumb: str=None, cookie: str=None, symbol: str=None):
 
 def main() -> None:
     plugin = Plugin()
-    defaults_dict = {
-        'VAR_STOCK_QUOTES_DEBUG_ENABLED': {
-            'default_value': False,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--debug',
-                'help': 'Toggle the Debugging menu',
-                'type': bool,
-            },
-        },
-        'VAR_STOCK_QUOTES_SYMBOLS': {
-            'default_value': 'AAPL',
-        },
-        'VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED': {
-            'default_value': True,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--company-info',
-                'help': 'Toggle the Company Info menu',
-                'type': bool,
-            },
-        },
-        'VAR_STOCK_QUOTES_KEY_STATS_ENABLED': {
-            'default_value': True,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--key-stats',
-                'help': 'Toggle the Key Stats menu',
-                'type': bool,
-            },
-        },
-        'VAR_STOCK_QUOTES_R_AND_P_ENABLED': {
-            'default_value': True,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--r-and-p',
-                'help': 'Toggle the Ratios and Profitability menu',
-                'type': bool,
-            },
-        },
-        'VAR_STOCK_QUOTES_EVENTS_ENABLED': {
-            'default_value': True,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--events',
-                'help': 'Toggle the Events menu',
-                'type': bool,
-            },
+    plugin.defaults_dict = OrderedDict()
+    plugin.defaults_dict['VAR_STOCK_QUOTES_DEBUG_ENABLED'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--debug',
+            'help': 'Toggle the Debugging menu',
+            'title': 'the "Debugging" menu',
+            'type': bool,
         },
     }
-    plugin.read_config(defaults_dict)
-    args = util.generate_args(defaults_dict)
+    plugin.defaults_dict['VAR_STOCK_QUOTES_SYMBOLS'] = {
+        'default_value': 'AAPL',
+    }
+    plugin.defaults_dict['VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED'] = {
+        'default_value': True,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--company-info',
+            'help': 'Toggle the Company Info menu',
+            'title': '"Company Info" menu',
+            'type': bool,
+        },
+    }
+    plugin.defaults_dict['VAR_STOCK_QUOTES_KEY_STATS_ENABLED'] = {
+        'default_value': True,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--key-stats',
+            'help': 'Toggle the Key Stats menu',
+            'title': '"Key Stats" menu',
+            'type': bool,
+        },
+    }
+    plugin.defaults_dict['VAR_STOCK_QUOTES_R_AND_P_ENABLED'] = {
+        'default_value': True,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--r-and-p',
+            'help': 'Toggle the Ratios and Profitability menu',
+            'title': '"Ratios and Profitability" menu',
+            'type': bool,
+        },
+    }
+    plugin.defaults_dict['VAR_STOCK_QUOTES_EVENTS_ENABLED'] = {
+        'default_value': True,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--events',
+            'help': 'Toggle the Events menu',
+            'title': '"Events" menu',
+            'type': bool,
+        },
+    }
+
+    plugin.read_config()
+    args = plugin.generate_args()
 
     if args.debug:
         plugin.update_setting('VAR_STOCK_QUOTES_DEBUG_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_DEBUG_ENABLED'] == False else False)
@@ -142,7 +147,7 @@ def main() -> None:
     elif args.events:
         plugin.update_setting('VAR_STOCK_QUOTES_EVENTS_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_EVENTS_ENABLED'] == False else False)
 
-    plugin.read_config(defaults_dict)
+    plugin.read_config()
     debug_enabled = plugin.configuration['VAR_STOCK_QUOTES_DEBUG_ENABLED']
     symbols = re.split(r'\s*,\s*', plugin.configuration['VAR_STOCK_QUOTES_SYMBOLS'])
     company_info_enabled = plugin.configuration['VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED']
@@ -337,37 +342,8 @@ def main() -> None:
         plugin.print_menu_item('Failed to get a Yahoo! Finance crumb')
 
     plugin.print_menu_separator()
-    plugin.print_menu_item('Settings')
-    plugin.print_menu_item(
-        f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
-        cmd=[plugin.plugin_name, '--debug'],
-        terminal=False,
-        refresh=True,
-    )
-    plugin.print_menu_item(
-        f'{"--Disable" if company_info_enabled else "--Enable"} "Company Info" menu',
-        cmd=[plugin.plugin_name, '--company-info'],
-        terminal=False,
-        refresh=True,
-    )
-    plugin.print_menu_item(
-        f'{"--Disable" if key_stats_enabled else "--Enable"} "Key Stats" menu',
-        cmd=[plugin.plugin_name, '--key-stats'],
-        terminal=False,
-        refresh=True,
-    )
-    plugin.print_menu_item(
-        f'{"--Disable" if r_and_p_enabled else "--Enable"} "Ratios and Profitability" menu',
-        cmd=[plugin.plugin_name, '--r-and-p'],
-        terminal=False,
-        refresh=True,
-    )
-    plugin.print_menu_item(
-        f'{"--Disable" if events_enabled else "--Enable"} "Events" menu',
-        cmd=[plugin.plugin_name, '--events'],
-        terminal=False,
-        refresh=True,
-    )
+    if plugin.defaults_dict:
+        plugin.display_settings_menu()
     if debug_enabled:
         plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh market data', refresh=True)

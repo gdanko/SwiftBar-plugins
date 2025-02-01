@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>RsaToken</xbar.title>
-# <xbar.version>v0.1.0</xbar.version>
+# <xbar.version>v0.2.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>fetches current rsa token, and allows you to copy your pin from keychain to your paste buffer</xbar.desc>
@@ -34,6 +34,7 @@
 
 # arm64 aarch
 
+from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Dict, List, Union
@@ -91,19 +92,18 @@ def pbcopy(text: str=None) -> None:
 def main() -> None:
     os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
-
-    defaults_dict = {
-        'VAR_RSA_TOKEN_DEBUG_ENABLED': {
-            'default_value': False,
-            'valid_values': [True, False],
-        },
+    plugin.defaults_dict = OrderedDict()
+    plugin.defaults_dict['VAR_RSA_TOKEN_DEBUG_ENABLED'] = {
+        'default_value': False,
+        'valid_values': [True, False],
     }
-    plugin.read_config(defaults_dict)
+
+    plugin.read_config()
     args = configure()
     if args.debug:
         plugin.update_setting('VAR_RSA_TOKEN_DEBUG_ENABLED', True if plugin.configuration['VAR_RSA_TOKEN_DEBUG_ENABLED'] == False else False)
 
-    plugin.read_config(defaults_dict)
+    plugin.read_config()
     debug_enabled = plugin.configuration['VAR_RSA_TOKEN_DEBUG_ENABLED']
     error = setup()
     if error:

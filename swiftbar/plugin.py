@@ -3,6 +3,7 @@ from pathlib import Path
 from swiftbar import util
 from swiftbar.params import Params, ParamsXbar, ParamsSwiftBar
 from typing import Any, Dict, List, Union
+import argparse
 import json
 import os
 import shutil
@@ -70,12 +71,12 @@ class Plugin:
         with open(self.vars_file, 'w') as fh:
             fh.write(json.dumps(contents, indent=4))
 
-    def _write_default_vars_file(self, defaults_dict: Dict[str, Any]=None) -> None:
+    def _write_default_vars_file(self) -> None:
         """
-        Write a new JSON variables file from the contents of the defaults_dict sent by the plugin.
+        Write a new JSON variables file from the contents of the defaults_dict.
         """
         config_data = {}
-        for key, value in defaults_dict.items():
+        for key, value in self.defaults_dict.items():
             config_data[key] = value['default_value']
             self.configuration = config_data
         with open(self.vars_file, 'w') as fh:
@@ -88,33 +89,33 @@ class Plugin:
         with open(self.vars_file, 'w') as fh:
             fh.write(json.dumps(self.configuration, indent=4))
 
-    def read_config(self, defaults_dict: Dict[str, Any]=None) -> None:
+    def read_config(self) -> None:
         """
-        Read and validate the defaults_dict sent by the plugin
+        Read and validate the defaults_dict.
         """
         if os.path.exists(self.vars_file):
             with open(self.vars_file, 'r') as fh:
                 contents = json.load(fh)
-                for key, value in defaults_dict.items():
+                for key, value in self.defaults_dict.items():
                     if key in contents:
                         if 'valid_values' in value:
                             if contents[key] in value['valid_values']:
                                 self.configuration[key] = contents[key]
                             else:
-                                self.configuration[key] = defaults_dict[key]['default_value']
+                                self.configuration[key] = self.defaults_dict[key]['default_value']
                         elif 'minmax' in value:
                             if contents[key] >= value['minmax'].min and contents[key] <= value['minmax'].max:
                                 self.configuration[key] = contents[key]
                             else:
-                                self.configuration[key] = defaults_dict[key]['default_value']
+                                self.configuration[key] = self.defaults_dict[key]['default_value']
                         else:
                             self.configuration[key] = contents[key]
                     else:
-                        self.configuration[key] = defaults_dict[key]['default_value']
+                        self.configuration[key] = self.defaults_dict[key]['default_value']
                 if contents != self.configuration:
                     self._rewrite_vars_file()
         else:
-            self._write_default_vars_file(defaults_dict)
+            self._write_default_vars_file()
         
         for key, value in self.configuration.items():
             value = 'true' if value == True else 'false'
@@ -216,6 +217,22 @@ class Plugin:
         self.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
         self.print_menu_separator()
 
+    def generate_args(self) -> argparse.Namespace:
+        parser = argparse.ArgumentParser()
+        for name, data in self.defaults_dict.items():
+            if 'setting_configuration' in data:
+                setting_default = data['setting_configuration']['default']
+                setting_flag = data['setting_configuration']['flag']
+                setting_type = data['setting_configuration']['type']
+                setting_help = data['setting_configuration']['help'] if data['setting_configuration']['help'] else name
+                if setting_type == bool:
+                    parser.add_argument(setting_flag, help=setting_help, required=False, default=setting_default, action='store_true')
+                else:
+                    parser.add_argument(setting_flag, help=setting_help, required=False, default=setting_default, type=setting_type)
+                    
+        args = parser.parse_args()
+        return args
+
     def display_debugging_menu(self):
         """
         Create a menu item to display plugin debug information.
@@ -254,3 +271,50 @@ class Plugin:
         for key in sorted(os.environ.keys()):
             environment_variables[key] = os.environ.get(key)
         self.print_ordered_dict(environment_variables, justify='right', indent=4, delimiter = '=', length=125)
+
+    def display_settings_menu(self):
+        self.print_menu_item('Settings')
+        for name, data in self.defaults_dict.items():
+            if 'setting_configuration' in data:
+                setting_flag = data['setting_configuration']['flag']
+                setting_title = data['setting_configuration']['title']
+                setting_type = data['setting_configuration']['type']
+                if setting_type is bool:
+                    if self.configuration[name] == False:
+                        menu_item_text = f'--Enable {setting_title}'
+                    elif self.configuration[name] == True:
+                        menu_item_text = f'--Disable {setting_title}'
+                    self.print_menu_item(
+                        menu_item_text,
+                        cmd=[self.plugin_name, setting_flag],
+                        terminal=False,
+                        refresh=True,
+                    )
+                else:
+                    self.print_menu_item(f'--{setting_title}')
+                    if 'valid_values' in data:
+                        for valid_value in data['valid_values']:
+                            color = 'blue' if valid_value == self.configuration[name] else 'black'
+                            self.print_menu_item(
+                                f'----{valid_value}',
+                                color=color,
+                                cmd=[self.plugin_name, setting_flag, valid_value],
+                                terminal=False,
+                                refresh=True,
+                        )
+                    elif 'minmax' in data:
+                        increment = 10
+                        if 'increment' in data['setting_configuration'] and type(data['setting_configuration']['increment']) == int:
+                            increment = data['setting_configuration']['increment']
+                        min = data['minmax'].min
+                        max = data['minmax'].max
+                        for number in range(min, max + increment):
+                            if number % increment == 0:
+                                color = 'blue' if number == self.configuration[name] else 'black'
+                                self.print_menu_item(
+                                    f'----{number}',
+                                    cmd=[self.plugin_name, setting_flag, number],
+                                    color=color,
+                                    refresh=True,
+                                    terminal=False,
+                                )

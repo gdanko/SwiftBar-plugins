@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Network Throughput</xbar.title>
-# <xbar.version>v0.5.0</xbar.version>
+# <xbar.version>v0.6.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show the current network throughput for a given interface</xbar.desc>
@@ -93,40 +93,42 @@ def get_public_ip() -> Union[str, None]:
 def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
-    defaults_dict = {
-        'VAR_NET_THROUGHPUT_DEBUG_ENABLED': {
-            'default_value': False,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--debug',
-                'help': 'Toggle the Debugging menu',
-                'type': bool,
-            },
-        },
-        'VAR_NET_THROUGHPUT_INTERFACE': {
-            'default_value': 'en0',
-            'valid_values': util.find_valid_network_interfaces(),
-            'setting_configuration': {
-                'default': None,
-                'flag': '--interface',
-                'help': 'Select the interface to view',
-                'type': str,
-            },
-        },
-        'VAR_NET_THROUGHPUT_VERBOSE': {
-            'default_value': False,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--verbose',
-                'help': 'Toggle verbose mode',
-                'type': bool,
-            },
+    plugin.defaults_dict = OrderedDict()
+    plugin.defaults_dict['VAR_NET_THROUGHPUT_DEBUG_ENABLED'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--debug',
+            'help': 'Toggle the Debugging menu',
+            'title': 'the "Debugging" menu',
+            'type': bool,
         },
     }
-    plugin.read_config(defaults_dict)
-    args = util.generate_args(defaults_dict)
+    plugin.defaults_dict['VAR_NET_THROUGHPUT_VERBOSE'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--verbose',
+            'help': 'Toggle verbose mode',
+            'title': 'verbose mode',
+            'type': bool,
+        },
+    }
+    plugin.defaults_dict['VAR_NET_THROUGHPUT_INTERFACE'] = {
+        'default_value': 'en0',
+        'valid_values': util.find_valid_network_interfaces(),
+        'setting_configuration': {
+            'default': None,
+            'flag': '--interface',
+            'title': 'Interface',
+            'help': 'Select the interface to view',
+            'type': str,
+        },
+    }
+    plugin.read_config()
+    args = plugin.generate_args()
     if args.debug:
         plugin.update_setting('VAR_NET_THROUGHPUT_DEBUG_ENABLED', True if plugin.configuration['VAR_NET_THROUGHPUT_DEBUG_ENABLED'] == False else False)
     elif args.interface:
@@ -134,7 +136,7 @@ def main() -> None:
     elif args.verbose:
         plugin.update_setting('VAR_NET_THROUGHPUT_VERBOSE', True if plugin.configuration['VAR_NET_THROUGHPUT_VERBOSE'] == False else False)
 
-    plugin.read_config(defaults_dict)
+    plugin.read_config()
     debug_enabled = plugin.configuration['VAR_NET_THROUGHPUT_DEBUG_ENABLED']
     interface = plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE']
     vebose_enabled = plugin.configuration['VAR_NET_THROUGHPUT_VERBOSE']
@@ -184,29 +186,9 @@ def main() -> None:
 
     plugin.print_ordered_dict(interface_output, justify='left')
     plugin.print_menu_separator()
-    plugin.print_menu_item('Settings')
-    plugin.print_menu_item(
-        f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
-        cmd=[plugin.plugin_name, '--debug'],
-        terminal=False,
-        refresh=True,
-    )
-    plugin.print_menu_item(
-        f'{"--Disable" if vebose_enabled else "--Enable"} verbose mode',
-        cmd=[plugin.plugin_name, '--verbose'],
-        terminal=False,
-        refresh=True,
-    )
-    plugin.print_menu_item('--Interface')
-    for ifname in util.find_valid_network_interfaces():
-        color = 'blue' if ifname == interface else 'black'
-        plugin.print_menu_item(
-            f'----{ifname}',
-            color=color,
-            cmd=[plugin.plugin_name, '--interface', ifname],
-            refresh=True,
-            terminal=False,
-        )
+    if plugin.defaults_dict:
+        plugin.display_settings_menu()
+
     if debug_enabled:
         plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh', refresh=True)

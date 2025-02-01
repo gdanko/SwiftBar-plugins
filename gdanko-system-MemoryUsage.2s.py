@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Memory Usage</xbar.title>
-# <xbar.version>v0.4.0</xbar.version>
+# <xbar.version>v0.5.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show system memery usage in the format used/total</xbar.desc>
@@ -20,7 +20,7 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_MEM_USAGE_CLICK_TO_KILL=false, VAR_MEM_USAGE_DEBUG_ENABLED=false, VAR_MEM_USAGE_KILL_SIGNAL=SIGQUIT, VAR_MEM_USAGE_MAX_CONSUMERS=30]</swiftbar.environment, VAR_MEM_USAGE_UNIT=auto>
 
-from collections import OrderedDict
+from collections import namedtuple, OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Any, Dict, List, NamedTuple, Tuple, Union
@@ -129,59 +129,67 @@ def get_top_memory_usage() -> List[Dict[str, Any]]:
 def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
-    defaults_dict = {
-        'VAR_MEM_USAGE_CLICK_TO_KILL': {
-            'default_value': True,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--click-to-kill',
-                'help': 'Toggle "Click to kill" functionality',
-                'type': bool,
-            },
-        },
-        'VAR_MEM_USAGE_DEBUG_ENABLED': {
-            'default_value': False,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--debug',
-                'help': 'Toggle the Debugging menu',
-                'type': bool,
-            },
-        },
-        'VAR_MEM_USAGE_KILL_SIGNAL': {
-            'default_value': 'SIGQUIT',
-            'valid_values': list(util.get_signal_map().keys()),
-            'setting_configuration': {
-                'default': False,
-                'flag': '--signal',
-                'help': 'The signal level to use when killing a process',
-                'type': str,
-            },
-        },
-        'VAR_MEM_USAGE_MAX_CONSUMERS': {
-            'default_value': 30,
-            'setting_configuration': {
-                'default': False,
-                'flag': '--max-consumers',
-                'help': 'Maximum number of memory consumers to display',
-                'type': int,
-            },
-        },
-        'VAR_MEM_USAGE_UNIT': {
-            'default_value': 'auto',
-            'valid_values': util.valid_storage_units(),
-            'setting_configuration': {
-                'default': False,
-                'flag': '--unit',
-                'help': 'The unit to use',
-                'type': str,
-            },
+    plugin.defaults_dict = OrderedDict()
+    plugin.defaults_dict['VAR_MEM_USAGE_DEBUG_ENABLED'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--debug',
+            'help': 'Toggle the Debugging menu',
+            'title': 'the "Debugging" menu',
+            'type': bool,
         },
     }
-    plugin.read_config(defaults_dict)
-    args = util.generate_args(defaults_dict)
+    plugin.defaults_dict['VAR_MEM_USAGE_CLICK_TO_KILL'] = {
+        'default_value': True,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--click-to-kill',
+            'help': 'Toggle "Click to kill" functionality',
+            'title': '"Click to Kill" functionality',
+            'help': 'Toggle "Click to kill" functionality',
+            'type': bool,
+        },
+    }
+    plugin.defaults_dict['VAR_MEM_USAGE_KILL_SIGNAL'] = {
+        'default_value': 'SIGQUIT',
+        'valid_values': list(util.get_signal_map().keys()),
+        'setting_configuration': {
+            'default': False,
+            'flag': '--signal',
+            'help': 'The signal level to use when killing a process',
+            'title': 'Kill Signal',
+            'type': str,
+        },
+    }
+    plugin.defaults_dict['VAR_MEM_USAGE_MAX_CONSUMERS'] = {
+        'default_value': 30,
+        'minmax': namedtuple('minmax', ['min', 'max'])(10, 100),
+        'setting_configuration': {
+            'default': False,
+            'flag': '--max-consumers',
+            'help': 'Maximum number of memory consumers to display',
+            'title': 'Maximum Number of Consumers',
+            'increment': 10,
+            'type': int,
+        },
+    }
+    plugin.defaults_dict['VAR_MEM_USAGE_UNIT'] = {
+        'default_value': 'auto',
+        'valid_values': util.valid_storage_units(),
+        'setting_configuration': {
+            'default': False,
+            'flag': '--unit',
+            'help': 'The unit to use',
+            'title': 'Unit',
+            'type': str,
+        },
+    }
+
+    plugin.read_config()
+    args = plugin.generate_args()
     if args.click_to_kill:
         plugin.update_setting('VAR_MEM_USAGE_CLICK_TO_KILL', True if plugin.configuration['VAR_MEM_USAGE_CLICK_TO_KILL'] == False else False)
     elif args.debug:
@@ -191,7 +199,7 @@ def main() -> None:
     elif args.max_consumers > 0:
         plugin.update_setting('VAR_MEM_USAGE_MAX_CONSUMERS', args.max_consumers)
     
-    plugin.read_config(defaults_dict)
+    plugin.read_config()
     click_to_kill = plugin.configuration['VAR_MEM_USAGE_CLICK_TO_KILL']
     debug_enabled = plugin.configuration['VAR_MEM_USAGE_DEBUG_ENABLED']
     signal = plugin.configuration['VAR_MEM_USAGE_KILL_SIGNAL']
@@ -251,50 +259,52 @@ def main() -> None:
         plugin.print_menu_separator()
         plugin.print_menu_item('Failed to parse vm_stat')
     plugin.print_menu_separator()
-    plugin.print_menu_item('Settings')
-    plugin.print_menu_item(
-        f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill"',
-        cmd=[plugin.plugin_name, '--click-to-kill'],
-        terminal=False,
-        refresh=True,
-    )
-    plugin.print_menu_item(
-        f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
-        cmd=[plugin.plugin_name, '--debug'],
-        terminal=False,
-        refresh=True,
-    )
-    plugin.print_menu_item('--Kill Signal')
-    for key, _ in util.get_signal_map().items():
-        color = 'blue' if key == signal else 'black'
-        plugin.print_menu_item(
-            f'----{key}',
-            color=color,
-            cmd=[plugin.plugin_name, '--signal', key],
-            refresh=True,
-            terminal=False,
-        )
-    plugin.print_menu_item('--Maximum Number of Top Consumers')
-    for number in range(1, 51):
-        if number %5 == 0:
-            color = 'blue' if number == max_consumers else 'black'
-            plugin.print_menu_item(
-                f'----{number}',
-                color=color,
-                cmd=[plugin.plugin_name, '--max-consumers', number],
-                refresh=True,
-                terminal=False,
-            )
-    plugin.print_menu_item('--Unit')
-    for valid_storage_unit in util.valid_storage_units():
-        color = 'blue' if valid_storage_unit == unit else 'black'
-        plugin.print_menu_item(
-            f'----{valid_storage_unit}',
-            color=color,
-            cmd=[plugin.plugin_name, '--unit', valid_storage_unit],
-            refresh=True,
-            terminal=False,
-        )
+    if plugin.defaults_dict:
+        plugin.display_settings_menu()
+    # plugin.print_menu_item('Settings')
+    # plugin.print_menu_item(
+    #     f'{"--Disable" if click_to_kill else "--Enable"} "Click to Kill"',
+    #     cmd=[plugin.plugin_name, '--click-to-kill'],
+    #     terminal=False,
+    #     refresh=True,
+    # )
+    # plugin.print_menu_item(
+    #     f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
+    #     cmd=[plugin.plugin_name, '--debug'],
+    #     terminal=False,
+    #     refresh=True,
+    # )
+    # plugin.print_menu_item('--Kill Signal')
+    # for key, _ in util.get_signal_map().items():
+    #     color = 'blue' if key == signal else 'black'
+    #     plugin.print_menu_item(
+    #         f'----{key}',
+    #         color=color,
+    #         cmd=[plugin.plugin_name, '--signal', key],
+    #         refresh=True,
+    #         terminal=False,
+    #     )
+    # plugin.print_menu_item('--Maximum Number of Top Consumers')
+    # for number in range(1, 51):
+    #     if number %5 == 0:
+    #         color = 'blue' if number == max_consumers else 'black'
+    #         plugin.print_menu_item(
+    #             f'----{number}',
+    #             color=color,
+    #             cmd=[plugin.plugin_name, '--max-consumers', number],
+    #             refresh=True,
+    #             terminal=False,
+    #         )
+    # plugin.print_menu_item('--Unit')
+    # for valid_storage_unit in util.valid_storage_units():
+    #     color = 'blue' if valid_storage_unit == unit else 'black'
+    #     plugin.print_menu_item(
+    #         f'----{valid_storage_unit}',
+    #         color=color,
+    #         cmd=[plugin.plugin_name, '--unit', valid_storage_unit],
+    #         refresh=True,
+    #         terminal=False,
+    #     )
     if debug_enabled:
         plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh', refresh=True)

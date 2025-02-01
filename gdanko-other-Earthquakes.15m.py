@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Earthquakes</xbar.title>
-# <xbar.version>v0.2.0</xbar.version>
+# <xbar.version>v0.3.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show information about earthquakes nearby</xbar.desc>
@@ -77,61 +77,68 @@ def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0)
 def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
-    defaults_dict = {
-        'VAR_EARTHQUAKES_DEBUG_ENABLED': {
-            'default_value': False,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--debug',
-                'help': 'Toggle the Debugging menu',
-                'type': bool,
-            },
+    plugin.defaults_dict = OrderedDict()
+    plugin.defaults_dict['VAR_EARTHQUAKES_DEBUG_ENABLED'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--debug',
+            'help': 'Toggle the Debugging menu',
+            'title': 'the "Debugging" menu',
+            'type': bool,
         },
-        'VAR_EARTHQUAKES_LIMIT': {
-            'default_value': 30,
-            'minmax': namedtuple('minmax', ['min', 'max'])(5, 50),
-            'setting_configuration': {
-                'default': None,
-                'flag': '--limit',
-                'help': 'Set the maximum number of earthquakes to display',
-                'type': int,
-            },
+    }
+    plugin.defaults_dict['VAR_EARTHQUAKES_LIMIT'] = {
+        'default_value': 30,
+        'minmax': namedtuple('minmax', ['min', 'max'])(5, 50),
+        'setting_configuration': {
+            'default': None,
+            'flag': '--limit',
+            'increment': 5,
+            'help': 'Set the maximum number of earthquakes to display',
+            'title': 'Limit',
+            'type': int,
         },
-        'VAR_EARTHQUAKES_MIN_MAGNITUDE': {
-            'default_value': 0,
-            'minmax': namedtuple('minmax', ['min', 'max'])(0, 20),
-            'setting_configuration': {
-                'default': None,
-                'flag': '--magnitude',
-                'help': 'Set the minimum magnitude',
-                'type': int,
-            },
+    }
+    plugin.defaults_dict['VAR_EARTHQUAKES_MIN_MAGNITUDE'] = {
+        'default_value': 0,
+        'minmax': namedtuple('minmax', ['min', 'max'])(0, 20),
+        'setting_configuration': {
+            'default': None,
+            'flag': '--magnitude',
+            'increment': 2,
+            'help': 'Set the minimum magnitude',
+            'title': 'Minimum Magnitude',
+            'type': int,
         },
-        'VAR_EARTHQUAKES_RADIUS_MILES': {
-            'default_value': 100,
-            'minmax': namedtuple('minmax', ['min', 'max'])(10, 500),
-            'setting_configuration': {
-                'default': None,
-                'flag': '--radius',
-                'help': 'Set the radius based on your location',
-                'type': int,
-            },
+    }
+    plugin.defaults_dict['VAR_EARTHQUAKES_RADIUS_MILES'] = {
+        'default_value': 100,
+        'minmax': namedtuple('minmax', ['min', 'max'])(10, 500),
+        'setting_configuration': {
+            'default': None,
+            'flag': '--radius',
+            'increment': 50,
+            'help': 'Set the radius based on your location',
+            'title': 'Radius',
+            'type': int,
         },
-        'VAR_EARTHQUAKES_UNIT': {
-            'default_value': 'm',
-            'valid_values': ['km', 'm'],
-            'setting_configuration': {
-                'default': None,
-                'flag': '--unit',
-                'help': 'The unit to use',
-                'type': str,
-            },
-        }
+    }
+    plugin.defaults_dict['VAR_EARTHQUAKES_UNIT'] = {
+        'default_value': 'm',
+        'valid_values': ['km', 'm'],
+        'setting_configuration': {
+            'default': None,
+            'flag': '--unit',
+            'help': 'The unit to use',
+            'title': 'Unit',
+            'type': str,
+        },
     }
 
-    plugin.read_config(defaults_dict)
-    args = util.generate_args(defaults_dict)
+    plugin.read_config()
+    args = plugin.generate_args()
     if args.debug:
         plugin.update_setting('VAR_EARTHQUAKES_DEBUG_ENABLED', True if plugin.configuration['VAR_EARTHQUAKES_DEBUG_ENABLED'] == False else False)
     elif args.limit:
@@ -143,7 +150,7 @@ def main() -> None:
     elif args.unit:
         plugin.update_setting('VAR_EARTHQUAKES_UNIT', args.unit)
 
-    plugin.read_config(defaults_dict)
+    plugin.read_config()
     debug_enabled = plugin.configuration['VAR_EARTHQUAKES_DEBUG_ENABLED']
     limit = plugin.configuration['VAR_EARTHQUAKES_LIMIT']
     magnitude = plugin.configuration['VAR_EARTHQUAKES_MIN_MAGNITUDE']
@@ -185,56 +192,8 @@ def main() -> None:
         plugin.print_menu_title('Earthquakes: Error')
         plugin.print_menu_item(err)
     plugin.print_menu_separator()
-    plugin.print_menu_item('Settings')
-    plugin.print_menu_item(
-        f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
-        cmd=[plugin.plugin_name, '--debug'],
-        refresh=True,
-        terminal=False,
-    )
-    plugin.print_menu_item(f'--Limit')
-    for number in range(5, 55):
-        if number % 5 == 0:
-            color = 'blue' if number == limit else 'black'
-            plugin.print_menu_item(
-                f'----{number}',
-                cmd=[plugin.plugin_name, '--limit', number],
-                color=color,
-                refresh=True,
-                terminal=False,
-            )
-    plugin.print_menu_item('--Minimum Magnitude')
-    for number in range(0, 22):
-        if number % 2 == 0:
-            color = 'blue' if number == magnitude else 'black'
-            plugin.print_menu_item(
-                f'----{number}',
-                cmd=[plugin.plugin_name, '--magnitude', number],
-                color=color,
-                refresh=True,
-                terminal=False,
-            )
-    plugin.print_menu_item(f'--Radius in {unit}')
-    for number in range(1, 550):
-        if number % 50 == 0:
-            color = 'blue' if number == radius else 'black'
-            plugin.print_menu_item(
-                f'----{number}',
-                cmd=[plugin.plugin_name, '--radius', number],
-                color=color,
-                refresh=True,
-                terminal=False,
-            )
-    plugin.print_menu_item('--Unit')
-    for valid_unit in ['km', 'm']:
-        color = 'blue' if valid_unit == unit else 'black'
-        plugin.print_menu_item(
-            f'----{valid_unit}',
-            cmd=[plugin.plugin_name, '--unit', valid_unit],
-            color=color,
-            refresh=True,
-            terminal=False,
-        )
+    if plugin.defaults_dict:
+        plugin.display_settings_menu()
     if debug_enabled:
             plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh', refresh=True)

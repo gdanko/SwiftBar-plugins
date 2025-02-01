@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Weather WeatherAPI</xbar.title>
-# <xbar.version>v0.4.0</xbar.version>
+# <xbar.version>v0.5.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the weather using weatherapi.com</xbar.desc>
@@ -59,46 +59,49 @@ def pluralize(count: int=0, word: str=None) -> str:
 def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
-    defaults_dict = {
-        'VAR_WEATHER_WAPI_DEBUG_ENABLED': {
-            'default_value': False,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--debug',
-                'help': 'Toggle the Debugging menu',
-                'type': bool,
-            },
+    plugin.defaults_dict = OrderedDict()
+    plugin.defaults_dict['VAR_WEATHER_WAPI_DEBUG_ENABLED'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--debug',
+            'help': 'Toggle the Debugging menu',
+            'title': 'the "Debugging" menu',
+            'type': bool,
         },
-        'VAR_WEATHER_WAPI_LOCATION': {
-            'default_value': 'Los Angeles, CA, US',
-        },
-        'VAR_WEATHER_WAPI_API_KEY': {
-            'default_value': '',
-        },
-        'VAR_WEATHER_WAPI_UNIT': {
-            'default_value': 'F',
-            'valid_values': util.valid_weather_units(),
-            'setting_configuration': {
-                'default': None,
-                'flag': '--unit',
-                'help': 'The unit to use',
-                'type': str,
-            },
-        },
-        'VAR_WEATHER_WAPI_SHOW_FORECAST': {
-            'default_value': True,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--forecast',
-                'help': 'Toggle the "Forecast" menu',
-                'type': bool,
-            },
-        }
     }
-    plugin.read_config(defaults_dict)
-    args = util.generate_args(defaults_dict)
+    plugin.defaults_dict['VAR_WEATHER_WAPI_LOCATION'] = {
+        'default_value': 'Los Angeles, CA, US',
+    }
+    plugin.defaults_dict['VAR_WEATHER_WAPI_API_KEY'] = {
+        'default_value': '',
+    }
+    plugin.defaults_dict['VAR_WEATHER_WAPI_SHOW_FORECAST'] = {
+        'default_value': True,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--forecast',
+            'help': 'Toggle the "Forecast" menu',
+            'title': 'the "Forecast" menu',
+            'type': bool,
+        },
+    }
+    plugin.defaults_dict['VAR_WEATHER_WAPI_UNIT'] = {
+        'default_value': 'F',
+        'valid_values': util.valid_weather_units(),
+        'setting_configuration': {
+            'default': None,
+            'flag': '--unit',
+            'help': 'The unit to use',
+            'title': 'Unit',
+            'type': str,
+        },
+    }
+
+    plugin.read_config()
+    args = plugin.generate_args()
     if args.debug:
         plugin.update_setting('VAR_WEATHER_WAPI_DEBUG_ENABLED', True if plugin.configuration['VAR_WEATHER_WAPI_DEBUG_ENABLED'] == False else False)
     elif args.forecast:
@@ -106,7 +109,7 @@ def main() -> None:
     elif args.unit:
         plugin.update_setting('VAR_WEATHER_WAPI_UNIT', 'C' if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else 'F')
 
-    plugin.read_config(defaults_dict)
+    plugin.read_config()
     api_key = plugin.configuration['VAR_WEATHER_WAPI_API_KEY']
     debug_enabled = plugin.configuration['VAR_WEATHER_WAPI_DEBUG_ENABLED']
     location = plugin.configuration['VAR_WEATHER_WAPI_LOCATION']
@@ -235,29 +238,8 @@ def main() -> None:
         for error_message in plugin.error_messages:
             plugin.print_menu_item(error_message)
     plugin.print_menu_separator()
-    plugin.print_menu_item('Settings')
-    plugin.print_menu_item(
-        f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
-        cmd=[plugin.plugin_name, '--debug'],
-        refresh=True,
-        terminal=False,
-    )
-    plugin.print_menu_item(
-        f'{"--Hide" if show_forecast else "--Show"} forecast data',
-        cmd=[plugin.plugin_name, '--forecast'],
-        refresh=True,
-        terminal=False,
-    )
-    plugin.print_menu_item('--Unit')
-    for valid_weather_unit in util.valid_weather_units():
-        color = 'blue' if valid_weather_unit == unit else 'black'
-        plugin.print_menu_item(
-            f'----{valid_weather_unit}',
-            cmd=[plugin.plugin_name, '--unit', valid_weather_unit],
-            color=color,
-            refresh=True,
-            terminal=False,
-        )
+    if plugin.defaults_dict:
+        plugin.display_settings_menu()
     if debug_enabled:
         plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh weather data', refresh=True)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Disk Usage</xbar.title>
-# <xbar.version>v0.4.0</xbar.version>
+# <xbar.version>v0.5.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show disk usage in the format used/total</xbar.desc>
@@ -54,40 +54,43 @@ def main() -> None:
     plugin = Plugin()
     partitions = get_partition_info()
     valid_mountpoints = [partition.mountpoint for partition in partitions]
-    defaults_dict = {
-        'VAR_DISK_USAGE_DEBUG_ENABLED': {
-            'default_value': False,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': None,
-                'flag': '--debug',
-                'help': 'Toggle the Debugging menu',
-                'type': bool,
-            },
-        },
-        'VAR_DISK_USAGE_MOUNTPOINT': {
-            'default_value': '/',
-            'valid_values': ','.join(valid_mountpoints),
-            'setting_configuration': {
-                'default': False,
-                'flag': '--mountpoint',
-                'help': 'The mountpoint to view',
-                'type': str,
-            },
-        },
-        'VAR_DISK_USAGE_UNIT': {
-            'default_value': 'auto',
-            'valid_values': util.valid_storage_units(),
-            'setting_configuration': {
-                'default': False,
-                'flag': '--unit',
-                'help': 'The unit to use',
-                'type': str,
-            },
+    plugin.defaults_dict = OrderedDict()
+    plugin.defaults_dict['VAR_DISK_USAGE_DEBUG_ENABLED'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': None,
+            'flag': '--debug',
+            'help': 'Toggle the Debugging menu',
+            'title': 'the "Debugging" menu',
+            'type': bool,
         },
     }
-    plugin.read_config(defaults_dict)
-    args = util.generate_args(defaults_dict)
+    plugin.defaults_dict['VAR_DISK_USAGE_MOUNTPOINT'] = {
+        'default_value': '/',
+        'valid_values': valid_mountpoints,
+        'setting_configuration': {
+            'default': False,
+            'flag': '--mountpoint',
+            'help': 'The mountpoint to view',
+            'title': 'Mountpoint',
+            'type': str,
+        },
+    }
+    plugin.defaults_dict['VAR_DISK_USAGE_UNIT'] = {
+        'default_value': 'auto',
+        'valid_values': util.valid_storage_units(),
+        'setting_configuration': {
+            'default': False,
+            'flag': '--unit',
+            'help': 'The unit to use',
+            'title': 'Unit',
+            'type': str,
+        },
+    }
+
+    plugin.read_config()
+    args = plugin.generate_args()
     if args.debug:
         plugin.update_setting('VAR_DISK_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED'] == False else False)
     elif args.mountpoint:
@@ -95,7 +98,7 @@ def main() -> None:
     elif args.unit:
         plugin.update_setting('VAR_DISK_USAGE_UNIT', args.unit)
     
-    plugin.read_config(defaults_dict)
+    plugin.read_config()
     debug_enabled = plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED']
     mountpoint = plugin.configuration['VAR_DISK_USAGE_MOUNTPOINT']
     unit = plugin.configuration['VAR_DISK_USAGE_UNIT']
@@ -117,33 +120,8 @@ def main() -> None:
     except:
         plugin.print_menu_item('Disk: Not found')
     plugin.print_menu_separator()
-    plugin.print_menu_item('Settings')
-    plugin.print_menu_item(
-        f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
-        cmd=[plugin.plugin_name, '--debug'],
-        terminal=False,
-        refresh=True,
-    )
-    plugin.print_menu_item('--Mountpoint')
-    for mountpoint_name in valid_mountpoints:
-        color = 'blue' if mountpoint_name == mountpoint else 'black'
-        plugin.print_menu_item(
-            f'----{mountpoint_name}',
-            color=color,
-            cmd=[plugin.plugin_name, '--mountpoint', f'{mountpoint_name}'],
-            refresh=True,
-            terminal=False,
-        )
-    plugin.print_menu_item('--Unit')
-    for valid_storage_unit in util.valid_storage_units():
-        color = 'blue' if valid_storage_unit == unit else 'black'
-        plugin.print_menu_item(
-            f'----{valid_storage_unit}',
-            color=color,
-            cmd=[plugin.plugin_name, '--unit', valid_storage_unit],
-            refresh=True,
-            terminal=False,
-        )
+    if plugin.defaults_dict:
+        plugin.display_settings_menu()
     if debug_enabled:
         plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh', refresh=True)

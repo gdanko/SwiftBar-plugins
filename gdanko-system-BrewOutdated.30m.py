@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>BrewOutdated</xbar.title>
-# <xbar.version>v0.2.0</xbar.version>
+# <xbar.version>v0.3.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the number upgradeable Homebrew packages</xbar.desc>
@@ -16,6 +16,7 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_BREW_OUTDATED_DEBUG_ENABLED=false]</swiftbar.environment>
 
+from collections import OrderedDict
 from dataclasses import dataclass
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
@@ -65,24 +66,24 @@ def get_brew_data() -> Union[None, str, Dict[str, list[Package]]]:
 def main() -> None:
     os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
-    defaults_dict = {
-        'VAR_BREW_OUTDATED_DEBUG_ENABLED': {
-            'default_value': False,
-            'valid_values': [True, False],
-            'setting_configuration': {
-                'default': False,
-                'flag': '--debug',
-                'help': 'Toggle the Debugging menu',
-                'type': bool,
-            },
+    plugin.defaults_dict = OrderedDict()
+    plugin.defaults_dict['VAR_BREW_OUTDATED_DEBUG_ENABLED'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'setting_configuration': {
+            'default': False,
+            'flag': '--debug',
+            'help': 'Toggle the Debugging menu',
+            'title': 'the "Debugging" menu',                
+            'type': bool,
         },
     }
-    plugin.read_config(defaults_dict)
-    args = util.generate_args(defaults_dict)
+    plugin.read_config()
+    args = plugin.generate_args()
     if args.debug:
         plugin.update_setting('VAR_BREW_OUTDATED_DEBUG_ENABLED', True if plugin.configuration['VAR_BREW_OUTDATED_DEBUG_ENABLED'] == False else False)
 
-    plugin.read_config(defaults_dict)
+    plugin.read_config()
     debug_enabled = plugin.configuration['VAR_BREW_OUTDATED_DEBUG_ENABLED']
     data, err = get_brew_data()
     if err:
@@ -113,13 +114,8 @@ def main() -> None:
                         terminal=True,
                     )
         plugin.print_menu_separator()
-        plugin.print_menu_item('Settings')
-        plugin.print_menu_item(
-            f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
-            cmd=[plugin.plugin_name, '--debug'],
-            terminal=False,
-            refresh=True,
-        )
+        if plugin.defaults_dict:
+            plugin.display_settings_menu()
         if debug_enabled:
             plugin.display_debugging_menu()
         plugin.print_menu_item('Refresh', refresh=True)
