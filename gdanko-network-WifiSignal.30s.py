@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>WiFi Signal</xbar.title>
-# <xbar.version>v0.3.0</xbar.version>
+# <xbar.version>v0.4.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the current WiFi signal strength</xbar.desc>
@@ -21,17 +21,9 @@ from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Any, Dict
-import argparse
 import json
 import os
 import re
-
-def configure() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
-    parser.add_argument('--interface', help='The name of the interface to monitor', required=False)
-    args = parser.parse_args()
-    return args
 
 def get_profiler_data(stdout: str=None) -> Dict[str, Any]:
     try:
@@ -47,14 +39,27 @@ def main() -> None:
         'VAR_WIFI_STATUS_DEBUG_ENABLED': {
             'default_value': False,
             'valid_values': [True, False],
+            'setting_configuration': {
+                'default': False,
+                'flag': '--debug',
+                'help': 'Toggle the Debugging menu',
+                'type': bool,
+            },
+            
         },
         'VAR_WIFI_STATUS_INTERFACE': {
             'default_value': 'en0',
             'valid_values': util.find_valid_wifi_interfaces(),
+            'setting_configuration': {
+                'default': None,
+                'flag': '--interface',
+                'help': 'Select the interface to view',
+                'type': str,
+            },
         },
     }
     plugin.read_config(defaults_dict)
-    args = configure()
+    args = util.generate_args(defaults_dict)
     if args.debug:
         plugin.update_setting('VAR_WIFI_STATUS_DEBUG_ENABLED', True if plugin.configuration['VAR_WIFI_STATUS_DEBUG_ENABLED'] == False else False)
     elif args.interface:

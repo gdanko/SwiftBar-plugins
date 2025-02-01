@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>BrewOutdated</xbar.title>
-# <xbar.version>v0.1.0</xbar.version>
+# <xbar.version>v0.2.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the number upgradeable Homebrew packages</xbar.desc>
@@ -20,7 +20,6 @@ from dataclasses import dataclass
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Dict, Union
-import argparse
 import json
 import os
 import shutil
@@ -31,12 +30,6 @@ class Package:
         self.name = name
         self.current_version = current_version
         self.installed_version = installed_versions[0]
-
-def configure() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
-    args = parser.parse_args()
-    return args
 
 def get_brew_data() -> Union[None, str, Dict[str, list[Package]]]:
     if not shutil.which('brew'):
@@ -76,10 +69,16 @@ def main() -> None:
         'VAR_BREW_OUTDATED_DEBUG_ENABLED': {
             'default_value': False,
             'valid_values': [True, False],
+            'setting_configuration': {
+                'default': False,
+                'flag': '--debug',
+                'help': 'Toggle the Debugging menu',
+                'type': bool,
+            },
         },
     }
     plugin.read_config(defaults_dict)
-    args = configure()
+    args = util.generate_args(defaults_dict)
     if args.debug:
         plugin.update_setting('VAR_BREW_OUTDATED_DEBUG_ENABLED', True if plugin.configuration['VAR_BREW_OUTDATED_DEBUG_ENABLED'] == False else False)
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Memory Usage</xbar.title>
-# <xbar.version>v0.3.1</xbar.version>
+# <xbar.version>v0.4.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show system memery usage in the format used/total</xbar.desc>
@@ -24,7 +24,6 @@ from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Any, Dict, List, NamedTuple, Tuple, Union
-import argparse
 import json
 import os
 import re
@@ -39,15 +38,6 @@ class SystemMemory(NamedTuple):
     inactive: int
     wired: int
     speculative: int
-
-def configure() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--click-to-kill', help='Toggle "Click to kill" functionality', required=False, default=False, action='store_true')
-    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
-    parser.add_argument('--max-consumers', help='Maximum number of memory consumers to display', required=False, default=0, type=int)
-    parser.add_argument('--signal', help='The signal level to use when killing a process', required=False)
-    args = parser.parse_args()
-    return args
 
 def get_memory_pressure_value(pagesize: int=0, pattern: str=None, string: str=None) -> Union[int, None]:
     match = re.search(pattern, string)
@@ -143,25 +133,55 @@ def main() -> None:
         'VAR_MEM_USAGE_CLICK_TO_KILL': {
             'default_value': True,
             'valid_values': [True, False],
+            'setting_configuration': {
+                'default': False,
+                'flag': '--click-to-kill',
+                'help': 'Toggle "Click to kill" functionality',
+                'type': bool,
+            },
         },
         'VAR_MEM_USAGE_DEBUG_ENABLED': {
             'default_value': False,
             'valid_values': [True, False],
+            'setting_configuration': {
+                'default': False,
+                'flag': '--debug',
+                'help': 'Toggle the Debugging menu',
+                'type': bool,
+            },
         },
         'VAR_MEM_USAGE_KILL_SIGNAL': {
             'default_value': 'SIGQUIT',
             'valid_values': list(util.get_signal_map().keys()),
+            'setting_configuration': {
+                'default': False,
+                'flag': '--signal',
+                'help': 'The signal level to use when killing a process',
+                'type': str,
+            },
         },
         'VAR_MEM_USAGE_MAX_CONSUMERS': {
             'default_value': 30,
+            'setting_configuration': {
+                'default': False,
+                'flag': '--max-consumers',
+                'help': 'Maximum number of memory consumers to display',
+                'type': int,
+            },
         },
         'VAR_MEM_USAGE_UNIT': {
             'default_value': 'auto',
             'valid_values': util.valid_storage_units(),
+            'setting_configuration': {
+                'default': False,
+                'flag': '--unit',
+                'help': 'The unit to use',
+                'type': str,
+            },
         },
     }
     plugin.read_config(defaults_dict)
-    args = configure()
+    args = util.generate_args(defaults_dict)
     if args.click_to_kill:
         plugin.update_setting('VAR_MEM_USAGE_CLICK_TO_KILL', True if plugin.configuration['VAR_MEM_USAGE_CLICK_TO_KILL'] == False else False)
     elif args.debug:

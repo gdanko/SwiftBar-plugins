@@ -25,18 +25,7 @@ from collections import OrderedDict
 from pprint import pprint
 from swiftbar import images, request, util
 from swiftbar.plugin import Plugin
-import argparse
 import re
-
-def configure() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', help='VAR_STOCK_QUOTES_DEBUG_ENABLED', required=False, default=False, action='store_true')
-    parser.add_argument('--company-info', help='VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED', required=False, default=False, action='store_true')
-    parser.add_argument('--key-stats', help='VAR_STOCK_QUOTES_KEY_STATS_ENABLED', required=False, default=False, action='store_true')
-    parser.add_argument('--r-and-p', help='VAR_STOCK_QUOTES_R_AND_P_ENABLED', required=False, default=False, action='store_true')
-    parser.add_argument('--events', help='VAR_STOCK_QUOTES_EVENTS_ENABLED', required=False, default=False, action='store_true')
-    args = parser.parse_args()
-    return args
 
 def get_yf_cookie_and_crumb(useragent: str=None):
     response, _, _ = request.swiftbar_request(
@@ -88,6 +77,11 @@ def main() -> None:
         'VAR_STOCK_QUOTES_DEBUG_ENABLED': {
             'default_value': False,
             'valid_values': [True, False],
+            'setting_configuration': {
+                'flag': '--debug',
+                'help': 'Toggle the Debugging menu',
+                'type': bool,
+            },
         },
         'VAR_STOCK_QUOTES_SYMBOLS': {
             'default_value': 'AAPL',
@@ -95,22 +89,42 @@ def main() -> None:
         'VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED': {
             'default_value': True,
             'valid_values': [True, False],
+            'setting_configuration': {
+                'flag': '--company-info',
+                'help': 'Toggle the Company Info menu',
+                'type': bool,
+            },
         },
         'VAR_STOCK_QUOTES_KEY_STATS_ENABLED': {
             'default_value': True,
             'valid_values': [True, False],
+            'setting_configuration': {
+                'flag': '--key-stats',
+                'help': 'Toggle the Key Stats menu',
+                'type': bool,
+            },
         },
         'VAR_STOCK_QUOTES_R_AND_P_ENABLED': {
             'default_value': True,
             'valid_values': [True, False],
+            'setting_configuration': {
+                'flag': '--r-and-p',
+                'help': 'Toggle the Ratios and Profitability menu',
+                'type': bool,
+            },
         },
         'VAR_STOCK_QUOTES_EVENTS_ENABLED': {
             'default_value': True,
             'valid_values': [True, False],
+            'setting_configuration': {
+                'flag': '--events',
+                'help': 'Toggle the Events menu',
+                'type': bool,
+            },
         },
     }
     plugin.read_config(defaults_dict)
-    args = configure()
+    args = util.generate_args(defaults_dict)
 
     if args.debug:
         plugin.update_setting('VAR_STOCK_QUOTES_DEBUG_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_DEBUG_ENABLED'] == False else False)

@@ -1,5 +1,6 @@
 from collections import namedtuple
 from typing import Any, Dict, List, Optional, Union
+import argparse
 import datetime
 import dateutil
 import getpass
@@ -291,3 +292,19 @@ def numerize(number: int=0) -> str:
         return str(number)
 
     return f'-{formatted}' if n < 0 else formatted
+
+def generate_args(defaults_dict: Dict=None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    for name, data in defaults_dict.items():
+        if 'setting_configuration' in data:
+            setting_default = data['setting_configuration']['default']
+            setting_flag = data['setting_configuration']['flag']
+            setting_type = data['setting_configuration']['type']
+            setting_help = data['setting_configuration']['help'] if data['setting_configuration']['help'] else name
+            if setting_type == bool:
+                parser.add_argument(setting_flag, help=setting_help, required=False, default=setting_default, action='store_true')
+            else:
+                parser.add_argument(setting_flag, help=setting_help, required=False, default=setting_default, type=setting_type)
+                
+    args = parser.parse_args()
+    return args

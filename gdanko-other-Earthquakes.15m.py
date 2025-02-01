@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Earthquakes</xbar.title>
-# <xbar.version>v0.1.0</xbar.version>
+# <xbar.version>v0.2.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show information about earthquakes nearby</xbar.desc>
@@ -24,30 +24,19 @@ from collections import namedtuple, OrderedDict
 from swiftbar import images, request, util
 from swiftbar.plugin import Plugin
 from typing import Any, Dict
-import argparse
 import datetime
 import re
 import time
 import os
 
-def configure() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
-    parser.add_argument('--limit', help='The maximum number of quakes to display', required=False, type=int)
-    parser.add_argument('--magnitude', help='The minimum magnitude', required=False, type=int)
-    parser.add_argument('--radius', help='The maximum radios in miles', required=False, type=int)
-    parser.add_argument('--unit', help='The unit to use', required=False)
-    args = parser.parse_args()
-    return args
-
 def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0) -> Dict[str, Any]:
     location = []
-    returncode, public_ip, stdrrr = util.execute_command('curl https://ifconfig.io')
+    returncode, public_ip, _ = util.execute_command('curl https://ifconfig.io')
     if returncode != 0 or not public_ip:
         return None, {}, 'Failed to determine my public IP'
     
-    status_code, geodata, err = request.swiftbar_request(url=f'https://ipinfo.io/{public_ip}/json', return_type='json')
-    if status_code != 200:
+    response, geodata, _ = request.swiftbar_request(host='ipinfo.io', path=f'/{public_ip}/json', return_type='json')
+    if response.status != 200:
         return None, {}, 'Failed to geolocate'
     
     if 'loc' not in geodata:
@@ -68,7 +57,8 @@ def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0)
 
     # https://earthquake.usgs.gov/fdsnws/event/1/#parameters
     latitude, longitude = re.split(r'\s*,\s*', geodata['loc'])
-    url = 'https://earthquake.usgs.gov/fdsnws/event/1/query'
+    host = 'earthquake.usgs.gov'
+    path = '/fdsnws/event/1/query'
     query = {
         'format': 'geojson',
         'starttime': local_8601_start_time,
@@ -81,7 +71,7 @@ def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0)
         'offset': 1,
         'orderby': 'time',
     }
-    _, data, _ = request.swiftbar_request(url=url, query=query, return_type='json')
+    response, data, _ = request.swiftbar_request(host=host, path=path, query=query, return_type='json', encode_query=True)
     return ', '.join(location) if len(location) >= 3 else None, data, None
 
 def main() -> None:
@@ -91,27 +81,57 @@ def main() -> None:
         'VAR_EARTHQUAKES_DEBUG_ENABLED': {
             'default_value': False,
             'valid_values': [True, False],
+            'setting_configuration': {
+                'default': False,
+                'flag': '--debug',
+                'help': 'Toggle the Debugging menu',
+                'type': bool,
+            },
         },
         'VAR_EARTHQUAKES_LIMIT': {
             'default_value': 30,
             'minmax': namedtuple('minmax', ['min', 'max'])(5, 50),
+            'setting_configuration': {
+                'default': None,
+                'flag': '--limit',
+                'help': 'Set the maximum number of earthquakes to display',
+                'type': int,
+            },
         },
         'VAR_EARTHQUAKES_MIN_MAGNITUDE': {
             'default_value': 0,
-            'minmax': namedtuple('minmax', ['min', 'max'])(0, 20)
+            'minmax': namedtuple('minmax', ['min', 'max'])(0, 20),
+            'setting_configuration': {
+                'default': None,
+                'flag': '--magnitude',
+                'help': 'Set the minimum magnitude',
+                'type': int,
+            },
         },
         'VAR_EARTHQUAKES_RADIUS_MILES': {
             'default_value': 100,
-            'minmax': namedtuple('minmax', ['min', 'max'])(10, 500)
+            'minmax': namedtuple('minmax', ['min', 'max'])(10, 500),
+            'setting_configuration': {
+                'default': None,
+                'flag': '--radius',
+                'help': 'Set the radius based on your location',
+                'type': int,
+            },
         },
         'VAR_EARTHQUAKES_UNIT': {
             'default_value': 'm',
             'valid_values': ['km', 'm'],
+            'setting_configuration': {
+                'default': None,
+                'flag': '--unit',
+                'help': 'The unit to use',
+                'type': str,
+            },
         }
     }
 
     plugin.read_config(defaults_dict)
-    args = configure()
+    args = util.generate_args(defaults_dict)
     if args.debug:
         plugin.update_setting('VAR_EARTHQUAKES_DEBUG_ENABLED', True if plugin.configuration['VAR_EARTHQUAKES_DEBUG_ENABLED'] == False else False)
     elif args.limit:

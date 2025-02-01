@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>System Updates</xbar.title>
-# <xbar.version>v0.3.2</xbar.version>
+# <xbar.version>v0.4.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the number of available system updates</xbar.desc>
@@ -19,7 +19,6 @@
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import NamedTuple, Tuple, Union
-import argparse
 import os
 import re
 
@@ -30,12 +29,6 @@ class SystemUpdate(NamedTuple):
     size: int
     recommended: bool
     action: str
-
-def configure() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
-    args = parser.parse_args()
-    return args
 
 def generate_update_data(entry: Tuple=None) -> SystemUpdate:
     items = re.split(r'\s*,\s*', entry[1].strip().rstrip(','))
@@ -79,10 +72,16 @@ def main() -> None:
         'VAR_SYSTEM_UPDATES_DEBUG_ENABLED': {
             'default_value': False,
             'valid_values': [True, False],
+            'setting_configuration': {
+                'default': False,
+                'flag': '--debug',
+                'help': 'Toggle the Debugging menu',
+                'type': bool,
+            },
         },
     }
     plugin.read_config(defaults_dict)
-    args = configure()
+    args = util.generate_args(defaults_dict)
     if args.debug:
         plugin.update_setting('VAR_SYSTEM_UPDATES_DEBUG_ENABLED', True if plugin.configuration['VAR_SYSTEM_UPDATES_DEBUG_ENABLED'] == False else False)
 
