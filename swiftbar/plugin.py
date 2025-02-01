@@ -80,7 +80,7 @@ class Plugin:
             self.configuration = config_data
         with open(self.vars_file, 'w') as fh:
             fh.write(json.dumps(config_data, indent=4))
-    
+
     def _rewrite_vars_file(self) -> None:
         """
         Rewrite the JSON variables file from the contents of self.coniguration.
@@ -153,7 +153,6 @@ class Plugin:
             except KeyError as e:
                 pass
         return sanitized
-
     def print_menu_title(self, text: str, *, out: Writer=sys.stdout, **params: Params) -> None:
         """
         Print the plugin title in the menu bar.
@@ -170,8 +169,9 @@ class Plugin:
         indent_str = indent * '-'
         longest = self.find_longest(data)
         params['trim'] = False
-        params_str = ' '.join(f'{k}={v}' for k, v in params.items())
+
         for k, v in data.items():
+            params_str = ' '.join(f'{k}={v}' for k, v in params.items())
             if justify == 'left':
                 self.print_menu_item(f'{indent_str}{k.ljust(longest)} {delimiter} {v} | {params_str}', **params)
             elif justify == 'right':
@@ -187,7 +187,7 @@ class Plugin:
         # Set default font if one isn't configured
         if not 'font' in params:
             params['font'] = self.font
-        
+
         # Set default font size if one isn't configured
         if not 'size' in params:
             params['size'] = self.size
@@ -207,7 +207,7 @@ class Plugin:
         Print a menu separator.
         """
         print('---', file=out)
-    
+
     def print_update_time(self, *, out: Writer = sys.stdout) -> None:
         """
         Print the updated time in human format.
