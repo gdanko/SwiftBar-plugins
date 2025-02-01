@@ -274,3 +274,20 @@ def kilometers_to_miles(kilometers: int=0) -> float:
     Convert kilometers to miles.
     """
     return kilometers * 0.6213712
+
+def numerize(number: int=0) -> str:
+    abs_number = abs(number)
+    if abs_number >= 1000000000000:
+        return f'{abs_number / 1000000000000:.1f}T'
+    elif abs_number >= 1000000000:
+        return f'{abs_number / 1000000000:.1f}B'
+    elif abs_number >= 1000000:
+        return f'{abs_number / 1000000:.1f}M'
+    elif abs_number >= 1000:
+        return f'{abs_number / 1000:.1f}K'
+    elif abs_number < 0 and abs_number > -10000:
+        return f'{abs_number / -1000:.1f}K'
+    else:
+        return str(number)
+
+    return f'-{formatted}' if n < 0 else formatted
