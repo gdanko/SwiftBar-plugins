@@ -109,25 +109,29 @@ def main() -> None:
     if api_key == '':
         plugin.error_messages.append('Missing API key')
     else:
-        status_code, weather_data, err = request.swiftbar_request(
-            url='http://api.weatherapi.com/v1/current.json',
+        response, weather_data, err = request.swiftbar_request(
+            host='api.weatherapi.com',
+            path='/v1/current.json',
             query={'key': api_key, 'q': location, 'aqi': 'yes'},
-            return_type = 'json'
+            return_type = 'json',
+            encode_query=True,
         )
-        if status_code != 200:
-            error_message = f'A non-200 {status_code} response code was received'
+        if response.status != 200:
+            error_message = f'A non-200 {response.status} response code was received'
             if weather_data:
                 if 'error' in weather_data and 'message' in weather_data['error']:
                     error_message = weather_data['error']['message']
             plugin.error_messages.append(f'Failed to fetch weather data: {error_message}')
 
-        status_code, forecast_data, err = request.swiftbar_request(
-            url='http://api.weatherapi.com/v1/forecast.json',
+        response, forecast_data, err = request.swiftbar_request(
+            host='api.weatherapi.com',
+            path='/v1/forecast.json',
             query={'key': api_key, 'q': location, 'days': 8, 'aqi': 'yes', 'alerts': 'yes'},
-            return_type = 'json'
+            return_type = 'json',
+            encode_query=True,
         )
-        if status_code != 200:
-            error_message = f'A non-200 {status_code} response code was received'
+        if response.status != 200:
+            error_message = f'A non-200 {response.status} response code was received'
             if forecast_data:
                 if 'error' in forecast_data and 'message' in forecast_data['error']:
                     error_message = forecast_data['error']['message']
