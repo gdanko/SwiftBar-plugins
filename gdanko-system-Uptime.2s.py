@@ -75,8 +75,8 @@ def main() -> None:
     }
 
     plugin.read_config()
-    args = plugin.generate_args()
-    if args.debug:
+    plugin.generate_args()
+    if plugin.args.debug:
         plugin.update_setting('VAR_SYSTEM_UPTIME_DEBUG_ENABLED', True if plugin.configuration['VAR_SYSTEM_UPTIME_DEBUG_ENABLED'] == False else False)
 
     plugin.read_config()

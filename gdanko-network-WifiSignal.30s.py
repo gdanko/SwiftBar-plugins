@@ -60,11 +60,11 @@ def main() -> None:
     }
 
     plugin.read_config()
-    args = plugin.generate_args()
-    if args.debug:
+    plugin.generate_args()
+    if plugin.args.debug:
         plugin.update_setting('VAR_WIFI_STATUS_DEBUG_ENABLED', True if plugin.configuration['VAR_WIFI_STATUS_DEBUG_ENABLED'] == False else False)
-    elif args.interface:
-        plugin.update_setting('VAR_WIFI_STATUS_INTERFACE', args.interface)
+    elif plugin.args.interface:
+        plugin.update_setting('VAR_WIFI_STATUS_INTERFACE', plugin.args.interface)
 
     my_interface = None
     rating = 'Unknown'

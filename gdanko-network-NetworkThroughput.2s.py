@@ -128,12 +128,12 @@ def main() -> None:
         },
     }
     plugin.read_config()
-    args = plugin.generate_args()
-    if args.debug:
+    plugin.generate_args()
+    if plugin.args.debug:
         plugin.update_setting('VAR_NET_THROUGHPUT_DEBUG_ENABLED', True if plugin.configuration['VAR_NET_THROUGHPUT_DEBUG_ENABLED'] == False else False)
-    elif args.interface:
-        plugin.update_setting('VAR_NET_THROUGHPUT_INTERFACE', args.interface)
-    elif args.verbose:
+    elif plugin.args.interface:
+        plugin.update_setting('VAR_NET_THROUGHPUT_INTERFACE', plugin.args.interface)
+    elif plugin.args.verbose:
         plugin.update_setting('VAR_NET_THROUGHPUT_VERBOSE', True if plugin.configuration['VAR_NET_THROUGHPUT_VERBOSE'] == False else False)
 
     plugin.read_config()

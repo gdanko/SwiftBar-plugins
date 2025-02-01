@@ -101,12 +101,12 @@ def main() -> None:
     }
 
     plugin.read_config()
-    args = plugin.generate_args()
-    if args.debug:
+    plugin.generate_args()
+    if plugin.args.debug:
         plugin.update_setting('VAR_WEATHER_WAPI_DEBUG_ENABLED', True if plugin.configuration['VAR_WEATHER_WAPI_DEBUG_ENABLED'] == False else False)
-    elif args.forecast:
+    elif plugin.args.forecast:
         plugin.update_setting('VAR_WEATHER_WAPI_SHOW_FORECAST', True if plugin.configuration['VAR_WEATHER_WAPI_SHOW_FORECAST'] == False else False)
-    elif args.unit:
+    elif plugin.args.unit:
         plugin.update_setting('VAR_WEATHER_WAPI_UNIT', 'C' if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else 'F')
 
     plugin.read_config()

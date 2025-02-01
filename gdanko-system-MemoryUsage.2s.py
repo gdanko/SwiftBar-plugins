@@ -189,15 +189,15 @@ def main() -> None:
     }
 
     plugin.read_config()
-    args = plugin.generate_args()
-    if args.click_to_kill:
+    plugin.generate_args()
+    if plugin.args.click_to_kill:
         plugin.update_setting('VAR_MEM_USAGE_CLICK_TO_KILL', True if plugin.configuration['VAR_MEM_USAGE_CLICK_TO_KILL'] == False else False)
-    elif args.debug:
+    elif plugin.args.debug:
         plugin.update_setting('VAR_MEM_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_MEM_USAGE_DEBUG_ENABLED'] == False else False)
-    elif args.signal:
-        plugin.update_setting('VAR_MEM_USAGE_KILL_SIGNAL', args.signal)
-    elif args.max_consumers > 0:
-        plugin.update_setting('VAR_MEM_USAGE_MAX_CONSUMERS', args.max_consumers)
+    elif plugin.args.signal:
+        plugin.update_setting('VAR_MEM_USAGE_KILL_SIGNAL', plugin.args.signal)
+    elif plugin.args.max_consumers > 0:
+        plugin.update_setting('VAR_MEM_USAGE_MAX_CONSUMERS', plugin.args.max_consumers)
     
     plugin.read_config()
     click_to_kill = plugin.configuration['VAR_MEM_USAGE_CLICK_TO_KILL']

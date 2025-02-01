@@ -23,6 +23,10 @@ class Plugin:
         self._get_config_dir()
         self._create_config_dir()
 
+        self.parser = None
+        self.args = None
+        self.defaults_dict = None
+
         self.font = 'AndaleMono'
         self.size = 13
 
@@ -217,8 +221,8 @@ class Plugin:
         self.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
         self.print_menu_separator()
 
-    def generate_args(self) -> argparse.Namespace:
-        parser = argparse.ArgumentParser()
+    def generate_args(self) -> None:
+        self.parser = argparse.ArgumentParser()
         for name, data in self.defaults_dict.items():
             if 'setting_configuration' in data:
                 setting_default = data['setting_configuration']['default']
@@ -226,12 +230,11 @@ class Plugin:
                 setting_type = data['setting_configuration']['type']
                 setting_help = data['setting_configuration']['help'] if data['setting_configuration']['help'] else name
                 if setting_type == bool:
-                    parser.add_argument(setting_flag, help=setting_help, required=False, default=setting_default, action='store_true')
+                    self.parser.add_argument(setting_flag, help=setting_help, required=False, default=setting_default, action='store_true')
                 else:
-                    parser.add_argument(setting_flag, help=setting_help, required=False, default=setting_default, type=setting_type)
+                    self.parser.add_argument(setting_flag, help=setting_help, required=False, default=setting_default, type=setting_type)
                     
-        args = parser.parse_args()
-        return args
+        self.args = self.parser.parse_args()
 
     def display_debugging_menu(self):
         """

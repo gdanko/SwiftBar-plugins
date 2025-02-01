@@ -90,13 +90,13 @@ def main() -> None:
     }
 
     plugin.read_config()
-    args = plugin.generate_args()
-    if args.debug:
+    plugin.generate_args()
+    if plugin.args.debug:
         plugin.update_setting('VAR_DISK_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED'] == False else False)
-    elif args.mountpoint:
-        plugin.update_setting('VAR_DISK_USAGE_MOUNTPOINT', args.mountpoint)
-    elif args.unit:
-        plugin.update_setting('VAR_DISK_USAGE_UNIT', args.unit)
+    elif plugin.args.mountpoint:
+        plugin.update_setting('VAR_DISK_USAGE_MOUNTPOINT', plugin.args.mountpoint)
+    elif plugin.args.unit:
+        plugin.update_setting('VAR_DISK_USAGE_UNIT', plugin.args.unit)
     
     plugin.read_config()
     debug_enabled = plugin.configuration['VAR_DISK_USAGE_DEBUG_ENABLED']

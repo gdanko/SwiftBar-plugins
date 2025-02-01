@@ -65,7 +65,7 @@ def main() -> None:
     
     plugin.read_config()
     args = plugin.generate_args()
-    if args.debug:
+    if plugin.args.debug:
         plugin.update_setting('VAR_DISK_CONSUMERS_DEBUG_ENABLED', True if plugin.configuration['VAR_DISK_CONSUMERS_DEBUG_ENABLED'] == False else False)
 
     plugin.read_config()

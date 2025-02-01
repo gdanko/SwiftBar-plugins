@@ -79,8 +79,8 @@ def main() -> None:
         },
     }
     plugin.read_config()
-    args = plugin.generate_args()
-    if args.debug:
+    plugin.generate_args()
+    if plugin.args.debug:
         plugin.update_setting('VAR_BREW_OUTDATED_DEBUG_ENABLED', True if plugin.configuration['VAR_BREW_OUTDATED_DEBUG_ENABLED'] == False else False)
 
     plugin.read_config()

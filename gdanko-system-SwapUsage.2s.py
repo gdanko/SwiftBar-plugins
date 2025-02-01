@@ -67,11 +67,11 @@ def main() -> None:
         },
     }
     plugin.read_config()
-    args = plugin.generate_args()
-    if args.debug:
+    plugin.generate_args()
+    if plugin.args.debug:
         plugin.update_setting('VAR_SWAP_USAGE_DEBUG_ENABLED', True if plugin.configuration['VAR_SWAP_USAGE_DEBUG_ENABLED'] == False else False)
-    elif args.unit:
-        plugin.update_setting('VAR_SWAP_USAGE_UNIT', args.unit)
+    elif plugin.args.unit:
+        plugin.update_setting('VAR_SWAP_USAGE_UNIT', plugin.args.unit)
 
     plugin.read_config()
     debug_enabled = plugin.configuration['VAR_SWAP_USAGE_DEBUG_ENABLED']
@@ -85,23 +85,6 @@ def main() -> None:
     else:
         plugin.print_menu_title('Swap: Failed')
         plugin.print_menu_item('Failed to gather swap information')
-    # plugin.print_menu_item('Settings')
-    # plugin.print_menu_item(
-    #     f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
-    #     cmd=[plugin.plugin_name, '--debug'],
-    #     terminal=False,
-    #     refresh=True,
-    # )
-    # plugin.print_menu_item('--Unit')
-    # for valid_storage_unit in util.valid_storage_units():
-    #     color = 'blue' if valid_storage_unit == unit else 'black'
-    #     plugin.print_menu_item(
-    #         f'----{valid_storage_unit}',
-    #         color=color,
-    #         cmd=[plugin.plugin_name, '--unit', valid_storage_unit],
-    #         refresh=True,
-    #         terminal=False,
-    #     )
     if plugin.defaults_dict:
         plugin.display_settings_menu()
     if debug_enabled:

@@ -138,17 +138,17 @@ def main() -> None:
     }
 
     plugin.read_config()
-    args = plugin.generate_args()
-    if args.debug:
+    plugin.generate_args()
+    if plugin.args.debug:
         plugin.update_setting('VAR_EARTHQUAKES_DEBUG_ENABLED', True if plugin.configuration['VAR_EARTHQUAKES_DEBUG_ENABLED'] == False else False)
-    elif args.limit:
-        plugin.update_setting('VAR_EARTHQUAKES_LIMIT', args.limit)
-    elif args.magnitude:
-        plugin.update_setting('VAR_EARTHQUAKES_MIN_MAGNITUDE', args.magnitude)
-    elif args.radius:
-        plugin.update_setting('VAR_EARTHQUAKES_RADIUS_MILES', args.radius)
-    elif args.unit:
-        plugin.update_setting('VAR_EARTHQUAKES_UNIT', args.unit)
+    elif plugin.args.limit:
+        plugin.update_setting('VAR_EARTHQUAKES_LIMIT', plugin.args.limit)
+    elif plugin.args.magnitude:
+        plugin.update_setting('VAR_EARTHQUAKES_MIN_MAGNITUDE', plugin.args.magnitude)
+    elif plugin.args.radius:
+        plugin.update_setting('VAR_EARTHQUAKES_RADIUS_MILES', plugin.args.radius)
+    elif plugin.args.unit:
+        plugin.update_setting('VAR_EARTHQUAKES_UNIT', plugin.args.unit)
 
     plugin.read_config()
     debug_enabled = plugin.configuration['VAR_EARTHQUAKES_DEBUG_ENABLED']

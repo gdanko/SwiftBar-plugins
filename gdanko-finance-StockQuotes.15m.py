@@ -134,17 +134,17 @@ def main() -> None:
     }
 
     plugin.read_config()
-    args = plugin.generate_args()
+    plugin.generate_args()
 
-    if args.debug:
+    if plugin.args.debug:
         plugin.update_setting('VAR_STOCK_QUOTES_DEBUG_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_DEBUG_ENABLED'] == False else False)
-    elif args.company_info:
+    elif plugin.args.company_info:
         plugin.update_setting('VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED'] == False else False)
-    elif args.key_stats:
+    elif plugin.args.key_stats:
         plugin.update_setting('VAR_STOCK_QUOTES_KEY_STATS_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_KEY_STATS_ENABLED'] == False else False)
-    elif args.r_and_p:
+    elif plugin.args.r_and_p:
         plugin.update_setting('VAR_STOCK_QUOTES_R_AND_P_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_R_AND_P_ENABLED'] == False else False)
-    elif args.events:
+    elif plugin.args.events:
         plugin.update_setting('VAR_STOCK_QUOTES_EVENTS_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_EVENTS_ENABLED'] == False else False)
 
     plugin.read_config()
