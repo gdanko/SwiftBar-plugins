@@ -4,6 +4,9 @@ import http.client
 import re
 import urllib.parse
 
+def get_useragent() -> str:
+    return 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
+
 def percent_encode(string: str=None) -> str:
     """
     Percent encode a string.
@@ -19,52 +22,48 @@ def percent_encode(string: str=None) -> str:
             result.append(f'%{hex_digits[ord(char) >> 4]}{hex_digits[ord(char) & 0xF]}')
     return ''.join(result)
 
-def encode_query_string(params: Dict[str, str]=None) -> str:
+def encode_query_string(query: Dict[str, str]=None) -> str:
     """
     Encode a query string.
     """
     encoded_pairs = []
-    for key, value in params.items():
+    for key, value in query.items():
         encoded_key = percent_encode(str(key))
         encoded_value = percent_encode(str(value))
         encoded_pairs.append(f"{encoded_key}={encoded_value}")
     return '&'.join(encoded_pairs)
 
-def swiftbar_request(url: str=None, method: Optional[str]='GET', headers: Optional[Dict[str, Any]]=None, query: Optional[Dict[str, Any]]=None, data: Optional[Dict[str, Any]]=None, return_type: str='text') -> Union[int, str, bytes, dict, None]:
+def swiftbar_request(host: str=None, path: str='/', method: Optional[str]='GET', headers: Optional[Dict[str, Any]]=None, query: Optional[Dict[str, Any]]=None, encode_query: bool=False, data: Optional[Dict[str, Any]]=None, return_type: str='text') -> Union[int, str, bytes, Dict, Any, None]:
     """
     Handle HTTP basic requests.
     """
     # Add support for other methods
     response = None
-    parsed = urllib.parse.urlparse(url)
 
-    host = parsed.hostname
-    path = parsed.path
-
-    if parsed.query:
-        for k, v in dict(re.split(r'\s*=\s*', pair) for pair in re.split('&', parsed.query)).items():
-            if not k in query:
-                query[k] = v
-
-    connection_string = path
     if query:
-        connection_string = connection_string + '?' + encode_query_string(query)
+        if encode_query:
+            params_str = encode_query_string(query)
+        else:
+            params_str = '&'.join([f'{k}={v}' for k, v in query.items()])
+        path = '?'.join([path, params_str])
 
     conn = http.client.HTTPSConnection(host)
-    conn.request(method, connection_string)
+    if headers:
+        conn.request(method, path, headers=headers)
+    else:
+        conn.request(method, path)
     response = conn.getresponse()
-    status_code = response.status
     content = response.read()
     
     if return_type == 'text':
-        return status_code, content.decode(), None
+        return response, content.decode(), None
     elif return_type == 'binary':
-        return status_code, content, None
+        return response, content, None
     elif return_type == 'json':
         try:
             json_body = json.loads(content.decode())
-            return status_code, json_body, None
+            return response, json_body, None
         except Exception as e:
-            return status_code, None, e
+            return response, None, e
     else:
         raise ValueError('Invalid return_type. Choose "json", "text", or "binary".')
