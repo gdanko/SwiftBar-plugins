@@ -78,6 +78,7 @@ def main() -> None:
             'default_value': False,
             'valid_values': [True, False],
             'setting_configuration': {
+                'default': False,
                 'flag': '--debug',
                 'help': 'Toggle the Debugging menu',
                 'type': bool,
@@ -90,6 +91,7 @@ def main() -> None:
             'default_value': True,
             'valid_values': [True, False],
             'setting_configuration': {
+                'default': False,
                 'flag': '--company-info',
                 'help': 'Toggle the Company Info menu',
                 'type': bool,
@@ -99,6 +101,7 @@ def main() -> None:
             'default_value': True,
             'valid_values': [True, False],
             'setting_configuration': {
+                'default': False,
                 'flag': '--key-stats',
                 'help': 'Toggle the Key Stats menu',
                 'type': bool,
@@ -108,6 +111,7 @@ def main() -> None:
             'default_value': True,
             'valid_values': [True, False],
             'setting_configuration': {
+                'default': False,
                 'flag': '--r-and-p',
                 'help': 'Toggle the Ratios and Profitability menu',
                 'type': bool,
@@ -117,6 +121,7 @@ def main() -> None:
             'default_value': True,
             'valid_values': [True, False],
             'setting_configuration': {
+                'default': False,
                 'flag': '--events',
                 'help': 'Toggle the Events menu',
                 'type': bool,
