@@ -277,6 +277,9 @@ def kilometers_to_miles(kilometers: int=0) -> float:
     return kilometers * 0.6213712
 
 def numerize(number: int=0) -> str:
+    """
+    Convert something like 1000000000 to 1B.
+    """
     abs_number = abs(number)
     if abs_number >= 1000000000000:
         return f'{abs_number / 1000000000000:.1f}T'
