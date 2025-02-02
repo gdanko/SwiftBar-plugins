@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Network Throughput</xbar.title>
-# <xbar.version>v0.6.0</xbar.version>
+# <xbar.version>v0.6.1</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show the current network throughput for a given interface</xbar.desc>
@@ -71,7 +71,7 @@ def get_interface_data(interface: str=None) -> InterfaceData:
     flags, mac, inet, inet6 = None, None, None, None
     command = f'ifconfig {interface}'
     returncode, stdout, _ = util.execute_command(command)
-    if stdout:
+    if returncode == 0 and stdout:
         match = re.findall(r'flags=\d+\<([A-Z0-9,]+)\>', stdout, re.MULTILINE)
         if match:
             flags = match[0]
@@ -87,7 +87,7 @@ def get_interface_data(interface: str=None) -> InterfaceData:
     return InterfaceData(interface=interface, flags=flags, mac=mac, inet=inet, inet6=inet6)
 
 def get_public_ip() -> Union[str, None]:
-    returncode, stdout, _ = util.execute_command('curl https://ifconfig.io')
+    _, stdout, _ = util.execute_command('curl https://ifconfig.io')
     return stdout if stdout else None
  
 def main() -> None:
@@ -97,59 +97,45 @@ def main() -> None:
     plugin.defaults_dict['VAR_NET_THROUGHPUT_DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
+        'type': bool,
         'setting_configuration': {
             'default': False,
             'flag': '--debug',
-            'help': 'Toggle the Debugging menu',
             'title': 'the "Debugging" menu',
-            'type': bool,
         },
     }
     plugin.defaults_dict['VAR_NET_THROUGHPUT_VERBOSE'] = {
         'default_value': False,
         'valid_values': [True, False],
+        'type': bool,
         'setting_configuration': {
             'default': False,
             'flag': '--verbose',
-            'help': 'Toggle verbose mode',
             'title': 'verbose mode',
-            'type': bool,
         },
     }
     plugin.defaults_dict['VAR_NET_THROUGHPUT_INTERFACE'] = {
         'default_value': 'en0',
         'valid_values': util.find_valid_network_interfaces(),
+        'type': str,
         'setting_configuration': {
             'default': None,
             'flag': '--interface',
             'title': 'Interface',
-            'help': 'Select the interface to view',
-            'type': str,
         },
     }
     plugin.read_config()
     plugin.generate_args()
-    if plugin.args.debug:
-        plugin.update_setting('VAR_NET_THROUGHPUT_DEBUG_ENABLED', True if plugin.configuration['VAR_NET_THROUGHPUT_DEBUG_ENABLED'] == False else False)
-    elif plugin.args.interface:
-        plugin.update_setting('VAR_NET_THROUGHPUT_INTERFACE', plugin.args.interface)
-    elif plugin.args.verbose:
-        plugin.update_setting('VAR_NET_THROUGHPUT_VERBOSE', True if plugin.configuration['VAR_NET_THROUGHPUT_VERBOSE'] == False else False)
+    plugin.update_json_from_args()
 
-    plugin.read_config()
-    debug_enabled = plugin.configuration['VAR_NET_THROUGHPUT_DEBUG_ENABLED']
-    interface = plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE']
-    vebose_enabled = plugin.configuration['VAR_NET_THROUGHPUT_VERBOSE']
-
-    interface_data = get_interface_data(interface)
+    interface_data = get_interface_data(plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE'])
     public_ip = get_public_ip()
-
-    first_sample = get_data(interface=interface)
+    first_sample = get_data(interface=plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE'])
     time.sleep(1)
-    second_sample = get_data(interface=interface)
+    second_sample = get_data(interface=plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE'])
 
     network_throughput = IoCounters(
-        interface    = interface,
+        interface    = plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE'],
         bytes_sent   = second_sample.bytes_sent - first_sample.bytes_sent,
         bytes_recv   = second_sample.bytes_recv - first_sample.bytes_recv,
         packets_sent = second_sample.packets_sent - first_sample.packets_sent,
@@ -170,7 +156,7 @@ def main() -> None:
         interface_output['IPv6 Address'] = interface_data.inet6
     if public_ip:
         interface_output['Public IP'] = public_ip
-    if vebose_enabled:
+    if plugin.configuration['VAR_NET_THROUGHPUT_VERBOSE']:
         if network_throughput.errin is not None:
             interface_output['Inbound Errors/sec'] = network_throughput.errin
         if network_throughput.errout is not None:
@@ -189,7 +175,7 @@ def main() -> None:
     if plugin.defaults_dict:
         plugin.display_settings_menu()
 
-    if debug_enabled:
+    if plugin.configuration['VAR_NET_THROUGHPUT_DEBUG_ENABLED']:
         plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh', refresh=True)
 

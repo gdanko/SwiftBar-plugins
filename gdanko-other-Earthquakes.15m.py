@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Earthquakes</xbar.title>
-# <xbar.version>v0.3.0</xbar.version>
+# <xbar.version>v0.3.1</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show information about earthquakes nearby</xbar.desc>
@@ -81,84 +81,68 @@ def main() -> None:
     plugin.defaults_dict['VAR_EARTHQUAKES_DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
+        'type': bool,
         'setting_configuration': {
             'default': False,
             'flag': '--debug',
-            'help': 'Toggle the Debugging menu',
             'title': 'the "Debugging" menu',
-            'type': bool,
         },
     }
     plugin.defaults_dict['VAR_EARTHQUAKES_LIMIT'] = {
         'default_value': 30,
         'minmax': namedtuple('minmax', ['min', 'max'])(5, 50),
+        'type': int,
         'setting_configuration': {
             'default': None,
             'flag': '--limit',
             'increment': 5,
-            'help': 'Set the maximum number of earthquakes to display',
             'title': 'Limit',
-            'type': int,
         },
     }
     plugin.defaults_dict['VAR_EARTHQUAKES_MIN_MAGNITUDE'] = {
         'default_value': 0,
         'minmax': namedtuple('minmax', ['min', 'max'])(0, 20),
+        'type': int,
         'setting_configuration': {
             'default': None,
             'flag': '--magnitude',
             'increment': 2,
-            'help': 'Set the minimum magnitude',
             'title': 'Minimum Magnitude',
-            'type': int,
         },
     }
     plugin.defaults_dict['VAR_EARTHQUAKES_RADIUS_MILES'] = {
         'default_value': 100,
         'minmax': namedtuple('minmax', ['min', 'max'])(10, 500),
+        'type': int,
         'setting_configuration': {
             'default': None,
             'flag': '--radius',
             'increment': 50,
-            'help': 'Set the radius based on your location',
             'title': 'Radius',
-            'type': int,
         },
     }
     plugin.defaults_dict['VAR_EARTHQUAKES_UNIT'] = {
         'default_value': 'm',
         'valid_values': ['km', 'm'],
+        'type': str,
         'setting_configuration': {
             'default': None,
             'flag': '--unit',
-            'help': 'The unit to use',
             'title': 'Unit',
-            'type': str,
         },
     }
 
     plugin.read_config()
     plugin.generate_args()
-    if plugin.args.debug:
-        plugin.update_setting('VAR_EARTHQUAKES_DEBUG_ENABLED', True if plugin.configuration['VAR_EARTHQUAKES_DEBUG_ENABLED'] == False else False)
-    elif plugin.args.limit:
-        plugin.update_setting('VAR_EARTHQUAKES_LIMIT', plugin.args.limit)
-    elif plugin.args.magnitude:
-        plugin.update_setting('VAR_EARTHQUAKES_MIN_MAGNITUDE', plugin.args.magnitude)
-    elif plugin.args.radius:
-        plugin.update_setting('VAR_EARTHQUAKES_RADIUS_MILES', plugin.args.radius)
-    elif plugin.args.unit:
-        plugin.update_setting('VAR_EARTHQUAKES_UNIT', plugin.args.unit)
+    plugin.update_json_from_args()
 
-    plugin.read_config()
-    debug_enabled = plugin.configuration['VAR_EARTHQUAKES_DEBUG_ENABLED']
-    limit = plugin.configuration['VAR_EARTHQUAKES_LIMIT']
-    magnitude = plugin.configuration['VAR_EARTHQUAKES_MIN_MAGNITUDE']
-    radius = plugin.configuration['VAR_EARTHQUAKES_RADIUS_MILES']
-    unit = plugin.configuration['VAR_EARTHQUAKES_UNIT']
     time_format = '%a, %B %-d, %Y %H:%M:%S'
-    
-    location, quake_data, err = get_quake_data(radius=radius, magnitude=magnitude, unit=unit, limit=limit)
+    location, quake_data, err = get_quake_data(
+        radius=plugin.configuration['VAR_EARTHQUAKES_RADIUS_MILES'],
+        magnitude=plugin.configuration['VAR_EARTHQUAKES_MIN_MAGNITUDE'],
+        unit=plugin.configuration['VAR_EARTHQUAKES_UNIT'],
+        limit=plugin.configuration['VAR_EARTHQUAKES_LIMIT']
+    )
     if quake_data:
         if 'features' in quake_data and type (quake_data['features']) == list:
             features = quake_data['features']
@@ -169,7 +153,7 @@ def main() -> None:
             for feature in features:
                 place = feature['properties']['place']
                 
-                if unit == 'm':
+                if plugin.configuration['VAR_EARTHQUAKES_UNIT'] == 'm':
                     match = re.search(r'^(\d+) km', place)
                     if match:
                         km = int(match.group(1))
@@ -194,7 +178,7 @@ def main() -> None:
     plugin.print_menu_separator()
     if plugin.defaults_dict:
         plugin.display_settings_menu()
-    if debug_enabled:
+    if plugin.configuration['VAR_EARTHQUAKES_DEBUG_ENABLED']:
             plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh', refresh=True)
     

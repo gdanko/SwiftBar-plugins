@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>BrewOutdated</xbar.title>
-# <xbar.version>v0.3.0</xbar.version>
+# <xbar.version>v0.3.1</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the number upgradeable Homebrew packages</xbar.desc>
@@ -70,21 +70,17 @@ def main() -> None:
     plugin.defaults_dict['VAR_BREW_OUTDATED_DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
+        'type': bool,
         'setting_configuration': {
             'default': False,
             'flag': '--debug',
-            'help': 'Toggle the Debugging menu',
             'title': 'the "Debugging" menu',                
-            'type': bool,
         },
     }
     plugin.read_config()
     plugin.generate_args()
-    if plugin.args.debug:
-        plugin.update_setting('VAR_BREW_OUTDATED_DEBUG_ENABLED', True if plugin.configuration['VAR_BREW_OUTDATED_DEBUG_ENABLED'] == False else False)
+    plugin.update_json_from_args()
 
-    plugin.read_config()
-    debug_enabled = plugin.configuration['VAR_BREW_OUTDATED_DEBUG_ENABLED']
     data, err = get_brew_data()
     if err:
         plugin.print_menu_title('Brew Outdated: Failure')
@@ -116,7 +112,7 @@ def main() -> None:
         plugin.print_menu_separator()
         if plugin.defaults_dict:
             plugin.display_settings_menu()
-        if debug_enabled:
+        if plugin.configuration['VAR_BREW_OUTDATED_DEBUG_ENABLED']:
             plugin.display_debugging_menu()
         plugin.print_menu_item('Refresh', refresh=True)
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Stock Quotes</xbar.title>
-# <xbar.version>v0.6.0</xbar.version>
+# <xbar.version>v0.6.1</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show info about the specified stock symbols</xbar.desc>
@@ -27,7 +27,7 @@ from swiftbar import images, request, util
 from swiftbar.plugin import Plugin
 import re
 
-def get_yf_cookie_and_crumb(useragent: str=None):
+def get_yf_cookie_and_crumb():
     response, _, _ = request.swiftbar_request(
         host='fc.yahoo.com',
     )
@@ -38,7 +38,7 @@ def get_yf_cookie_and_crumb(useragent: str=None):
     response, crumb, err = request.swiftbar_request(
         host='query2.finance.yahoo.com',
         path='/v1/test/getcrumb',
-        headers={'Cookie': cookie, 'User-Agent': useragent},
+        headers={'Cookie': cookie, 'User-Agent': request.get_useragent()},
         return_type='text',
     )
     if response.status == 200 and crumb:
@@ -77,12 +77,11 @@ def main() -> None:
     plugin.defaults_dict['VAR_STOCK_QUOTES_DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
+        'type': bool,
         'setting_configuration': {
             'default': False,
             'flag': '--debug',
-            'help': 'Toggle the Debugging menu',
             'title': 'the "Debugging" menu',
-            'type': bool,
         },
     }
     plugin.defaults_dict['VAR_STOCK_QUOTES_SYMBOLS'] = {
@@ -91,76 +90,54 @@ def main() -> None:
     plugin.defaults_dict['VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
+        'type': bool,
         'setting_configuration': {
             'default': False,
             'flag': '--company-info',
-            'help': 'Toggle the Company Info menu',
-            'title': '"Company Info" menu',
-            'type': bool,
+            'title': 'the "Company Info" menu',
         },
     }
     plugin.defaults_dict['VAR_STOCK_QUOTES_KEY_STATS_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
+        'type': bool,
         'setting_configuration': {
             'default': False,
             'flag': '--key-stats',
-            'help': 'Toggle the Key Stats menu',
-            'title': '"Key Stats" menu',
-            'type': bool,
+            'title': 'the "Key Stats" menu',
         },
     }
     plugin.defaults_dict['VAR_STOCK_QUOTES_R_AND_P_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
+        'type': bool,
         'setting_configuration': {
             'default': False,
             'flag': '--r-and-p',
-            'help': 'Toggle the Ratios and Profitability menu',
-            'title': '"Ratios and Profitability" menu',
-            'type': bool,
+            'title': 'the "Ratios and Profitability" menu',
         },
     }
     plugin.defaults_dict['VAR_STOCK_QUOTES_EVENTS_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
+        'type': bool,
         'setting_configuration': {
             'default': False,
             'flag': '--events',
-            'help': 'Toggle the Events menu',
-            'title': '"Events" menu',
-            'type': bool,
+            'title': 'the "Events" menu',
         },
     }
 
     plugin.read_config()
     plugin.generate_args()
+    plugin.update_json_from_args()
 
-    if plugin.args.debug:
-        plugin.update_setting('VAR_STOCK_QUOTES_DEBUG_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_DEBUG_ENABLED'] == False else False)
-    elif plugin.args.company_info:
-        plugin.update_setting('VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED'] == False else False)
-    elif plugin.args.key_stats:
-        plugin.update_setting('VAR_STOCK_QUOTES_KEY_STATS_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_KEY_STATS_ENABLED'] == False else False)
-    elif plugin.args.r_and_p:
-        plugin.update_setting('VAR_STOCK_QUOTES_R_AND_P_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_R_AND_P_ENABLED'] == False else False)
-    elif plugin.args.events:
-        plugin.update_setting('VAR_STOCK_QUOTES_EVENTS_ENABLED', True if plugin.configuration['VAR_STOCK_QUOTES_EVENTS_ENABLED'] == False else False)
-
-    plugin.read_config()
-    debug_enabled = plugin.configuration['VAR_STOCK_QUOTES_DEBUG_ENABLED']
-    symbols = re.split(r'\s*,\s*', plugin.configuration['VAR_STOCK_QUOTES_SYMBOLS'])
-    company_info_enabled = plugin.configuration['VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED']
-    key_stats_enabled = plugin.configuration['VAR_STOCK_QUOTES_KEY_STATS_ENABLED']
-    r_and_p_enabled = plugin.configuration['VAR_STOCK_QUOTES_R_AND_P_ENABLED']
-    events_enabled = plugin.configuration['VAR_STOCK_QUOTES_EVENTS_ENABLED']
-    useragent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
     plugin_output = []
     info_dict = {}
 
-    cookie, crumb = get_yf_cookie_and_crumb(useragent)
+    cookie, crumb = get_yf_cookie_and_crumb()
     if cookie and crumb:
-        for symbol in symbols:
+        for symbol in re.split(r'\s*,\s*', plugin.configuration['VAR_STOCK_QUOTES_SYMBOLS']):
             company_data = get_yf_data(cookie=cookie, crumb=crumb, symbol=symbol)
             if company_data:
                 info_dict[symbol] = company_data
@@ -180,8 +157,8 @@ def main() -> None:
                 plugin_output.append(f'{symbol} {util.pad_float(price)} {updown} {updown_amount} ({pct_change}%)')
 
             plugin.print_menu_title('; '.join(plugin_output))
-            for i in range (len(symbols)):
-                symbol = symbols[i]
+            for i in range (len(re.split(r'\s*,\s*', plugin.configuration['VAR_STOCK_QUOTES_SYMBOLS']))):
+                symbol = re.split(r'\s*,\s*', plugin.configuration['VAR_STOCK_QUOTES_SYMBOLS'])[i]
                 symbol_info = info_dict[symbol]
 
                 company_info = OrderedDict()
@@ -306,10 +283,10 @@ def main() -> None:
                 if 'lastSplitFactor' in symbol_info and 'lastSplitDate' in symbol_info:
                     events['Last Split'] = f'{symbol_info["lastSplitFactor"]} on {util.unix_to_human(symbol_info["lastSplitDate"])}'
                 
-                if (company_info_enabled and len(company_info) > 0) or (key_stats_enabled and len(key_stats) > 0) or (r_and_p_enabled and len(ratios_and_profitability) > 0) or (events_enabled and len(events) > 0):
+                if (plugin.configuration['VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED'] and len(company_info) > 0) or (plugin.configuration['VAR_STOCK_QUOTES_KEY_STATS_ENABLED'] and len(key_stats) > 0) or (plugin.configuration['VAR_STOCK_QUOTES_R_AND_P_ENABLED'] and len(ratios_and_profitability) > 0) or (plugin.configuration['VAR_STOCK_QUOTES_EVENTS_ENABLED'] and len(events) > 0):
                     plugin.print_menu_item(symbol)
 
-                if company_info_enabled:
+                if plugin.configuration['VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED']:
                     if len(company_info) > 0:
                         plugin.print_menu_item('--Company Info')
                         plugin.print_ordered_dict(company_info, justify='left', indent=4)
@@ -320,17 +297,17 @@ def main() -> None:
                 #         plugin.print_menu_item(f'----{person}')
                 #         plugin.print_ordered_dict(data, justify='left', indent=6)
 
-                if key_stats_enabled:
+                if plugin.configuration['VAR_STOCK_QUOTES_KEY_STATS_ENABLED']:
                     if len(key_stats) > 0:
                         plugin.print_menu_item('--Key Stats')
                         plugin.print_ordered_dict(key_stats, justify='left', indent=4)
 
-                if r_and_p_enabled:
+                if plugin.configuration['VAR_STOCK_QUOTES_R_AND_P_ENABLED']:
                     if len(ratios_and_profitability) > 0:
                         plugin.print_menu_item('--Ratios and Profitability')
                         plugin.print_ordered_dict(ratios_and_profitability, justify='left', indent=4)
 
-                if events_enabled:
+                if plugin.configuration['VAR_STOCK_QUOTES_EVENTS_ENABLED']:
                     if len(events) > 0:
                         plugin.print_menu_item('--Events')
                         plugin.print_ordered_dict(events, justify='left', indent=4)
@@ -344,7 +321,7 @@ def main() -> None:
     plugin.print_menu_separator()
     if plugin.defaults_dict:
         plugin.display_settings_menu()
-    if debug_enabled:
+    if plugin.configuration['VAR_STOCK_QUOTES_DEBUG_ENABLED']:
         plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh market data', refresh=True)
 if __name__ == '__main__':

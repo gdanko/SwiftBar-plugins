@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>WiFi Signal</xbar.title>
-# <xbar.version>v0.5.0</xbar.version>
+# <xbar.version>v0.5.1</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the current WiFi signal strength</xbar.desc>
@@ -39,39 +39,30 @@ def main() -> None:
     plugin.defaults_dict['VAR_WIFI_STATUS_DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
+        'type': bool,
         'setting_configuration': {
             'default': False,
             'flag': '--debug',
-            'help': 'Toggle the Debugging menu',
             'title': 'the "Debugging" menu',
-            'type': bool,
         },
     }
     plugin.defaults_dict['VAR_WIFI_STATUS_INTERFACE'] = {
         'default_value': 'en0',
         'valid_values': util.find_valid_wifi_interfaces(),
+        'type': str,
         'setting_configuration': {
             'default': None,
             'flag': '--interface',
-            'help': 'Select the interface to view',
             'title': 'Interface',
-            'type': str,
         },
     }
 
     plugin.read_config()
     plugin.generate_args()
-    if plugin.args.debug:
-        plugin.update_setting('VAR_WIFI_STATUS_DEBUG_ENABLED', True if plugin.configuration['VAR_WIFI_STATUS_DEBUG_ENABLED'] == False else False)
-    elif plugin.args.interface:
-        plugin.update_setting('VAR_WIFI_STATUS_INTERFACE', plugin.args.interface)
+    plugin.update_json_from_args()
 
     my_interface = None
     rating = 'Unknown'
-    plugin.read_config()
-    debug_enabled = plugin.configuration['VAR_WIFI_STATUS_DEBUG_ENABLED']
-    interface = plugin.configuration['VAR_WIFI_STATUS_INTERFACE']
-
     returncode, stdout, _ = util.execute_command('system_profiler SPAirPortDataType -json detailLevel basic')
     if returncode == 0 and stdout:
         profiler_data, err = get_profiler_data(stdout)
@@ -82,7 +73,7 @@ def main() -> None:
             if 'SPAirPortDataType' in profiler_data:
                 interfaces = profiler_data['SPAirPortDataType'][0]["spairport_airport_interfaces"]
                 for iface in interfaces:
-                    if iface['_name'] == interface:
+                    if iface['_name'] == plugin.configuration['VAR_WIFI_STATUS_INTERFACE']:
                         my_interface = iface
                         break
                 if my_interface:
@@ -117,7 +108,7 @@ def main() -> None:
                                         rating = 'Unknown'
 
                                     wifi_output = OrderedDict()
-                                    wifi_output['Device'] = interface
+                                    wifi_output['Device'] = plugin.configuration['VAR_WIFI_STATUS_INTERFACE']
                                     wifi_output['Channel'] = channel
                                     wifi_output['Mode'] = mode
                                     wifi_output['Signal'] = f'{signal} dBm ({rating})'
@@ -134,7 +125,7 @@ def main() -> None:
                         plugin.error_messages.append('Failed to find current network information data in the system_profiler results')
                 else:
                     plugin.success = False
-                    plugin.error_messages.append(f'Failed to find interface data for {interface} in the system_profiler results')
+                    plugin.error_messages.append(f'Failed to find interface data for {plugin.configuration["VAR_WIFI_STATUS_INTERFACE"]} in the system_profiler results')
     else:
         plugin.success = False
         plugin.error_messages.append('Failed to parse the system_profiler results')
@@ -149,7 +140,7 @@ def main() -> None:
     plugin.print_menu_separator()
     if plugin.defaults_dict:
         plugin.display_settings_menu()
-    if debug_enabled:
+    if plugin.configuration['VAR_WIFI_STATUS_DEBUG_ENABLED']:
         plugin.display_debugging_menu()
     plugin.print_menu_item('Refresh WiFi Data', refresh=True)
 
