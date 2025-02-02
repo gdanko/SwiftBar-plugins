@@ -136,6 +136,7 @@ class Plugin:
                 if key in contents:
                     contents[key] = value
                     self.write_config(contents)
+        self.read_config()
 
     def find_longest(self, input: Union[List[str], Dict[str, Any]]=None) ->int:
         """
@@ -222,19 +223,35 @@ class Plugin:
         self.print_menu_separator()
 
     def generate_args(self) -> None:
+        """
+        Generate an argparser namespace from self.defaults_dict.
+        """
         self.parser = argparse.ArgumentParser()
         for name, data in self.defaults_dict.items():
             if 'setting_configuration' in data:
                 setting_default = data['setting_configuration']['default']
                 setting_flag = data['setting_configuration']['flag']
-                setting_type = data['setting_configuration']['type']
-                setting_help = data['setting_configuration']['help'] if data['setting_configuration']['help'] else name
+                setting_type = data['type']
+
                 if setting_type == bool:
-                    self.parser.add_argument(setting_flag, help=setting_help, required=False, default=setting_default, action='store_true')
+                    self.parser.add_argument(setting_flag, help=name, required=False, default=setting_default, action='store_true')
                 else:
-                    self.parser.add_argument(setting_flag, help=setting_help, required=False, default=setting_default, type=setting_type)
+                    self.parser.add_argument(setting_flag, help=name, required=False, default=setting_default, type=setting_type)
                     
         self.args = self.parser.parse_args()
+
+    def update_json_from_args(self) -> None:
+        """
+        Parse self.args and look for changes, then update the JSON with the new setting.
+        """
+        for action in self.parser._actions:
+            if type(action) != argparse._HelpAction:
+                if action.default != getattr(self.args, action.dest, None):
+                    if self.defaults_dict[action.help]['type'] is bool:
+                        new_value = True if self.configuration[action.help] == False else False
+                        self.update_setting(action.help, new_value)
+                    else:
+                        self.update_setting(action.help, getattr(self.args, action.dest))
 
     def display_debugging_menu(self):
         """
@@ -276,12 +293,15 @@ class Plugin:
         self.print_ordered_dict(environment_variables, justify='right', indent=4, delimiter = '=', length=125)
 
     def display_settings_menu(self):
+        """
+        Generate and display the Settings menu from self.defaults_dict.
+        """
         self.print_menu_item('Settings')
         for name, data in self.defaults_dict.items():
             if 'setting_configuration' in data:
                 setting_flag = data['setting_configuration']['flag']
                 setting_title = data['setting_configuration']['title']
-                setting_type = data['setting_configuration']['type']
+                setting_type = data['type']
                 if setting_type is bool:
                     if self.configuration[name] == False:
                         menu_item_text = f'--Enable {setting_title}'
@@ -309,9 +329,7 @@ class Plugin:
                         increment = 10
                         if 'increment' in data['setting_configuration'] and type(data['setting_configuration']['increment']) == int:
                             increment = data['setting_configuration']['increment']
-                        min = data['minmax'].min
-                        max = data['minmax'].max
-                        for number in range(min, max + increment):
+                        for number in range(data['minmax'].min, data['minmax'].max + increment):
                             if number % increment == 0:
                                 color = 'blue' if number == self.configuration[name] else 'black'
                                 self.print_menu_item(
