@@ -1,6 +1,6 @@
 from collections import namedtuple
+from pprint import pprint as pp
 from typing import Any, Dict, List, Optional, Union
-import argparse
 import datetime
 import dateutil
 import getpass
@@ -81,6 +81,10 @@ def get_macos_version() -> str:
     elif os_version.part1 > 10:
         version_string = f'{os_version.part1}'
     return f'macOS {macos_families[version_string]} {os_version.part1}.{os_version.part2}'
+
+def pprint(input: Any=None):
+    pp(input)
+    print()
 
 def execute_command(command: str=None, input: Optional[Any]=None):
     """
@@ -209,7 +213,7 @@ def format_number(num: int=0) -> str:
         num = num / 1024
     return f'{pad_float(num)} Yi{suffix}'
 
-def prettify_timestamp(timestamp: str=None, format:str=None):
+def prettify_timestamp(timestamp: str=None, format:str='%Y-%m-%d %H:%M:%S'):
     """
     Parse a data-based timestamp and convert it to the specified format.
     """
