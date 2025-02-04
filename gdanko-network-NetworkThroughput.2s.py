@@ -124,6 +124,7 @@ def main() -> None:
             'title': 'Interface',
         },
     }
+
     plugin.read_config()
     plugin.generate_args()
     plugin.update_json_from_args()
