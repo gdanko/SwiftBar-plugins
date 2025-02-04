@@ -71,7 +71,7 @@ def main() -> None:
         },
     }
     plugin.defaults_dict['VAR_WEATHER_WAPI_LOCATION'] = {
-        'default_value': 'Los Angeles, CA, US',
+        'default_value': None,
         'type': str,
     }
     plugin.defaults_dict['VAR_WEATHER_WAPI_API_KEY'] = {
@@ -103,6 +103,16 @@ def main() -> None:
     plugin.generate_args()
     plugin.update_json_from_args()
 
+    location = None
+    if plugin.configuration['VAR_WEATHER_WAPI_LOCATION']:
+        location = plugin.configuration['VAR_WEATHER_WAPI_LOCATION']
+    else:
+        geodata = util.geolocate_me()
+        if geodata:
+            location = f'{geodata.City}, {geodata.Region}, {geodata.Country}'
+        else:
+            location = 'Los Angeles, California, US'
+
     alert_format = '%a, %B %-d, %Y %H:%M:%S'
     forecast_format = '%a, %B %-d, %Y'
     if plugin.configuration['VAR_WEATHER_WAPI_API_KEY'] == '':
@@ -111,7 +121,7 @@ def main() -> None:
         response, weather_data, err = request.swiftbar_request(
             host='api.weatherapi.com',
             path='/v1/current.json',
-            query={'key': plugin.configuration['VAR_WEATHER_WAPI_API_KEY'], 'q': plugin.configuration['VAR_WEATHER_WAPI_LOCATION'], 'aqi': 'yes'},
+            query={'key': plugin.configuration['VAR_WEATHER_WAPI_API_KEY'], 'q': location, 'aqi': 'yes'},
             return_type = 'json',
             encode_query=True,
         )
@@ -125,7 +135,7 @@ def main() -> None:
         response, forecast_data, err = request.swiftbar_request(
             host='api.weatherapi.com',
             path='/v1/forecast.json',
-            query={'key': plugin.configuration['VAR_WEATHER_WAPI_API_KEY'], 'q': plugin.configuration['VAR_WEATHER_WAPI_LOCATION'], 'days': 8, 'aqi': 'yes', 'alerts': 'yes'},
+            query={'key': plugin.configuration['VAR_WEATHER_WAPI_API_KEY'], 'q': location, 'days': 8, 'aqi': 'yes', 'alerts': 'yes'},
             return_type = 'json',
             encode_query=True,
         )
@@ -152,7 +162,7 @@ def main() -> None:
         dew_point = weather_data["current"]["dewpoint_f"] if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else weather_data["current"]["dewpoint_c"]
         pressure = f'{round(weather_data["current"]["pressure_in"])} in' if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else f'{round(weather_data["current"]["pressure_mb"])} mb'
 
-        plugin.print_menu_title(f'{plugin.configuration["VAR_WEATHER_WAPI_LOCATION"]} {round(current_temp)}°{plugin.configuration["VAR_WEATHER_WAPI_UNIT"]}')
+        plugin.print_menu_title(f'{location} {round(current_temp)}°{plugin.configuration["VAR_WEATHER_WAPI_UNIT"]}')
         current = OrderedDict()
         # current['Low / High'] = f'{round(low_temp)}°{unit} / {round(high_temp)}°{unit}'
         current['Feels Like'] = f'{round(feels_like)}°{plugin.configuration["VAR_WEATHER_WAPI_UNIT"]}'
