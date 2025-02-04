@@ -1,8 +1,6 @@
 from typing import Any, Dict, Optional, Union
 import json
 import http.client
-import re
-import urllib.parse
 
 def get_useragent() -> str:
     return 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
