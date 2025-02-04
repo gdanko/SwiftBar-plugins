@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Earthquakes</xbar.title>
-# <xbar.version>v0.3.1</xbar.version>
+# <xbar.version>v0.3.3</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show information about earthquakes nearby</xbar.desc>
@@ -30,41 +30,31 @@ import time
 import os
 
 def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0) -> Dict[str, Any]:
-    location = []
-    returncode, public_ip, _ = util.execute_command('curl https://ifconfig.io')
-    if returncode != 0 or not public_ip:
-        return None, {}, 'Failed to determine my public IP'
-    
-    response, geodata, _ = request.swiftbar_request(host='ipinfo.io', path=f'/{public_ip}/json', return_type='json')
-    if response.status != 200:
+    geodata = util.geolocate_me()
+    if not geodata:
         return None, {}, 'Failed to geolocate'
     
-    if 'loc' not in geodata:
-        return None, {}, 'Failed to geolocate'
-    
-    if 'city' in geodata and 'region' in geodata and 'country' in geodata:
-        location = [
-            geodata['city'],
-            geodata['region'],
-            geodata['country']
-        ]
-    if 'postal' in geodata:
-        location.append(geodata['postal'])
+    location = [
+        geodata.City,
+        geodata.Region,
+        geodata.Country,
+        geodata.Postal,
+    ]
     
     now = int(time.time())
     local_8601_start_time = datetime.datetime.fromtimestamp(now - 86400).isoformat('T', 'seconds')
     local_8601_end_time = datetime.datetime.fromtimestamp(now).isoformat('T', 'seconds')
 
     # https://earthquake.usgs.gov/fdsnws/event/1/#parameters
-    latitude, longitude = re.split(r'\s*,\s*', geodata['loc'])
+    # latitude, longitude = re.split(r'\s*,\s*', geodata['loc'])
     host = 'earthquake.usgs.gov'
     path = '/fdsnws/event/1/query'
     query = {
         'format': 'geojson',
         'starttime': local_8601_start_time,
         'endtime': local_8601_end_time,
-        'latitude': latitude,
-        'longitude': longitude,
+        'latitude': geodata.Latitude,
+        'longitude': geodata.Longitude,
         'limit': limit,
         'maxradiuskm': util.miles_to_kilometers(miles=radius) if unit == 'm' else radius,
         'minmagnitude': magnitude,

@@ -1,6 +1,7 @@
 from collections import namedtuple
 from pprint import pprint as pp
-from typing import Any, Dict, List, Optional, Union
+from swiftbar import request
+from typing import Any, Dict, List, NamedTuple, Optional, Union
 import datetime
 import dateutil
 import getpass
@@ -10,6 +11,17 @@ import shutil
 import signal
 import subprocess
 import time
+
+class GeoData(NamedTuple):
+    City: str
+    Country: str
+    Hostname: str
+    IP: str
+    Latitude: str
+    Longitude: str
+    Postal: str
+    Region: str
+    Timezone: str
 
 def get_signal_map() -> Dict[str, signal.Signals]:
     """
@@ -103,6 +115,35 @@ def execute_command(command: str=None, input: Optional[Any]=None):
 def brew_package_installed(package: str=None) -> bool:
     returncode, stdout, stderr = execute_command(f'brew list {package}')
     return True if returncode == 0 else False
+
+def geolocate_me() -> Union[Dict, None]:
+    headers = {'User-Agent': 'curl/8.7.1'}
+
+    response, data, error = request.swiftbar_request(host='ifconfig.io', headers=headers)
+    if response.status == 200 and data:
+        address = data.strip()
+    else:
+        return None
+    
+    response, geodata, _ = request.swiftbar_request(host='ipinfo.io', path=f'/{address}/json', return_type='json')
+    if response.status != 200:
+        return None, {}, 'Failed to geolocate'
+    
+    try:
+        lat, lon = re.split(r'\s*,\s*', geodata['loc'])
+        return GeoData(
+            City=geodata['city'],
+            Country=geodata['country'],
+            Hostname=geodata['hostname'],
+            IP=geodata['ip'],
+            Latitude=lat,
+            Longitude=lon,
+            Postal=geodata['postal'],
+            Region=geodata['region'],
+            Timezone=geodata['timezone']
+        )
+    except:
+        return None
 
 def binary_exists(binary: str=None) -> bool:
     return shutil.which(binary) is not None
