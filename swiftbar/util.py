@@ -6,6 +6,7 @@ import dateutil
 import getpass
 import platform
 import re
+import shutil
 import signal
 import subprocess
 import time
@@ -98,6 +99,13 @@ def execute_command(command: str=None, input: Optional[Any]=None):
         if stdout:
             input = stdout
     return p.returncode, stdout, stderr
+
+def brew_package_installed(package: str=None) -> bool:
+    returncode, stdout, stderr = execute_command(f'brew list {package}')
+    return True if returncode == 0 else False
+
+def binary_exists(binary: str=None) -> bool:
+    return shutil.which(binary) is not None
 
 def find_all_network_interfaces() -> List[str]:
     """
