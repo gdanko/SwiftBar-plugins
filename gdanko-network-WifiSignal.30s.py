@@ -20,7 +20,7 @@
 from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
-from typing import Any, Dict
+from typing import Any, Dict, Union
 import json
 import os
 import re
@@ -62,6 +62,7 @@ def main() -> None:
     plugin.update_json_from_args()
 
     my_interface = None
+    signal_icon = None
     rating = 'Unknown'
     returncode, stdout, _ = util.execute_command('system_profiler SPAirPortDataType -json detailLevel basic')
     if returncode == 0 and stdout:
