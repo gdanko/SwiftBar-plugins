@@ -165,4 +165,6 @@ cython_debug/
 
 # Ignore my test script
 test*.py
+gdanko-dummy-test.30m.py
+
 
