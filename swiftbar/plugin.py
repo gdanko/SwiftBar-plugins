@@ -16,7 +16,7 @@ class Writer(typing.Protocol):
 
 class Plugin:
     def __init__(self) -> None:
-        self.config_dir = os.path.join(Path.home(), 'SwiftBar')
+        self.config_dir = os.path.join(Path.home(), '.config', 'SwiftBar')
         self.invoked_by = None
         self.invoked_by_full = None
 
@@ -54,8 +54,6 @@ class Plugin:
                 self.config_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
             elif stdout == '/Applications/SwiftBar.app/Contents/MacOS/SwiftBar':
                 self.config_dir = os.path.join(Path.home(), '.config', 'SwiftBar')
-            else:
-                self.config_dir = os.path.join(Path.home(), 'SwiftBar')
 
     def _create_config_dir(self) -> None:
         """
@@ -130,13 +128,21 @@ class Plugin:
         """
         Update a given setting for a plugin and rewrite the JSON variables file.
         """
+        from pprint import pprint
+        # print(self.vars_file)
+        # print(key)
+        # print(value)
         if os.path.exists(self.vars_file):
             with open(self.vars_file, 'r') as fh:
                 contents = json.load(fh)
+                # pprint(contents)
                 if key in contents:
                     contents[key] = value
                     self.write_config(contents)
+                # pprint(contents)
+                # exit()
         self.read_config()
+        # exit()
 
     def find_longest(self, input: Union[List[str], Dict[str, Any]]=None) ->int:
         """
@@ -159,14 +165,17 @@ class Plugin:
             except KeyError as e:
                 pass
         return sanitized
-    def print_menu_title(self, text: str, *, out: Writer=sys.stdout, **params: Params) -> None:
+    def print_menu_title(self, text: str=None, display_update_time: bool=True, *, out: Writer=sys.stdout, **params: Params) -> None:
         """
         Print the plugin title in the menu bar.
         """
         params = self.sanitize_params(**params)
         params_str = ' '.join(f'{k}={v}' for k, v in params.items())
         print(f'{text} | {params_str}', file=out)
-        self.print_update_time()
+        if display_update_time:
+            self.print_update_time()
+        else:
+            self.print_menu_separator()
 
     def print_ordered_dict(self, data: OrderedDict, justify: str='right', delimiter: str = '', indent: int=0, *, out: Writer=sys.stdout, **params: Params) -> None:
         """
@@ -183,7 +192,7 @@ class Plugin:
             elif justify == 'right':
                 self.print_menu_item(f'{indent_str}{k.rjust(longest)} {delimiter} {v} | {params_str}', **params)
 
-    def print_menu_item(self, text: str, *, out: Writer=sys.stdout, **params: Params) -> None:
+    def print_menu_item(self, text: str=None, *, out: Writer=sys.stdout, **params: Params) -> None:
         """
         Generic wrapper to print all non-title menu items.
         """
