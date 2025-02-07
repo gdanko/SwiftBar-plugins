@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Stock Quotes</xbar.title>
-# <xbar.version>v0.6.1</xbar.version>
+# <xbar.version>v0.6.2</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show info about the specified stock symbols</xbar.desc>
@@ -22,54 +22,9 @@
 # <swiftbar.environment>[VAR_STOCK_QUOTES_DEBUG_ENABLED=false, VAR_STOCK_SYMBOLS=AAPL, VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED=true, VAR_STOCK_QUOTES_KEY_STATS_ENABLED=true, VAR_STOCK_QUOTES_R_AND_P_ENABLED=true, VAR_STOCK_QUOTES_EVENTS_ENABLED=true]</swiftbar.environment>
 
 from collections import OrderedDict
-from pprint import pprint
-from swiftbar import images, request, util
+from swiftbar import images, util, yfinance
 from swiftbar.plugin import Plugin
 import re
-
-def get_yf_cookie_and_crumb():
-    response, _, _ = request.swiftbar_request(
-        host='fc.yahoo.com',
-    )
-    cookie = next((h[1] for h in response.headers.items() if h[0] == 'Set-Cookie'), None)
-    if not cookie:
-        return None, None
-
-    response, crumb, err = request.swiftbar_request(
-        host='query2.finance.yahoo.com',
-        path='/v1/test/getcrumb',
-        headers={'Cookie': cookie, 'User-Agent': request.get_useragent()},
-        return_type='text',
-    )
-    if response.status == 200 and crumb:
-        return cookie, crumb
-    else:
-        return None, None
-
-def get_yf_data(crumb: str=None, cookie: str=None, symbol: str=None):
-    headers = {'Cookie': cookie, 'User-Agent': request.get_useragent()}
-    response, output, _ = request.swiftbar_request(
-        host='query2.finance.yahoo.com',
-        path=f'/v10/finance/quoteSummary/{symbol}',
-        query={
-            'corsDomain': 'finance.yahoo.com',
-            'crumb': crumb,
-            'formatted': False,
-            'modules': 'financialData,quoteType,defaultKeyStatistics,assetProfile,summaryDetail',
-            'symbol': symbol,
-        },
-        headers=headers,
-        return_type='json',
-    )                
-    if response.status == 200 and output:
-        info = output['quoteSummary']['result'][0]
-        company_data = {}
-        for category in ['assetProfile', 'summaryDetail', 'defaultKeyStatistics', 'quoteType', 'financialData']:
-            for k, v in info[category].items():
-                company_data[k] = v
-        return company_data
-    else:
-        return None
 
 def main() -> None:
     plugin = Plugin()
@@ -95,6 +50,16 @@ def main() -> None:
             'default': False,
             'flag': '--company-info',
             'title': 'the "Company Info" menu',
+        },
+    }
+    plugin.defaults_dict['VAR_STOCK_QUOTES_COMPANY_OFFICERS_ENABLED'] = {
+        'default_value': True,
+        'valid_values': [True, False],
+        'type': bool,
+        'setting_configuration': {
+            'default': False,
+            'flag': '--company-officers',
+            'title': 'the "Company Officers" menu',
         },
     }
     plugin.defaults_dict['VAR_STOCK_QUOTES_KEY_STATS_ENABLED'] = {
@@ -135,10 +100,15 @@ def main() -> None:
     plugin_output = []
     info_dict = {}
 
-    cookie, crumb = get_yf_cookie_and_crumb()
+    cookie, crumb = yfinance.get_cookie_and_crumb()
     if cookie and crumb:
         for symbol in re.split(r'\s*,\s*', plugin.configuration['VAR_STOCK_QUOTES_SYMBOLS']):
-            company_data = get_yf_data(cookie=cookie, crumb=crumb, symbol=symbol)
+            company_data = yfinance.get_quote_summary(
+                cookie=cookie,
+                crumb=crumb,
+                modules=['financialData', 'quoteType', 'defaultKeyStatistics', 'assetProfile', 'summaryDetail'],
+                symbol=symbol,
+            )
             if company_data:
                 info_dict[symbol] = company_data
     
@@ -291,11 +261,12 @@ def main() -> None:
                         plugin.print_menu_item('--Company Info')
                         plugin.print_ordered_dict(company_info, justify='left', indent=4)
                 
-                # if len(people) > 0:
-                #     plugin.print_menu_item('--Company Officers')
-                #     for person, data in people.items():
-                #         plugin.print_menu_item(f'----{person}')
-                #         plugin.print_ordered_dict(data, justify='left', indent=6)
+                if plugin.configuration['VAR_STOCK_QUOTES_COMPANY_OFFICERS_ENABLED']:
+                    if len(people) > 0:
+                        plugin.print_menu_item('--Company Officers')
+                        for person, data in people.items():
+                            plugin.print_menu_item(f'----{person}')
+                            plugin.print_ordered_dict(data, justify='left', indent=6)
 
                 if plugin.configuration['VAR_STOCK_QUOTES_KEY_STATS_ENABLED']:
                     if len(key_stats) > 0:
