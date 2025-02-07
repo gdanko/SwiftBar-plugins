@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>CPU Percent</xbar.title>
-# <xbar.version>v0.5.1</xbar.version>
+# <xbar.version>v0.5.2</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display CPU % for user, system, and idle</xbar.desc>
@@ -24,18 +24,8 @@ from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Any, Dict, List, NamedTuple
 import os
+import pkg_resources
 import re
-import subprocess
-import sys
-
-try:
-    from psutil import cpu_freq, cpu_times_percent
-except ModuleNotFoundError:
-    print('Error: missing "psutil" library.')
-    print('---')
-    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install psutil')
-    print('Fix copied to clipboard. Paste on terminal and run.')
-    exit(1)
 
 class CpuTimes(NamedTuple):
     cpu: str
@@ -184,59 +174,68 @@ def main() -> None:
 
     plugin.read_config()
     plugin.generate_args()
-    plugin.update_json_from_args()       
+    plugin.update_json_from_args()
 
-    command_length = 125
-    cpu_type = util.get_sysctl('machdep.cpu.brand_string')
-    cpu_family = get_cpu_family_strings().get(int(util.get_sysctl('hw.cpufamily')), int(util.get_sysctl('hw.cpufamily')))
-    max_cpu_freq = cpu_freq().max if cpu_freq().max is not None else None
-    individual_cpu_pct = []
-    combined_cpu_pct = []
+    required = {'psutil'}
+    installed = {pkg.key for pkg in pkg_resources.working_set}
+    missing = required - installed
+    if len(missing) == 0:
+        from psutil import cpu_freq, cpu_times_percent
+        command_length = 125
+        cpu_type = util.get_sysctl('machdep.cpu.brand_string')
+        cpu_family = get_cpu_family_strings().get(int(util.get_sysctl('hw.cpufamily')), int(util.get_sysctl('hw.cpufamily')))
+        max_cpu_freq = cpu_freq().max if cpu_freq().max is not None else None
+        individual_cpu_pct = []
+        combined_cpu_pct = []
 
-    individual_cpu_percent = cpu_times_percent(interval=1.0, percpu=True)
+        individual_cpu_percent = cpu_times_percent(interval=1.0, percpu=True)
 
-    for i, cpu_instance in enumerate(individual_cpu_percent):
-        individual_cpu_pct.append(CpuTimes(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
-    combined_cpu_pct.append(combine_stats(individual_cpu_pct, cpu_type))
+        for i, cpu_instance in enumerate(individual_cpu_percent):
+            individual_cpu_pct.append(CpuTimes(cpu=i, cpu_type=cpu_type, user=cpu_instance.user, system=cpu_instance.system, nice=cpu_instance.nice, idle=cpu_instance.idle))
+        combined_cpu_pct.append(combine_stats(individual_cpu_pct, cpu_type))
 
-    plugin.print_menu_title(f'CPU: user {util.pad_float(combined_cpu_pct[0].user)}%, sys {util.pad_float(combined_cpu_pct[0].system)}%, idle {util.pad_float(combined_cpu_pct[0].idle)}%')
-    if cpu_type is not None:
-        processor = cpu_type
-        if cpu_family:
-            processor = processor + f' ({cpu_family})'
-        if max_cpu_freq:
-            processor = processor + f' @ {util.pad_float(max_cpu_freq / 1000)} GHz'
-        plugin.print_menu_item(f'Processor: {processor}')
-        
-    for cpu in individual_cpu_pct:
-        plugin.print_menu_item(f'Core {str(cpu.cpu)}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
+        plugin.print_menu_title(f'CPU: user {util.pad_float(combined_cpu_pct[0].user)}%, sys {util.pad_float(combined_cpu_pct[0].system)}%, idle {util.pad_float(combined_cpu_pct[0].idle)}%')
+        if cpu_type is not None:
+            processor = cpu_type
+            if cpu_family:
+                processor = processor + f' ({cpu_family})'
+            if max_cpu_freq:
+                processor = processor + f' @ {util.pad_float(max_cpu_freq / 1000)} GHz'
+            plugin.print_menu_item(f'Processor: {processor}')
+            
+        for cpu in individual_cpu_pct:
+            plugin.print_menu_item(f'Core {str(cpu.cpu)}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
 
-    top_cpu_consumers = get_top_cpu_usage()
-    if len(top_cpu_consumers) > 0:
-        if len(top_cpu_consumers) > plugin.configuration['VAR_CPU_USAGE_MAX_CONSUMERS']:
-            top_cpu_consumers = top_cpu_consumers[0:plugin.configuration['VAR_CPU_USAGE_MAX_CONSUMERS']]
-        plugin.print_menu_item(
-            f'Top {len(top_cpu_consumers)} CPU Consumers',
-        )
-        for consumer in top_cpu_consumers:
-            command = consumer['command']
-            cpu_usage = consumer['cpu_usage']
-            pid = consumer['pid']
-            user = consumer['user']
-            padding_width = 6
-            icon = util.get_process_icon(user, plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL'])
-            cpu_usage = f'{str(cpu_usage)}%'
-            cmd = ['kill', f'-{util.get_signal_map()[plugin.configuration["VAR_CPU_USAGE_KILL_SIGNAL"]]}', pid] if plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL'] else []
+        top_cpu_consumers = get_top_cpu_usage()
+        if len(top_cpu_consumers) > 0:
+            if len(top_cpu_consumers) > plugin.configuration['VAR_CPU_USAGE_MAX_CONSUMERS']:
+                top_cpu_consumers = top_cpu_consumers[0:plugin.configuration['VAR_CPU_USAGE_MAX_CONSUMERS']]
             plugin.print_menu_item(
-                f'--{icon}{cpu_usage.rjust(padding_width)} - {command}',
-                cmd=cmd,
-                emojize=True,
-                length=command_length,
-                symbolize=False,
-                terminal=False,
-                trim=False,
+                f'Top {len(top_cpu_consumers)} CPU Consumers',
             )
-    plugin.print_menu_separator()
+            for consumer in top_cpu_consumers:
+                command = consumer['command']
+                cpu_usage = consumer['cpu_usage']
+                pid = consumer['pid']
+                user = consumer['user']
+                padding_width = 6
+                icon = util.get_process_icon(user, plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL'])
+                cpu_usage = f'{str(cpu_usage)}%'
+                cmd = ['kill', f'-{util.get_signal_map()[plugin.configuration["VAR_CPU_USAGE_KILL_SIGNAL"]]}', pid] if plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL'] else []
+                plugin.print_menu_item(
+                    f'--{icon}{cpu_usage.rjust(padding_width)} - {command}',
+                    cmd=cmd,
+                    emojize=True,
+                    length=command_length,
+                    symbolize=False,
+                    terminal=False,
+                    trim=False,
+                )
+    else:
+        plugin.print_menu_title('CPU: Error')
+        plugin.print_menu_separator()
+        plugin.print_menu_item(f'Please install the following packages via pip: {", ".join(missing)}')
+
     if plugin.defaults_dict:
         plugin.display_settings_menu()
     if plugin.configuration['VAR_CPU_USAGE_DEBUG_ENABLED']:
