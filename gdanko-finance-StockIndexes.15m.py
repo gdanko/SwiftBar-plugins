@@ -16,49 +16,62 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_STOCK_INDEXES_DEBUG_ENABLED=false]</swiftbar.environment>
 
-from swiftbar import images, util
+from collections import OrderedDict
+from swiftbar import images, util, yfinance
 from swiftbar.plugin import Plugin
-import subprocess
-import sys
-
-try:
-    import yfinance
-except ModuleNotFoundError:
-    print('Error: missing "yfinance" library.')
-    print('---')
-
-    subprocess.run('pbcopy', universal_newlines=True, input=f'{sys.executable} -m pip install yfinance')
-    print('Fix copied to clipboard. Paste on terminal and run.')
-    exit(1)
 
 def main() -> None:
     plugin = Plugin()
-    plugin_output = []
-    symbol_map = {
-        'Dow': '^DJI',
-        'Nasdaq': '^IXIC',
-        'S&P500': '^GSPC',
+    plugin.defaults_dict = OrderedDict()
+    plugin.defaults_dict['VAR_STOCK_INDEXES_DEBUG_ENABLED'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'type': bool,
+        'setting_configuration': {
+            'default': None,
+            'flag': '--debug',
+            'title': 'the "Debugging" menu',
+        },
     }
 
-    tickers = yfinance.Tickers('^DJI ^IXIC ^GSPC')
+    plugin.read_config()
+    plugin.generate_args()
+    plugin.update_json_from_args()
 
-    for key, value in symbol_map.items():
-        info = tickers.tickers[value].info
-        tickers.tickers[value].history(period="1d")
-        metadata= tickers.tickers[value].history_metadata
+    plugin_output = []
+    cookie, crumb = yfinance.get_cookie_and_crumb()
+    if cookie and crumb:
+        symbol_map = {
+            'Dow': '^DJI',
+            'Nasdaq': '^IXIC',
+            'S&P500': '^GSPC',
+        }
+        for key, value in symbol_map.items():
+            index_data = yfinance.get_chart(cookie=cookie, crumb=crumb, symbol=value)
+            if index_data:
+                price = index_data['regularMarketPrice']
+                last = index_data['previousClose']
 
-        price = metadata['regularMarketPrice']
-        last = info['previousClose']
+                if price > last:
+                    updown = u'\u2191'
+                    pct_change = f'{util.pad_float((price - last) / last * 100)}%'
+                else:
+                    updown = u'\u2193'
+                    pct_change = f'{util.pad_float((last - price) / last * 100)}%'
 
-        if price > last:
-            updown = u'\u2191'
-            pct_change = f'{util.pad_float((price - last) / last * 100)}%'
-        else:
-            updown = u'\u2193'
-            pct_change = f'{util.pad_float((last - price) / last * 100)}%'
+                plugin_output.append(f'{key} {updown} {pct_change}')
+        plugin.print_menu_title('; '.join(plugin_output))
 
-        plugin_output.append(f'{key} {updown} {pct_change}')
-    plugin.print_menu_title('; '.join(plugin_output))
+    else:
+        plugin.print_menu_title('Stock Indexes: Error')
+        plugin.print_menu_item('Failed to get a Yahoo! Finance crumb')
+
+    plugin.print_menu_separator()
+    if plugin.defaults_dict:
+        plugin.display_settings_menu()
+    if plugin.configuration['VAR_STOCK_INDEXES_DEBUG_ENABLED']:
+        plugin.display_debugging_menu()
+    plugin.print_menu_item('Refresh market data', refresh=True)
 
 if __name__ == '__main__':
     main()
