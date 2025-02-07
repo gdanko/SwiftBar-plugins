@@ -22,13 +22,8 @@
 from collections import namedtuple, OrderedDict
 from swiftbar import images, request, util
 from swiftbar.plugin import Plugin
-from typing import Any, Dict, List
-import datetime
-import re
-import time
+from typing import Any, List
 import os
-
-from pprint import pprint
 
 def get_valid_sections(api_key: str=None) -> List[str]:
     sections = []
