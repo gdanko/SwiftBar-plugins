@@ -20,7 +20,7 @@
 from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
-from typing import Any, Dict, Union
+from typing import Any, Dict
 import json
 import os
 import re
