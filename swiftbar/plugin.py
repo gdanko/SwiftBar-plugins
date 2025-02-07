@@ -128,21 +128,13 @@ class Plugin:
         """
         Update a given setting for a plugin and rewrite the JSON variables file.
         """
-        from pprint import pprint
-        # print(self.vars_file)
-        # print(key)
-        # print(value)
         if os.path.exists(self.vars_file):
             with open(self.vars_file, 'r') as fh:
                 contents = json.load(fh)
-                # pprint(contents)
                 if key in contents:
                     contents[key] = value
                     self.write_config(contents)
-                # pprint(contents)
-                # exit()
         self.read_config()
-        # exit()
 
     def find_longest(self, input: Union[List[str], Dict[str, Any]]=None) ->int:
         """
@@ -280,9 +272,9 @@ class Plugin:
         debug_data['Python version'] = f'{pv.major}.{pv.minor}.{pv.micro}-{pv.releaselevel}'
         debug_data['Plugins directory'] = os.path.dirname(self.plugin_name)
         debug_data['Plugin path'] = self.plugin_name
-        debug_data['Invoked by'] = self.invoked_by
-        debug_data['Invoked by (full path)'] = self.invoked_by_full
-        debug_data[f'{self.invoked_by} pid'] = self.invoker_pid
+        debug_data['Invoked by'] = self.invoked_by.lstrip('-')
+        debug_data['Invoked by (full path)'] = self.invoked_by_full.lstrip('-')
+        debug_data[f'{self.invoked_by.lstrip("-")} pid'] = self.invoker_pid
         if self.invoked_by == 'SwiftBar':
             debug_data['SwiftBar version'] = f'{os.environ.get("SWIFTBAR_VERSION")} build {os.environ.get("SWIFTBAR_BUILD")}'
         debug_data['Default font family'] = self.font
