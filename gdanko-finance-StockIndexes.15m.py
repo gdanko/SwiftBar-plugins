@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Stock Indexes</xbar.title>
-# <xbar.version>v0.2.0</xbar.version>
+# <xbar.version>v0.3.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show info about the DOW, NASDAQ, S&P indexes</xbar.desc>
