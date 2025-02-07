@@ -21,7 +21,6 @@ from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import NamedTuple, Union
-import argparse
 import os
 import re
 
