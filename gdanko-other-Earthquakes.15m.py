@@ -137,7 +137,7 @@ def main() -> None:
                 quake_details = OrderedDict()
                 plugin.print_menu_item(
                     f'--{feature["properties"]["url"]}',
-                    color=plugin.selected_setting_color,
+                    color='blue',
                     href=feature['properties']['url']
                 )
                 quake_details['Magnitude'] = feature['properties']['mag']
