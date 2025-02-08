@@ -37,13 +37,13 @@ def main() -> None:
                 last = meta['chartPreviousClose']
 
                 if price > last:
-                    updown = u'\u2191'
+                    arrow = u'\u2191'
                     pct_change = f'{util.pad_float((price - last) / last * 100)}%'
                 else:
-                    updown = u'\u2193'
+                    arrow = u'\u2193'
                     pct_change = f'{util.pad_float((last - price) / last * 100)}%'
 
-                plugin_output.append(f'{key} {updown} {pct_change}')
+                plugin_output.append(f'{key} {arrow} {pct_change}')
         plugin.print_menu_title('; '.join(plugin_output))
 
     else:
