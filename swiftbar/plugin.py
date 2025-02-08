@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from pathlib import Path
-from swiftbar import util
+from swiftbar import images, util
 from swiftbar.params import Params, ParamsXbar, ParamsSwiftBar
 from typing import Any, Dict, List, Union
 import argparse
@@ -16,7 +16,10 @@ class Writer(typing.Protocol):
 
 class Plugin:
     def __init__(self, **kwargs) -> None:
-        self.no_brew = kwargs.get('no_brew', False)
+        self.disable_brew = kwargs.get('disable_brew', False)
+        self.font_family = kwargs.get('font', 'AndaleMono')
+        self.font_size = kwargs.get('size', 13)
+
         self._set_path()
 
         self.config_dir = os.path.join(Path.home(), '.config', 'SwiftBar')
@@ -41,10 +44,6 @@ class Plugin:
         }
 
         self.debug = False
-
-        self.font = 'AndaleMono'
-        self.size = 13
-
         self.success = True
         self.error_messages = []
 
@@ -53,13 +52,11 @@ class Plugin:
         self.plugin_basename = os.path.basename(self.plugin_name)
         self.vars_file = os.path.join(self.config_dir, self.plugin_basename) + '.vars.json'
 
-
-
     def _set_path(self):
         """
-        Determine and set the path, accounting for the no_brew flag.
+        Determine and set the path, accounting for the disable_brew flag.
         """
-        if self.no_brew:
+        if self.disable_brew:
             os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
         else:
             if os.path.exists('/opt/homebrew/bin') and os.path.isdir('/opt/homebrew/bin'):
@@ -230,11 +227,11 @@ class Plugin:
 
         # Set default font if one isn't configured
         if not 'font' in params:
-            params['font'] = self.font
+            params['font'] = self.font_family
 
         # Set default font size if one isn't configured
         if not 'size' in params:
-            params['size'] = self.size
+            params['size'] = self.font_size
 
         if 'cmd' in params and type(params['cmd']) == list and len(params['cmd']) > 0:
             params['bash'] = f'"{params["cmd"][0]}"'
@@ -306,7 +303,7 @@ class Plugin:
         if total_mem:
             debug_data['Memory'] = util.format_number(int(total_mem))
         debug_data['Debug flag'] = 'Enabled' if self.debug else 'Disabled'
-        debug_data['Brew enabled'] = False if self.no_brew else True
+        debug_data['Brew enabled'] = False if self.disable_brew else True
         debug_data['Python'] = shutil.which('python3')
         debug_data['Python version'] = f'{pv.major}.{pv.minor}.{pv.micro}-{pv.releaselevel}'
         debug_data['Plugins directory'] = os.path.dirname(self.plugin_name)
@@ -316,8 +313,8 @@ class Plugin:
         debug_data[f'{self.invoked_by.lstrip("-")} pid'] = self.invoker_pid
         if self.invoked_by == 'SwiftBar':
             debug_data['SwiftBar version'] = f'{os.environ.get("SWIFTBAR_VERSION")} build {os.environ.get("SWIFTBAR_BUILD")}'
-        debug_data['Default font family'] = self.font
-        debug_data['Default font size'] = self.size
+        debug_data['Default font family'] = self.font_family
+        debug_data['Default font size'] = self.font_size
         debug_data['Configuration directory'] = self.config_dir
         debug_data['Variables file'] = self.vars_file
         self.print_ordered_dict(debug_data, justify='left', indent=2)
@@ -358,13 +355,13 @@ class Plugin:
                         self.print_menu_item(f'--{setting_title}')
                         if 'valid_values' in data:
                             for valid_value in data['valid_values']:
-                                color = 'blue' if valid_value == self.configuration[name] else 'black'
+                                checked = images.checmark_icon() if valid_value == self.configuration[name] else ''
                                 self.print_menu_item(
                                     f'----{valid_value}',
-                                    color=color,
                                     cmd=[self.plugin_name, setting_flag, valid_value],
                                     terminal=False,
                                     refresh=True,
+                                    image=checked,
                             )
                         elif 'minmax' in data:
                             increment = 10
@@ -372,13 +369,13 @@ class Plugin:
                                 increment = data['setting_configuration']['increment']
                             for number in range(data['minmax'].min, data['minmax'].max + increment):
                                 if number % increment == 0:
-                                    color = 'blue' if number == self.configuration[name] else 'black'
+                                    checked = images.checmark_icon() if number == self.configuration[name] else ''
                                     self.print_menu_item(
                                         f'----{number}',
                                         cmd=[self.plugin_name, setting_flag, number],
-                                        color=color,
                                         refresh=True,
                                         terminal=False,
+                                        image=checked,
                                     )
 
     def render_footer(self):
