@@ -7,7 +7,6 @@
 # <xbar.desc>Display CPU % for user, system, and idle</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-CpuPercent.2s.py</xbar.abouturl>
-# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_CPU_USAGE_EXTENDED_DETAILS_ENABLED=true): Show extended information about the CPU and its cores</xbar.var>
 # <xbar.var>string(VAR_CPU_USAGE_CLICK_TO_KILL=false): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
 # <xbar.var>string(VAR_CPU_USAGE_KILL_SIGNAL=SIGQUIT): The BSD kill signal to use when killing a process</xbar.var>
@@ -18,7 +17,7 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_CPU_USAGE_EXTENDED_DETAILS_ENABLED=true, VAR_CPU_USAGE_CLICK_TO_KILL=false, VAR_CPU_USAGE_KILL_SIGNAL=SIGQUIT, VAR_CPU_USAGE_MAX_CONSUMERS=30]</swiftbar.environment>
+# <swiftbar.environment>[VAR_CPU_USAGE_EXTENDED_DETAILS_ENABLED=true, VAR_CPU_USAGE_CLICK_TO_KILL=false, VAR_CPU_USAGE_KILL_SIGNAL=SIGQUIT, VAR_CPU_USAGE_MAX_CONSUMERS=30]</swiftbar.environment>
 
 from collections import namedtuple, OrderedDict
 from swiftbar import images, util
@@ -127,17 +126,6 @@ def get_top_cpu_usage() -> List[Dict[str, Any]]:
 
 def main() -> None:
     plugin = Plugin(no_brew=True)
-    plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['DEBUG_ENABLED'] = {
-        'default_value': False,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': None,
-            'flag': '--debug',
-            'title': 'the "Debugging" menu',
-        },
-    }
     plugin.defaults_dict['VAR_CPU_USAGE_EXTENDED_DETAILS_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],

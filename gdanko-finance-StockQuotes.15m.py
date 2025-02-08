@@ -7,7 +7,6 @@
 # <xbar.desc>Show info about the specified stock symbols</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-finance-StockQuotes.15m.py</xbar.abouturl>
-# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_STOCK_SYMBOLS="AAPL"): A comma-delimited list of stock symbols</xbar.var>
 # <xbar.var>string(VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED=false): Show Company Info menu</xbar.var>
 # <xbar.var>string(VAR_STOCK_QUOTES_COMPANY_OFFICERS_ENABLED=false): Show Company Officers menu</xbar.var>
@@ -20,7 +19,7 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_STOCK_SYMBOLS=AAPL, VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED=true, VAR_STOCK_QUOTES_KEY_STATS_ENABLED=true, VAR_STOCK_QUOTES_R_AND_P_ENABLED=true, VAR_STOCK_QUOTES_EVENTS_ENABLED=true]</swiftbar.environment>
+# <swiftbar.environment>[VAR_STOCK_SYMBOLS=AAPL, VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED=true, VAR_STOCK_QUOTES_KEY_STATS_ENABLED=true, VAR_STOCK_QUOTES_R_AND_P_ENABLED=true, VAR_STOCK_QUOTES_EVENTS_ENABLED=true]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import images, util, yfinance
@@ -29,17 +28,6 @@ import re
 
 def main() -> None:
     plugin = Plugin()
-    plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['DEBUG_ENABLED'] = {
-        'default_value': False,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': False,
-            'flag': '--debug',
-            'title': 'the "Debugging" menu',
-        },
-    }
     plugin.defaults_dict['VAR_STOCK_QUOTES_SYMBOLS'] = {
         'default_value': 'AAPL',
     }

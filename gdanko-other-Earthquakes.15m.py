@@ -7,7 +7,6 @@
 # <xbar.desc>Show information about earthquakes nearby</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-other-Earthquakes.15m.py</xbar.abouturl>
-# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_EARTHQUAKES_LIMIT=20): The maximum number of quakes to display</xbar.var>
 # <xbar.var>string(VAR_EARTHQUAKES_MIN_MAGNITUDE=0): The minimum magnitude for quakes</xbar.var>
 # <xbar.var>string(VAR_EARTHQUAKES_RADIUS_MILES=50): Radius in miles</xbar.var>
@@ -18,7 +17,7 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_EARTHQUAKES_LIMIT=20, VAR_EARTHQUAKES_MIN_MAGNITUDE=0, VAR_EARTHQUAKES_RADIUS_MILES=50, VAR_EARTHQUAKES_RADIUS_UNIT=m]</swiftbar.environment>
+# <swiftbar.environment>[VAR_EARTHQUAKES_LIMIT=20, VAR_EARTHQUAKES_MIN_MAGNITUDE=0, VAR_EARTHQUAKES_RADIUS_MILES=50, VAR_EARTHQUAKES_RADIUS_UNIT=m]</swiftbar.environment>
 
 from collections import namedtuple, OrderedDict
 from swiftbar import images, request, util
@@ -65,17 +64,6 @@ def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0)
 
 def main() -> None:
     plugin = Plugin()
-    plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['DEBUG_ENABLED'] = {
-        'default_value': False,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': False,
-            'flag': '--debug',
-            'title': 'the "Debugging" menu',
-        },
-    }
     plugin.defaults_dict['VAR_EARTHQUAKES_LIMIT'] = {
         'default_value': 30,
         'minmax': namedtuple('minmax', ['min', 'max'])(5, 50),

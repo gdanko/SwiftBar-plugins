@@ -7,14 +7,13 @@
 # <xbar.desc>Display the number upgradeable Homebrew packages</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-BrewOutdated.30m.py</xbar.abouturl>
-# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[DEBUG_ENABLED=false]</swiftbar.environment>
+# <swiftbar.environment>[]</swiftbar.environment>
 
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -63,18 +62,6 @@ def get_brew_data() -> Union[None, str, Dict[str, list[Package]]]:
 
 def main() -> None:
     plugin = Plugin()
-    plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['DEBUG_ENABLED'] = {
-        'default_value': False,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': False,
-            'flag': '--debug',
-            'title': 'the "Debugging" menu',                
-        },
-    }
-
     plugin.read_config()
     plugin.generate_args()
     plugin.update_json_from_args()
@@ -82,11 +69,11 @@ def main() -> None:
     data, err = get_brew_data()
     if err:
         plugin.print_menu_title('Brew Outdated: Failure')
+        plugin.print_menu_item(err)
     else:
         total = len(data['Formulae']) + len(data['Casks'])
         plugin.print_menu_title(f'Brew Outdated: {total}')
         if total > 0:
-            plugin.print_menu_separator()
             plugin.print_menu_item(
                 f'Update {total} package(s)',
                 cmd=['brew', 'upgrade'],

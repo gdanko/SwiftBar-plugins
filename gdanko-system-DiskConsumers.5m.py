@@ -7,7 +7,6 @@
 # <xbar.desc>Show files and directories using the most disk space for a given path</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-DiskConsumers.5m.py</xbar.abouturl>
-# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_DISK_CONSUMERS_PATHS=/): A comma-delimited list of paths</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
@@ -15,7 +14,7 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_DISK_CONSUMERS_PATHS=/]</swiftbar.environment>
+# <swiftbar.environment>[VAR_DISK_CONSUMERS_PATHS=/]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import images, util
@@ -45,17 +44,6 @@ def get_consumers(path: str=None) -> List[Dict[str, Any]]:
 def main() -> None:
     start_time = util.unix_time_in_ms()
     plugin = Plugin(no_brew=True)
-    plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['DEBUG_ENABLED'] = {
-        'default_value': False,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': None,
-            'flag': '--debug',
-            'title': 'the "Debugging" menu',
-        },
-    }
     plugin.defaults_dict['VAR_DISK_CONSUMERS_PATHS'] = {
         'default_value': '~',
         'type': str,

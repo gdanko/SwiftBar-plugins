@@ -53,17 +53,6 @@ def main() -> None:
     plugin = Plugin(no_brew=True)
     partitions = get_partition_info()
     valid_mountpoints = [partition.mountpoint for partition in partitions]
-    plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['DEBUG_ENABLED'] = {
-        'default_value': False,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': None,
-            'flag': '--debug',
-            'title': 'the "Debugging" menu',
-        },
-    }
     plugin.defaults_dict['VAR_DISK_USAGE_EXTENDED_DETAILS_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],

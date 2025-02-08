@@ -7,7 +7,6 @@
 # <xbar.desc>Display the weather using weatherapi.com</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-weather-WeatherWAPI.10m.py</xbar.abouturl>
-# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_API_KEY=): The OpenWeatherMap API key</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_LOCATION="Los Angeles, CA, US"): The location to use</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_SHOW_FORECAST=true): Show the forecast in the drop down menut</xbar.var>
@@ -18,7 +17,7 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_WEATHER_WAPI_API_KEY=, VAR_WEATHER_WAPI_LOCATION="Los Angeles, CA, US", VAR_WEATHER_WAPI_SHOW_FORECAST=true, VAR_WEATHER_WAPI_UNITS=F]</swiftbar.environment>
+# <swiftbar.environment>[VAR_WEATHER_WAPI_API_KEY=, VAR_WEATHER_WAPI_LOCATION="Los Angeles, CA, US", VAR_WEATHER_WAPI_SHOW_FORECAST=true, VAR_WEATHER_WAPI_UNITS=F]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar.plugin import Plugin
@@ -57,17 +56,6 @@ def pluralize(count: int=0, word: str=None) -> str:
 
 def main() -> None:
     plugin = Plugin()
-    plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['DEBUG_ENABLED'] = {
-        'default_value': False,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': False,
-            'flag': '--debug',
-            'title': 'the "Debugging" menu',
-        },
-    }
     plugin.defaults_dict['VAR_WEATHER_WAPI_LOCATION'] = {
         'default_value': None,
         'type': str,
