@@ -28,7 +28,18 @@ class Plugin:
 
         self.parser = None
         self.args = None
-        self.defaults_dict = None
+        self.defaults_dict = OrderedDict()
+        self.defaults_dict['DEBUG_ENABLED'] = {
+            'default_value': False,
+            'valid_values': [True, False],
+            'type': bool,
+            'setting_configuration': {
+                'default': False,
+                'flag': '--debug',
+                'title': 'the "Debugging" menu',
+            },
+        }
+
         self.debug = False
 
         self.font = 'AndaleMono'
@@ -43,11 +54,14 @@ class Plugin:
         self.vars_file = os.path.join(self.config_dir, self.plugin_basename) + '.vars.json'
 
     def _set_path(self):
+        """
+        Determine and set the path, accounting for the no_brew flag.
+        """
         if self.no_brew:
             os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
         else:
             if os.path.exists('/opt/homebrew/bin') and os.path.isdir('/opt/homebrew/bin'):
-                if os.path.exists('/opt/homebrew/bin/brew') and os.path.isdir('/opt/homebrew/bin/brew'):
+                if os.path.exists('/opt/homebrew/bin/brew'):
                     os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
                 else:
                     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
