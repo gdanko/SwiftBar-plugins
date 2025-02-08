@@ -22,6 +22,12 @@ class GeoData(NamedTuple):
     Region: str
     Timezone: str
 
+class Mountpoint(NamedTuple):
+    device: str
+    mountpoint: str
+    fstype: str
+    opts: List[str]
+
 def get_signal_map() -> Dict[str, signal.Signals]:
     """
     Return a dict containing all valid signals.
@@ -95,6 +101,9 @@ def get_macos_version() -> str:
     return f'macOS {macos_families[version_string]} {os_version.part1}.{os_version.part2}'
 
 def pprint(input: Any=None):
+    """
+    Pretty print the supplied input.
+    """
     pp(input)
     print()
 
@@ -112,10 +121,16 @@ def execute_command(command: str=None, input: Optional[Any]=None):
     return p.returncode, stdout, stderr
 
 def brew_package_installed(package: str=None) -> bool:
+    """
+    Check if thes upplied homebrew package is installed.
+    """
     returncode, stdout, stderr = execute_command(f'brew list {package}')
     return True if returncode == 0 else False
 
 def geolocate_me() -> Union[Dict, None]:
+    """
+    Attempt to geolocate you based on your public IP address.
+    """
     headers = {'User-Agent': 'curl/8.7.1'}
     response, data, error = request.swiftbar_request(host='ifconfig.io', headers=headers)
     if response.status == 200 and data:
@@ -175,15 +190,26 @@ def find_valid_wifi_interfaces() -> List[str]:
         matches = re.findall(pattern, stdout)
         return sorted(matches) if (matches and type(matches) == list) else ['en0']
 
-def find_valid_mountpoints() -> List[str]:
+def find_partitions() -> List[Mountpoint]:
     """
-    Find and return a list of all mounted filesystems.
+    Find and return a list of all valid partitions.
     """
+    partitions: List[Mountpoint]= []
     returncode, stdout, _ = execute_command('mount')
-    if returncode == 0  and stdout:
-        pattern = r'/dev/disk[s0-9]+ on\s+([^\)]+)\s+\('
-        matches = re.findall(pattern, stdout)
-        return sorted(matches) if (matches and type(matches) == list) else ['/']
+    if returncode == 0:
+        entries = stdout.split('\n')
+        for entry in entries:
+            match = re.search(r'^(/dev/disk[s0-9]+)\s+on\s+([^(]+)\s+\((.*)\)', entry)
+            if match:
+                device = match.group(1)
+                mountpoint = match.group(2)
+                opts_string = match.group(3)
+                opts_list = re.split('\s*,\s*', opts_string)
+                fstype = opts_list[0]
+                opts = opts_list[1:]
+                partitions.append(Mountpoint(device=device, mountpoint=mountpoint, fstype=fstype, opts=opts))
+        return partitions
+    return ['/']
 
 def valid_storage_units() -> List[str]:
     """
