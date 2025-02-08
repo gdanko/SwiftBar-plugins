@@ -77,6 +77,20 @@ This combination of tweaks and workarounds allows both xbar and SwiftBar to exec
     * Variables listed in `VAR_SOMETHING = value` format
     * Environment variables listed in `VAR_SOMETHING = value` format
 
+## The `Plugin()` Class
+The plugin class is used by all plugins to do things like define plugin settings, render the `Settings` menu, and more. In a very simple example, you can do something like this.
+```
+plugin = Plugin()
+plugin.print_menu_title('Plugin Output')
+plugin.render_footer()
+```
+
+### `Plugin()` Parameters
+You can define a few things when you instantiate an instance of the class:
+* `disable_brew` excludes `${HOMEBREW_PREFIX}/bin` and `${HOMEBREW_PREFIX}/sbin` from the PATH when you want to use built-in versions of certain binaries.
+* `font_family` defines the default font family for the plugin's output. You can, of course, override this with the `font` parameter when using something like `plugin.print_menu_item()`.
+* `font_size` defines the default font size for the plugin's output. You can, of course, override this with the `size` parameter when using something like `plugin.print_menu_item()`.
+
 ## The `defaults_dict`
 The defaults_dict is an instance of `collections.OrderedDict` that does a few things
 * Create a set of defaults for all of the variables used by the plugin.
@@ -266,7 +280,7 @@ Each entry is mapped to one of the xbar-style `<xbar.var></xbar.var>` variable/c
 First let's look at the code for a simple plugin that pulls information about system swap usage
 ```python
 def main() -> None:
-    plugin = Plugin(no_brew=True)
+    plugin = Plugin(disable_brew=True)
     plugin.defaults_dict['VAR_SWAP_USAGE_UNIT'] = {
         'default_value': 'auto',
         'valid_values': util.valid_storage_units(),
@@ -291,9 +305,9 @@ def main() -> None:
 ```
 
 Now we'll explain what is happening.
-* Now we're create an instance of the `Plugin()` class, passing the `no_brew` flag. This flag tells the plugin not to include `${HOMEBREW_PREFIX}/bin` or `${HOMEBREW_PREFIX}/sbin` in the path since we want to use the OS versions of certain binaries.
+* We create an instance of the `Plugin()` class, passing the `disable_brew` flag. This flag tells the plugin not to include `${HOMEBREW_PREFIX}/bin` or `${HOMEBREW_PREFIX}/sbin` in the path since we want to use the OS versions of certain binaries.
 * We can now add additional variables to `plugin.defaults_dict`. If you have not read the section about this dictionary, please do so now.
-* After addin variable definitions, we make a call to `plugin.setup()`. This function deos the following:
+* After adding variable definitions, we make a call to `plugin.setup()`. This function does the following:
     * Calls `plugin.read_config()` to sanitize and populate `plugin.configuation` from the `.vars.json` file if it exists. If the file does not exist, one is created from the defaults. We call it here to get the values of any booleans so that if the plugin is executed with a flag like `--debug`, we can now compare the existing setting with the new setting and make the change to the `.vars.json` file as needed.
     * Calls `plugin.generate_args()` to generate the `argparse.Namespace` object from `plugin.defaults_dict` and parse the command line arguments.
     * Calls `plugin.update_json_from_args()`. This function parses the `plugin.parser` and gathers the arguments sent to the script. For each argument that was passed, it compares the passed value with the existing value stored in `plugin.configuration`. If we find an instance where a change was made, we pass the variable name, e.g., `VAR_SWAP_USAGE_DEBUG_ENABLED` and the new value to `plugin.update_setting()`. This function reads the `.vars.json` file to a dictionary, updates the changed setting, and rewrites the file. After rewriting the file, `plugin.read_config()` is called to repopulate `plugin.configuration`.
