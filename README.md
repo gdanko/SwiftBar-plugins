@@ -58,10 +58,12 @@ This combination of tweaks and workarounds allows both xbar and SwiftBar to exec
 * Plugins should be able to automatically generate the argparer from `plugin.defaults_dict`.
 * Plugins should be able to automatically generate the settings menu from `plugin.defaults_dict`.
 * Automatically generate a plugin configration file using default values for every plugin that can use one. Its location is based on `plugin.config_dir` and `plugin.plugin_name`. For example, if you're using SwiftBar and your plugin name is `fancy-plugin-DoSomething.10s.py` then your plugin configuration file's path will be `~/.config/SwiftBar/fancy-plugin-DoSomething.10s.py.vars.json`.
-* Most plugins have a `Settings` menu that can modify MOST of the settings. Obviously, things like API keys need to be manually configured by hand editing the JSON.
-* Most plugins have a debugging menu that can be toggled via the plugin's `Settings` menu which shows the following:
+* All plugins have a `Settings` menu that can modify MOST of the settings. Obviously, things like API keys need to be manually configured by hand editing the JSON. If a specific setting displays a list of options, e.g., network interfaces, the currently selected option will have a checkmark next to it. The selected option used to be colored differently, but I opted to use a checkmark for the sake of accessibility.
+* All plugins have a debugging menu that can be toggled via the plugin's `Settings` menu which shows the following:
     * OS version, e.g., `macOS 15.2 (Sequoia)`
     * Installed system memory
+    * Debug flag enabled
+    * Brew enabled (whether or not `${HOMEBREW_PREFIX}/bin` and `${HOMEBREW_PREFIX}/sbin` are included in the PATH)
     * Python binary path
     * Python version
     * Plugins directory
@@ -74,22 +76,8 @@ This combination of tweaks and workarounds allows both xbar and SwiftBar to exec
     * Default font size
     * Plugin configuration directory
     * Plugin JSON variables file path
-    * Variables listed in `VAR_SOMETHING = value` format
-    * Environment variables listed in `VAR_SOMETHING = value` format
-
-## The `Plugin()` Class
-The plugin class is used by all plugins to do things like define plugin settings, render the `Settings` menu, and more. In a very simple example, you can do something like this.
-```
-plugin = Plugin()
-plugin.print_menu_title('Plugin Output')
-plugin.render_footer()
-```
-
-### `Plugin()` Parameters
-You can define a few things when you instantiate an instance of the class:
-* `disable_brew` excludes `${HOMEBREW_PREFIX}/bin` and `${HOMEBREW_PREFIX}/sbin` from the PATH when you want to use built-in versions of certain binaries.
-* `font_family` defines the default font family for the plugin's output. You can, of course, override this with the `font` parameter when using something like `plugin.print_menu_item()`.
-* `font_size` defines the default font size for the plugin's output. You can, of course, override this with the `size` parameter when using something like `plugin.print_menu_item()`.
+    * Variables listed in `FOO = bar` format
+    * Environment variables listed in `FOO = bar` format
 
 ## The `defaults_dict`
 The defaults_dict is an instance of `collections.OrderedDict` that does a few things
@@ -156,6 +144,47 @@ Each entry is mapped to one of the xbar-style `<xbar.var></xbar.var>` variable/c
     * `increment` - If the setting block uses `minmax`, this is the increment for displaying the list. For example, in the above list, `VAR_EARTHQUAKES_RADIUS_MILES` has a `min` of 50 and a `max` of 500. With an `increment` of 50, the list will be rendered as 50, 100, 150.....500. If one is not specified, the default is 10. I will eventually programatically change the logic to adjust the default increment based on the the size of the span from `min` to `max`.
     * `title` - This is an important setting. This is the title of the `Settings` menu item. If the variable type is `bool`, the menu item will be either `Enable {title}` or `Disable {title}`, depending on the current state of the variable. For this reason, the title, in this example, is `the "Debugging" menu`. For every other type of setting, you can just put the name of the item, e.g., `Radius` or `Unit`.
 
+Note, you should follow this format when setting the `default` field in a `setting_configuration` block:
+* `bool` = `False`
+* `float` = `None`
+* `int` = `None`
+* `str` = `None`
+
+## The `Plugin()` Class
+The plugin class is used by all plugins to do things like define plugin settings, render the `Settings` menu, and more. In a very simple example, you can do something like this.
+```
+plugin = Plugin()
+plugin.print_menu_title('Plugin Output')
+plugin.render_footer()
+```
+
+### `Plugin()` Parameters
+You can define a few things when you instantiate an instance of the class:
+* `disable_brew` excludes `${HOMEBREW_PREFIX}/bin` and `${HOMEBREW_PREFIX}/sbin` from the PATH when you want to use built-in versions of certain binaries.
+* `font_family` defines the default font family for the plugin's output. You can, of course, override this with the `font` parameter when using something like `plugin.print_menu_item()`.
+* `font_size` defines the default font size for the plugin's output. You can, of course, override this with the `size` parameter when using something like `plugin.print_menu_item()`.
+
+### Noteable `Plugin()` Methods
+* `plugin._set_path()` - Executed at instantiation, this function sets the path based on whether or not homebrew is installed. If the `disable_brew` parameter is passed, homebrew paths are excluded automatically.
+* `plugin._get_config_dir()` - Executed at instantiation, this function sets `plugin.invoked_by` by examining the parent pid of the executed plugin. It then uses that value to set the location of the configuration directory.
+* `plugin._create_config_dir()` - Executed at instantiation, this function should only be when `plugin.invoked_by` is `SwiftBar`, since plugin `.var.json` files cannot live in the same directory as the plugins themselves.
+* `plugin.setup()` - This has to be executed after adding any settings to `plugin.defaults_dict`. It executes the followin methods:
+    * `plugin._read_config()` - This method is used to sanitize and populate `plugin.configuation` from the `.vars.json` file if it exists. If the file does not exist, one is created from the defaults. We call it here to get the values of any booleans so that if the plugin is executed with a flag like `--debug`, we can now compare the existing setting with the new setting and make the change to the `.vars.json` file as needed.
+    * `plugin._generate_args()` - This method generates the `argparse.Namespace` object from `plugin.defaults_dict` and parse the command line arguments.
+    * `plugin._update_json_from_args()` - This method parses `plugin.parser` and gathers the arguments sent to the script. For each argument that was passed, it compares the passed value with the existing value stored in `plugin.configuration`. If we find an instance where a change was made, we pass the variable name, e.g., `VAR_SWAP_USAGE_DEBUG_ENABLED` and the new value to `plugin.update_setting()`. This function reads the `.vars.json` file to a dictionary, updates the changed setting, and rewrites the file. After rewriting the file, `plugin.read_config()` is called to repopulate `plugin.configuration`.
+* `plugin._write_config()` - This method rewrites the plugin's `.vars.json` file any time a setting is changed.
+* `plugin._write_default_vars_file()` - This method writes the `.vars.json` file from the contents of `plugin.defaults_dict`. It's used when a plugin's `.vars.json` file cannot be found.
+* `plugin._rewrite_vars_file()` - This method completely rewrites the plugin's `.vars.json` file from the contents of `self.configuration`.
+* `plugin.sanitize_params()` - This method takes an arbitrary list of params and returns an instance of `ParamsXbar` or `ParamsSwiftBar`, depending on the value of `plugin.invoked_by`.
+* `plugin.print_ordered_dict()` - This method accepts a `collections.OrderedDict` object and renders it cleanly. It allows you to pass the entire dict instead of passing individual lines.
+* `plugin.print_menu_item()` - This method accepts any of the parameters acceptable by `self.invoked_by` and renders it.
+* `plugin.print_menu_separator()` - This method prints `---` to separate menu items.
+* `plugin.print_update_time()` - This method prints the last date and time the plugin was updated. It's used by `plugin.print_menu_title()`.
+* `plugin._update_setting()` - This method is invoked by `plugin._update_json_from_args()`. When the user changes a setting, the plugin is invoked with a unique flag, which tells `Plugin()` that the setting needs to be updated in the `.var.json` file.
+* `plugin.find_longest` - This method accepts either a list or a dictionary. It returns the length of the longest member of the list, or in the case of a dictionary, the length of the longest dictionary key. It's used to properly pad lists of strings for proper formatting.
+* `plugin.render_settings_menu()` - This method is invoked by `plugin.render_footer()` and renders the contents of the `Settings` menu.
+* `plugin.render_debugging_menu()` - This method is invoked by `plugin.render_footer()` and renders the contents of the `Debugging` menu.
+
 ## Plugins
 * [Finance](#finance)
 * [Network](#network)
@@ -171,7 +200,11 @@ Each entry is mapped to one of the xbar-style `<xbar.var></xbar.var>` variable/c
     * Features
         * Show lots and lots of detail about one or more stock symbols.
     * Settings
-        * Toggle the `Debugging` menu
+        * Toggle the `Company Info` sub-menu
+        * Toggle the `Company Officers` sub-menu
+        * Toggle the `Key Stats` sub-menu
+        * Toggle the `Ratios and Profitability` sub-menu
+        * Toggle the `Events` sub-menu
 
 ### Network
 * `gdanko-network-NetworkThroughput.2s.py`
@@ -179,7 +212,6 @@ Each entry is mapped to one of the xbar-style `<xbar.var></xbar.var>` variable/c
         * Display the TX/RX rate for the specified interface.
         * Display interface flags, hardware address, IPV4 address, IPV6 address, and public IP address (if applicable).
     * Settings
-        * Toggle the `Debugging` menu
         * Toggle verbose mode, which shows information about errors and dropped packets
         * Select the interface to view
 * `gdanko-network-WifiSignal.30s.py`
@@ -187,45 +219,43 @@ Each entry is mapped to one of the xbar-style `<xbar.var></xbar.var>` variable/c
         * Display the specified interface's connection strength to its configured SSID.
         * Display device name, channel number, WiFi mode, signal, noise, and signal quality.
     * Settings
-        * Toggle the `Debugging` menu
+        * Toggle display of extended WiFi information, e.g., Mode, Signal, Noise, and so on
         * Select the interface to view
 
 ### System
 * `gdanko-stystem-BrewOutdated.30m.py`
     * Features
         * Display a list of outdated homebrew packages with an option to install one or all of them.
-    * Settings
-        * Toggle the `Debugging` menu
 * `gdanko-system-CpuPercent.2s.py`
     * Features
         * Display average user, system, and idle times for the CPU.
         * Display user, system, and idle times for each individual core.
         * Display top CPU consumers with an option to attempt to kill those owned by you.
     * Settings
-        * Toggle the `Debugging` menu
+        * Toggle display of extended CPU information, e.g., CPU model, CPU frequency, and so on
         * Toggle "Click to Kill" functionality
         * Set the kill signal to use when attempting to kill a process
         * Set the maximum number of top CPU consumers to display
 * `gdanko-system-DiskConsumers.5m.py`
     * Features
         * Display the largest disk consumers for one or more paths, with the ability to open the selected item.
-    * Settings
-        * Toggle the `Debugging` menu
+
 * `gdanko-system-DiskUsage.2s.py`
     * Features
         * Display used/total disk space for the specified mountpoint.
         * Display the mountpoint, device name, filesystem type, and mount options as shown by `mount (8)`.
     * Settings
-        * Toggle the `Debugging` menu
+        * Toggle display of extended partition information, e.g., mountpoint, device name, and so on
         * Select the mountpoint to view
         * Select the unit for displaying the data, e.g., `M` or `Gi`
+        * Select the output format, e.g., `Used / Total`, `% Used`, or `% Free`
 * `gdanko-system-MemoryUsage.2s.py`
     * Features
         * Display used/total system memory.
         * Display memory manufacturer and type (if possible), total memory, available memory, used memory, free memory, active memory, inactive memory, wired memory, and speculative memory.
         * Display top memory consumers with an option to attempt to kill those owned by you.
     * Settings
-        * Toggle the `Debugging` menu
+        * Toggle display of extended memory information, e.g., memory manufacter, memory type, and so on
         * Toggle "Click to Kill" functionality
         * Set the kill signal to use when attempting to kill a process
         * Set the maximum number of top memory consumers to display
@@ -234,19 +264,14 @@ Each entry is mapped to one of the xbar-style `<xbar.var></xbar.var>` variable/c
     * Features
         * Display used/total swap memory.
     * Settings
-        * Toggle the `Debugging` menu
         * Select the unit for displaying the data, e.g., `M` or `Gi`
 * `gdanko-system-SystemUpdates.15m.py`
     * Features
         * Display a list of available system updates and their version numbers, with an option to install them individually.
-    * Settings
-        * Toggle the `Debugging` menu
 * `gdanko-system-Uptime.2s.py`
     * Features
         * Display system uptime.
         * Display last boot time.
-    * Settings
-        * Toggle the `Debugging` menu
 
 ### Weather
 * `gdanko-weather-WeatherWAPI.10m.py`
@@ -255,7 +280,6 @@ Each entry is mapped to one of the xbar-style `<xbar.var></xbar.var>` variable/c
         * Display "feels like" temperaure, pressure, visibility, condition, dew point, humidity, precipitation, wind, wind chill, heat index, UV index.
         * Display up to an eight day forecast, showing low/high temperature, average temperature, average visibility, condition, average humidity, total precipitation, chance of rain, chance of snow, UV index, sunrise time, sunset time, moonrise time, moonset time, and moon phase.
     * Settings
-        * Toggle the `Debugging` menu
         * Toggle displaying the `x Day Forecast` menu
         * Set the units in either `C` or `F`
 
@@ -266,10 +290,9 @@ Each entry is mapped to one of the xbar-style `<xbar.var></xbar.var>` variable/c
         * Display a list of recent earthquakes based on your location.
         * Display the magnitude, time of occurence, updated time, status, as well as a clickable link for the quake's details page at usgs.gov.
     * Settings
-        * Toggle the `Debugging` menu
         * Set the limit for the number of results to display
         * Set the minimum magnitude
-        * Set the radius based on your location
+        * Set the maximum radius based on your location
         * Set the unit in either `km` or `m`
 
 ## How Do the Settings Toggles Work?
@@ -307,10 +330,7 @@ def main() -> None:
 Now we'll explain what is happening.
 * We create an instance of the `Plugin()` class, passing the `disable_brew` flag. This flag tells the plugin not to include `${HOMEBREW_PREFIX}/bin` or `${HOMEBREW_PREFIX}/sbin` in the path since we want to use the OS versions of certain binaries.
 * We can now add additional variables to `plugin.defaults_dict`. If you have not read the section about this dictionary, please do so now.
-* After adding variable definitions, we make a call to `plugin.setup()`. This function does the following:
-    * Calls `plugin.read_config()` to sanitize and populate `plugin.configuation` from the `.vars.json` file if it exists. If the file does not exist, one is created from the defaults. We call it here to get the values of any booleans so that if the plugin is executed with a flag like `--debug`, we can now compare the existing setting with the new setting and make the change to the `.vars.json` file as needed.
-    * Calls `plugin.generate_args()` to generate the `argparse.Namespace` object from `plugin.defaults_dict` and parse the command line arguments.
-    * Calls `plugin.update_json_from_args()`. This function parses the `plugin.parser` and gathers the arguments sent to the script. For each argument that was passed, it compares the passed value with the existing value stored in `plugin.configuration`. If we find an instance where a change was made, we pass the variable name, e.g., `VAR_SWAP_USAGE_DEBUG_ENABLED` and the new value to `plugin.update_setting()`. This function reads the `.vars.json` file to a dictionary, updates the changed setting, and rewrites the file. After rewriting the file, `plugin.read_config()` is called to repopulate `plugin.configuration`.
+* After adding variable definitions, we make a call to `plugin.setup()`. This is documented in the `Plugin()` section.
 * Once all of that stuff is done, we call `get_swap_usage()` to gather the data. If the data is retrieved successfully we render the output happily, otherwise we display an error.
 * The last call is to `plugin.render_footer()`. This function does three things:
     * It renders the "Debugging" menu if debugging is enabled.
