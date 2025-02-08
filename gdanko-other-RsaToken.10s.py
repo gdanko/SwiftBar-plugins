@@ -7,14 +7,14 @@
 # <xbar.desc>fetches current rsa token, and allows you to copy your pin from keychain to your paste buffer</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-RsaToken.10s.py</xbar.abouturl>
-# <xbar.var>string(VAR_RSA_TOKEN_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_RSA_TOKEN_DEBUG_ENABLED=false]</swiftbar.environment>
+# <swiftbar.environment>[DEBUG_ENABLED=false]</swiftbar.environment>
 
 # Credit to Marcus D'Camp for the original, which was a shell script.
 # Requirements:
@@ -90,10 +90,9 @@ def pbcopy(text: str=None) -> None:
     util.execute_command('pbcopy', input=text)
     
 def main() -> None:
-    os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_RSA_TOKEN_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
     }
@@ -101,10 +100,10 @@ def main() -> None:
     plugin.read_config()
     args = configure()
     if args.debug:
-        plugin.update_setting('VAR_RSA_TOKEN_DEBUG_ENABLED', True if plugin.configuration['VAR_RSA_TOKEN_DEBUG_ENABLED'] == False else False)
+        plugin.update_setting('DEBUG_ENABLED', True if plugin.configuration['DEBUG_ENABLED'] == False else False)
 
     plugin.read_config()
-    debug_enabled = plugin.configuration['VAR_RSA_TOKEN_DEBUG_ENABLED']
+    debug_enabled = plugin.configuration['DEBUG_ENABLED']
     error = setup()
     if error:
         plugin.print_menu_title('RSA Token Error')
