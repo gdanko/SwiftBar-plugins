@@ -42,7 +42,7 @@ class InterfaceData(NamedTuple):
     inet6: str
 
 def get_data(interface: str=None) -> Union[IoCounters, None]:
-    returncode, stdout, stderr = util.execute_command(f'netstat -bid {interface}')
+    returncode, stdout, stderr = util.execute_command(f'netstat -bid -I {interface}')
     if returncode == 0 and stdout:
         match = re.search(f'^({interface}\s+.*)', stdout, re.MULTILINE)
         if match:
@@ -110,10 +110,7 @@ def main() -> None:
             'title': 'Interface',
         },
     }
-
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     interface_data = get_interface_data(plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE'])
     public_ip = get_public_ip()
