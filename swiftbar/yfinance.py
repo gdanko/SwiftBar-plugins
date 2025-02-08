@@ -98,7 +98,7 @@ def get_quote_summary(crumb: str=None, cookie: str=None, symbol: str=None, lang:
     else:
         return None
 
-def get_chart(crumb: str=None, cookie: str=None, ticker: str=None, interval:str = '1d', range: str='1d', lang: str='en', region: str='US', comparisons: List[str]=None):
+def get_chart(crumb: str=None, cookie: str=None, ticker: str=None, interval:str = '1d', range: str='1d', lang: str='en', region: str='US', comparisons: List[str]=[]):
     headers = {'Cookie': cookie, 'User-Agent': request.get_useragent()}
     response, output, _ = request.swiftbar_request(
         host='query2.finance.yahoo.com',
