@@ -16,7 +16,6 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_DISK_CONSUMERS_PATHS=/]</swiftbar.environment>
 
-from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Any, Dict, List

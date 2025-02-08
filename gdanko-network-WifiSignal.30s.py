@@ -53,7 +53,6 @@ def main() -> None:
             'title': 'Interface',
         },
     }
-
     plugin.setup()
 
     my_interface = None

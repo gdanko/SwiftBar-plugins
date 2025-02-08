@@ -19,7 +19,7 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[VAR_CPU_USAGE_EXTENDED_DETAILS_ENABLED=true, VAR_CPU_USAGE_CLICK_TO_KILL=false, VAR_CPU_USAGE_KILL_SIGNAL=SIGQUIT, VAR_CPU_USAGE_MAX_CONSUMERS=30]</swiftbar.environment>
 
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Any, Dict, List, NamedTuple

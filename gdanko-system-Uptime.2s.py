@@ -15,7 +15,6 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[]</swiftbar.environment>
 
-from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import NamedTuple, Union

@@ -15,7 +15,6 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[]</swiftbar.environment>
 
-from collections import OrderedDict
 from dataclasses import dataclass
 from swiftbar import images, util
 from swiftbar.plugin import Plugin

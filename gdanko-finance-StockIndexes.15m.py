@@ -14,7 +14,6 @@
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 
-from collections import OrderedDict
 from swiftbar import images, util, yfinance
 from swiftbar.plugin import Plugin
 
