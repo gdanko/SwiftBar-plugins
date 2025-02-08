@@ -7,19 +7,19 @@
 # <xbar.desc>Show info about the specified stock symbols</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-finance-StockQuotes.15m.py</xbar.abouturl>
-# <xbar.var>string(VAR_STOCK_SYMBOLS="AAPL"): A comma-delimited list of stock symbols</xbar.var>
-# <xbar.var>string(VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED=false): Show Company Info menu</xbar.var>
-# <xbar.var>string(VAR_STOCK_QUOTES_COMPANY_OFFICERS_ENABLED=false): Show Company Officers menu</xbar.var>
-# <xbar.var>string(VAR_STOCK_QUOTES_KEY_STATS_ENABLED=false): Show Key Stats menu</xbar.var>
-# <xbar.var>string(VAR_STOCK_QUOTES_R_AND_P_ENABLED=false): Ratios and Profitability debugging menu</xbar.var>
-# <xbar.var>string(VAR_STOCK_QUOTES_EVENTS_ENABLED=false): Show Events menu</xbar.var>
+# <xbar.var>string(STOCK_SYMBOLS="AAPL"): A comma-delimited list of stock symbols</xbar.var>
+# <xbar.var>string(COMPANY_INFO_ENABLED=false): Show Company Info menu</xbar.var>
+# <xbar.var>string(COMPANY_OFFICERS_ENABLED=false): Show Company Officers menu</xbar.var>
+# <xbar.var>string(KEY_STATS_ENABLED=false): Show Key Stats menu</xbar.var>
+# <xbar.var>string(RATIOS_AND_PROFIABILITY_ENABLED=false): Ratios and Profitability debugging menu</xbar.var>
+# <xbar.var>string(EVENTS_ENABLED=false): Show Events menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_STOCK_SYMBOLS=AAPL, VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED=true, VAR_STOCK_QUOTES_KEY_STATS_ENABLED=true, VAR_STOCK_QUOTES_R_AND_P_ENABLED=true, VAR_STOCK_QUOTES_EVENTS_ENABLED=true]</swiftbar.environment>
+# <swiftbar.environment>[STOCK_SYMBOLS=AAPL, COMPANY_INFO_ENABLED=true, COMPANY_OFFICERS_DNABLED=true, KEY_STATS_ENABLED=true, RATIOS_AND_PROFIABILITY_ENABLED=true, EVENTS_ENABLED=true]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import images, util, yfinance
@@ -28,10 +28,10 @@ import re
 
 def main() -> None:
     plugin = Plugin()
-    plugin.defaults_dict['VAR_STOCK_QUOTES_SYMBOLS'] = {
+    plugin.defaults_dict['SYMBOLS'] = {
         'default_value': 'AAPL',
     }
-    plugin.defaults_dict['VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED'] = {
+    plugin.defaults_dict['COMPANY_INFO_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
         'type': bool,
@@ -41,7 +41,7 @@ def main() -> None:
             'title': 'the "Company Info" menu',
         },
     }
-    plugin.defaults_dict['VAR_STOCK_QUOTES_COMPANY_OFFICERS_ENABLED'] = {
+    plugin.defaults_dict['COMPANY_OFFICERS_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
         'type': bool,
@@ -51,7 +51,7 @@ def main() -> None:
             'title': 'the "Company Officers" menu',
         },
     }
-    plugin.defaults_dict['VAR_STOCK_QUOTES_KEY_STATS_ENABLED'] = {
+    plugin.defaults_dict['KEY_STATS_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
         'type': bool,
@@ -61,7 +61,7 @@ def main() -> None:
             'title': 'the "Key Stats" menu',
         },
     }
-    plugin.defaults_dict['VAR_STOCK_QUOTES_R_AND_P_ENABLED'] = {
+    plugin.defaults_dict['RATIOS_AND_PROFIABILITY_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
         'type': bool,
@@ -71,7 +71,7 @@ def main() -> None:
             'title': 'the "Ratios and Profitability" menu',
         },
     }
-    plugin.defaults_dict['VAR_STOCK_QUOTES_EVENTS_ENABLED'] = {
+    plugin.defaults_dict['EVENTS_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
         'type': bool,
@@ -88,7 +88,7 @@ def main() -> None:
 
     cookie, crumb = yfinance.get_cookie_and_crumb()
     if cookie and crumb:
-        for symbol in re.split(r'\s*,\s*', plugin.configuration['VAR_STOCK_QUOTES_SYMBOLS']):
+        for symbol in re.split(r'\s*,\s*', plugin.configuration['SYMBOLS']):
             company_data = yfinance.get_quote_summary(
                 cookie=cookie,
                 crumb=crumb,
@@ -103,18 +103,18 @@ def main() -> None:
                 price = info['currentPrice']
                 last = info['previousClose']
                 if price > last:
-                    updown = u'\u2191'
-                    updown_amount = f'+{util.pad_float((price - last))}'
+                    arrow = u'\u2191'
+                    change_amount = f'+{util.pad_float((price - last))}'
                     pct_change = f'+{util.pad_float((price - last) / last * 100)}'
                 else:
-                    updown = u'\u2193'
-                    updown_amount = f'-{util.pad_float((float(last - price)))}'
+                    arrow = u'\u2193'
+                    change_amount = f'-{util.pad_float((float(last - price)))}'
                     pct_change = f'-{util.pad_float((last - price) / last * 100)}'
-                plugin_output.append(f'{symbol} {util.pad_float(price)} {updown} {updown_amount} ({pct_change}%)')
+                plugin_output.append(f'{symbol} {util.pad_float(price)} {arrow} {change_amount} ({pct_change}%)')
 
             plugin.print_menu_title('; '.join(plugin_output))
-            for i in range (len(re.split(r'\s*,\s*', plugin.configuration['VAR_STOCK_QUOTES_SYMBOLS']))):
-                symbol = re.split(r'\s*,\s*', plugin.configuration['VAR_STOCK_QUOTES_SYMBOLS'])[i]
+            for i in range (len(re.split(r'\s*,\s*', plugin.configuration['SYMBOLS']))):
+                symbol = re.split(r'\s*,\s*', plugin.configuration['SYMBOLS'])[i]
                 symbol_info = info_dict[symbol]
 
                 company_info = OrderedDict()
@@ -134,17 +134,17 @@ def main() -> None:
                     company_info['Phone'] = symbol_info['phone']
                 
                 if 'companyOfficers' in symbol_info and len(symbol_info['companyOfficers']) > 0:
-                    people = {}
+                    company_officers = {}
                     for entry in symbol_info['companyOfficers']:
-                        people[entry['name']] = OrderedDict()
+                        company_officers[entry['name']] = OrderedDict()
                         if 'title' in entry:
-                            people[entry['name']]['Title'] = entry['title']
+                            company_officers[entry['name']]['Title'] = entry['title']
                         if 'totalPay' in entry:
-                            people[entry['name']]['Total Pay'] = util.numerize(entry['totalPay']['raw'])
+                            company_officers[entry['name']]['Total Pay'] = util.numerize(entry['totalPay']['raw'])
                         if 'yearBorn' in entry:
-                            people[entry['name']]['Year Born'] = entry['yearBorn']
+                            company_officers[entry['name']]['Year Born'] = entry['yearBorn']
                         if 'age' in entry:
-                            people[entry['name']]['Age'] = entry['age']
+                            company_officers[entry['name']]['Age'] = entry['age']
                 
                 key_stats  = OrderedDict()
                 if 'open' in symbol_info:
@@ -239,32 +239,32 @@ def main() -> None:
                 if 'lastSplitFactor' in symbol_info and 'lastSplitDate' in symbol_info:
                     events['Last Split'] = f'{symbol_info["lastSplitFactor"]} on {util.unix_to_human(symbol_info["lastSplitDate"])}'
                 
-                if (plugin.configuration['VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED'] and len(company_info) > 0) or (plugin.configuration['VAR_STOCK_QUOTES_KEY_STATS_ENABLED'] and len(key_stats) > 0) or (plugin.configuration['VAR_STOCK_QUOTES_R_AND_P_ENABLED'] and len(ratios_and_profitability) > 0) or (plugin.configuration['VAR_STOCK_QUOTES_EVENTS_ENABLED'] and len(events) > 0):
+                if (plugin.configuration['COMPANY_INFO_ENABLED'] and len(company_info) > 0) or (plugin.configuration['KEY_STATS_ENABLED'] and len(key_stats) > 0) or (plugin.configuration['RATIOS_AND_PROFIABILITY_ENABLED'] and len(ratios_and_profitability) > 0) or (plugin.configuration['EVENTS_ENABLED'] and len(events) > 0):
                     plugin.print_menu_item(symbol)
 
-                if plugin.configuration['VAR_STOCK_QUOTES_COMPANY_INFO_ENABLED']:
+                if plugin.configuration['COMPANY_INFO_ENABLED']:
                     if len(company_info) > 0:
                         plugin.print_menu_item('--Company Info')
                         plugin.print_ordered_dict(company_info, justify='left', indent=4)
                 
-                if plugin.configuration['VAR_STOCK_QUOTES_COMPANY_OFFICERS_ENABLED']:
-                    if len(people) > 0:
+                if plugin.configuration['COMPANY_OFFICERS_ENABLED']:
+                    if len(company_officers) > 0:
                         plugin.print_menu_item('--Company Officers')
-                        for person, data in people.items():
+                        for person, data in company_officers.items():
                             plugin.print_menu_item(f'----{person}')
                             plugin.print_ordered_dict(data, justify='left', indent=6)
 
-                if plugin.configuration['VAR_STOCK_QUOTES_KEY_STATS_ENABLED']:
+                if plugin.configuration['KEY_STATS_ENABLED']:
                     if len(key_stats) > 0:
                         plugin.print_menu_item('--Key Stats')
                         plugin.print_ordered_dict(key_stats, justify='left', indent=4)
 
-                if plugin.configuration['VAR_STOCK_QUOTES_R_AND_P_ENABLED']:
+                if plugin.configuration['RATIOS_AND_PROFIABILITY_ENABLED']:
                     if len(ratios_and_profitability) > 0:
                         plugin.print_menu_item('--Ratios and Profitability')
                         plugin.print_ordered_dict(ratios_and_profitability, justify='left', indent=4)
 
-                if plugin.configuration['VAR_STOCK_QUOTES_EVENTS_ENABLED']:
+                if plugin.configuration['EVENTS_ENABLED']:
                     if len(events) > 0:
                         plugin.print_menu_item('--Events')
                         plugin.print_ordered_dict(events, justify='left', indent=4)
@@ -275,5 +275,6 @@ def main() -> None:
         plugin.print_menu_title('Stock Quotes: Error')
         plugin.print_menu_item('Failed to get a Yahoo! Finance crumb')
     plugin.render_footer()
+
 if __name__ == '__main__':
     main()

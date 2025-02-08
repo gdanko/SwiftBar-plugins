@@ -7,17 +7,17 @@
 # <xbar.desc>Show information about earthquakes nearby</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-other-Earthquakes.15m.py</xbar.abouturl>
-# <xbar.var>string(VAR_EARTHQUAKES_LIMIT=20): The maximum number of quakes to display</xbar.var>
-# <xbar.var>string(VAR_EARTHQUAKES_MIN_MAGNITUDE=0): The minimum magnitude for quakes</xbar.var>
-# <xbar.var>string(VAR_EARTHQUAKES_RADIUS_MILES=50): Radius in miles</xbar.var>
-# <xbar.var>string(VAR_EARTHQUAKES_RADIUS_UNIT=m): miles or kilometers</xbar.var>
+# <xbar.var>string(LIMIT=20): The maximum number of quakes to display</xbar.var>
+# <xbar.var>string(MINIMUM_MAGNITUDE=0): The minimum magnitude for quakes</xbar.var>
+# <xbar.var>string(MAXIMUM_RADIUS=50): Radius in miles</xbar.var>
+# <xbar.var>string(RADIUS_UNIT=m): miles or kilometers</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_EARTHQUAKES_LIMIT=20, VAR_EARTHQUAKES_MIN_MAGNITUDE=0, VAR_EARTHQUAKES_RADIUS_MILES=50, VAR_EARTHQUAKES_RADIUS_UNIT=m]</swiftbar.environment>
+# <swiftbar.environment>[LIMIT=20, MINIMUM_MAGNITUDE=0, MAXIMUM_RADIUS=50, RADIUS_UNIT=m]</swiftbar.environment>
 
 from collections import namedtuple, OrderedDict
 from swiftbar import images, request, util
@@ -64,7 +64,7 @@ def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0)
 
 def main() -> None:
     plugin = Plugin()
-    plugin.defaults_dict['VAR_EARTHQUAKES_LIMIT'] = {
+    plugin.defaults_dict['LIMIT'] = {
         'default_value': 30,
         'minmax': namedtuple('minmax', ['min', 'max'])(5, 50),
         'type': int,
@@ -75,7 +75,7 @@ def main() -> None:
             'title': 'Limit',
         },
     }
-    plugin.defaults_dict['VAR_EARTHQUAKES_MIN_MAGNITUDE'] = {
+    plugin.defaults_dict['MINIMUM_MAGNITUDE'] = {
         'default_value': 0,
         'minmax': namedtuple('minmax', ['min', 'max'])(0, 20),
         'type': int,
@@ -86,7 +86,7 @@ def main() -> None:
             'title': 'Minimum Magnitude',
         },
     }
-    plugin.defaults_dict['VAR_EARTHQUAKES_RADIUS_MILES'] = {
+    plugin.defaults_dict['MAXIMUM_RADIUS'] = {
         'default_value': 100,
         'minmax': namedtuple('minmax', ['min', 'max'])(10, 500),
         'type': int,
@@ -97,7 +97,7 @@ def main() -> None:
             'title': 'Radius',
         },
     }
-    plugin.defaults_dict['VAR_EARTHQUAKES_UNIT'] = {
+    plugin.defaults_dict['UNIT'] = {
         'default_value': 'm',
         'valid_values': ['km', 'm'],
         'type': str,
@@ -111,10 +111,10 @@ def main() -> None:
 
     time_format = '%a, %B %-d, %Y %H:%M:%S'
     location, quake_data, err = get_quake_data(
-        radius=plugin.configuration['VAR_EARTHQUAKES_RADIUS_MILES'],
-        magnitude=plugin.configuration['VAR_EARTHQUAKES_MIN_MAGNITUDE'],
-        unit=plugin.configuration['VAR_EARTHQUAKES_UNIT'],
-        limit=plugin.configuration['VAR_EARTHQUAKES_LIMIT']
+        radius=plugin.configuration['MAXIMUM_RADIUS'],
+        magnitude=plugin.configuration['MINIMUM_MAGNITUDE'],
+        unit=plugin.configuration['UNIT'],
+        limit=plugin.configuration['LIMIT']
     )
     if quake_data:
         if 'features' in quake_data and type (quake_data['features']) == list:
@@ -126,7 +126,7 @@ def main() -> None:
             for feature in features:
                 place = feature['properties']['place']
                 
-                if plugin.configuration['VAR_EARTHQUAKES_UNIT'] == 'm':
+                if plugin.configuration['UNIT'] == 'm':
                     match = re.search(r'^(\d+) km', place)
                     if match:
                         km = int(match.group(1))
@@ -137,7 +137,7 @@ def main() -> None:
                 quake_details = OrderedDict()
                 plugin.print_menu_item(
                     f'--{feature["properties"]["url"]}',
-                    color='blue',
+                    color=plugin.selected_setting_color,
                     href=feature['properties']['url']
                 )
                 quake_details['Magnitude'] = feature['properties']['mag']

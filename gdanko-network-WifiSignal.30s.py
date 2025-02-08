@@ -7,15 +7,15 @@
 # <xbar.desc>Display the current WiFi signal strength</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/gdanko-network-WifiSignal.30s.py</xbar.abouturl>
-# <xbar.var>string(VAR_WIFI_STATUS_EXTENDED_DETAILS_ENABLED=true): Show extended information about the WiFi connection.</xbar.var>
-# <xbar.var>string(VAR_WIFI_STATUS_INTERFACE=en0): The network interface to measure.</xbar.var>
+# <xbar.var>string(EXTENDED_DETAILS_ENABLED=true): Show extended information about the WiFi connection.</xbar.var>
+# <xbar.var>string(INTERFACE=en0): The network interface to measure.</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_WIFI_STATUS_EXTENDED_DETAILS_ENABLED=true, VAR_WIFI_STATUS_INTERFACE=en0]</swiftbar.environment>
+# <swiftbar.environment>[EXTENDED_DETAILS_ENABLED=true, INTERFACE=en0]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import images, util
@@ -33,7 +33,7 @@ def get_profiler_data(stdout: str=None) -> Dict[str, Any]:
 
 def main() -> None:
     plugin = Plugin()
-    plugin.defaults_dict['VAR_WIFI_STATUS_EXTENDED_DETAILS_ENABLED'] = {
+    plugin.defaults_dict['EXTENDED_DETAILS_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
         'type': bool,
@@ -43,7 +43,7 @@ def main() -> None:
             'title': 'extended WiFi details',
         },
     }
-    plugin.defaults_dict['VAR_WIFI_STATUS_INTERFACE'] = {
+    plugin.defaults_dict['INTERFACE'] = {
         'default_value': 'en0',
         'valid_values': util.find_valid_wifi_interfaces(),
         'type': str,
@@ -67,7 +67,7 @@ def main() -> None:
             if 'SPAirPortDataType' in profiler_data:
                 interfaces = profiler_data['SPAirPortDataType'][0]["spairport_airport_interfaces"]
                 for iface in interfaces:
-                    if iface['_name'] == plugin.configuration['VAR_WIFI_STATUS_INTERFACE']:
+                    if iface['_name'] == plugin.configuration['INTERFACE']:
                         my_interface = iface
                         break
                 if my_interface:
@@ -102,7 +102,7 @@ def main() -> None:
                                         rating = 'Unknown'
 
                                     wifi_output = OrderedDict()
-                                    wifi_output['Device'] = plugin.configuration['VAR_WIFI_STATUS_INTERFACE']
+                                    wifi_output['Device'] = plugin.configuration['INTERFACE']
                                     wifi_output['Channel'] = channel
                                     wifi_output['Mode'] = mode
                                     wifi_output['Signal'] = f'{signal} dBm ({rating})'
@@ -119,14 +119,14 @@ def main() -> None:
                         plugin.error_messages.append('Failed to find current network information data in the system_profiler results')
                 else:
                     plugin.success = False
-                    plugin.error_messages.append(f'Failed to find interface data for {plugin.configuration["VAR_WIFI_STATUS_INTERFACE"]} in the system_profiler results')
+                    plugin.error_messages.append(f'Failed to find interface data for {plugin.configuration["INTERFACE"]} in the system_profiler results')
     else:
         plugin.success = False
         plugin.error_messages.append('Failed to parse the system_profiler results')
 
     if plugin.success:
         plugin.print_menu_title(f'WiFI: {ssid} - {rating}')
-        if plugin.configuration['VAR_WIFI_STATUS_EXTENDED_DETAILS_ENABLED']:
+        if plugin.configuration['EXTENDED_DETAILS_ENABLED']:
             plugin.print_ordered_dict(wifi_output, justify='left')
     else:
         plugin.print_menu_title('WiFi status: N/A')

@@ -8,52 +8,26 @@
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-MemoryUsage.2s.py</xbar.abouturl>
 # <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
-# <xbar.var>string(VAR_DISK_USAGE_EXTENDED_DETAILS_ENABLED=true): Show extended information about the specified mountpoint</xbar.var>
-# <xbar.var>string(VAR_DISK_USAGE_MOUNTPOINT=/): A valid mountpoint</xbar.var>
-# <xbar.var>string(VAR_DISK_USAGE_UNIT=auto): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
+# <xbar.var>string(EXTENDED_DETAILS_ENABLED=true): Show extended information about the specified mountpoint</xbar.var>
+# <xbar.var>string(MOUNTPOINT=/): A valid mountpoint</xbar.var>
+# <xbar.var>string(UNIT=auto): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_DISK_USAGE_EXTENDED_DETAILS_ENABLED=true, VAR_DISK_USAGE_MOUNTPOINT=/, VAR_DISK_USAGE_UNIT=auto]</swiftbar.environment>
+# <swiftbar.environment>[DEBUG_ENABLED=false, EXTENDED_DETAILS_ENABLED=true, MOUNTPOINT=/, UNIT=auto]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar.plugin import Plugin
 from swiftbar import images, util
-from typing import List, NamedTuple
-import re
 import shutil
 
-class MountpointData(NamedTuple):
-    device: str
-    mountpoint: str
-    fstype: str
-    opts: list[str]
-
-def get_partition_info() -> List[MountpointData]:
-    partitions = []
-    returncode, stdout, _ = util.execute_command('mount')
-    if returncode == 0:
-        entries = stdout.split('\n')
-        for entry in entries:
-            match = re.search(r'^(/dev/disk[s0-9]+)\s+on\s+([^(]+)\s+\((.*)\)', entry)
-            if match:
-                device = match.group(1)
-                mountpoint = match.group(2)
-                opts_string = match.group(3)
-                opts_list = re.split('\s*,\s*', opts_string)
-                fstype = opts_list[0]
-                opts = opts_list[1:]
-                partitions.append(MountpointData(device=device, mountpoint=mountpoint, fstype=fstype, opts=opts))
-    return partitions
-
 def main() -> None:
-    plugin = Plugin(no_brew=True)
-    partitions = get_partition_info()
-    valid_mountpoints = [partition.mountpoint for partition in partitions]
-    plugin.defaults_dict['VAR_DISK_USAGE_EXTENDED_DETAILS_ENABLED'] = {
+    plugin = Plugin(disable_brew=True)
+    partitions = util.find_partitions()
+    plugin.defaults_dict['EXTENDED_DETAILS_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
         'type': bool,
@@ -63,9 +37,9 @@ def main() -> None:
             'title': 'extended mountpoint details',
         },
     }
-    plugin.defaults_dict['VAR_DISK_USAGE_MOUNTPOINT'] = {
+    plugin.defaults_dict['MOUNTPOINT'] = {
         'default_value': '/',
-        'valid_values': valid_mountpoints,
+        'valid_values': [partition.mountpoint for partition in partitions],
         'type': str,
         'setting_configuration': {
             'default': None,
@@ -73,7 +47,7 @@ def main() -> None:
             'title': 'Mountpoint',
         },
     }
-    plugin.defaults_dict['VAR_DISK_USAGE_UNIT'] = {
+    plugin.defaults_dict['UNIT'] = {
         'default_value': 'auto',
         'valid_values': util.valid_storage_units(),
         'type': str,
@@ -83,16 +57,40 @@ def main() -> None:
             'title': 'Unit',
         },
     }
+    plugin.defaults_dict['OUTPUT_FORMAT'] = {
+        'default_value': 'Used / Total',
+        'valid_values': [
+            'Used / Total',
+            '% Used',
+            '% Free',
+        ],
+        'type': str,
+        'setting_configuration': {
+            'default': None,
+            'flag': '--output-format',
+            'title': 'Output format',
+        },
+    }
     plugin.setup()
 
-    partition = next((p for p in partitions if p.mountpoint == plugin.configuration['VAR_DISK_USAGE_MOUNTPOINT']), None)
+    partition = next((p for p in partitions if p.mountpoint == plugin.configuration['MOUNTPOINT']), None)
     try:
-        total, used, _ = shutil.disk_usage(plugin.configuration['VAR_DISK_USAGE_MOUNTPOINT'])
+        total, used, _ = shutil.disk_usage(plugin.configuration['MOUNTPOINT'])
         if total and used:
-            total = util.format_number(total) if plugin.configuration['VAR_DISK_USAGE_UNIT'] == 'auto' else util.byte_converter(total, plugin.configuration['VAR_DISK_USAGE_UNIT'])
-            used = util.format_number(used) if plugin.configuration['VAR_DISK_USAGE_UNIT'] == 'auto' else util.byte_converter(used, plugin.configuration['VAR_DISK_USAGE_UNIT'])
-            plugin.print_menu_title(f'Disk: "{plugin.configuration["VAR_DISK_USAGE_MOUNTPOINT"]}" {used} / {total}')
-            if plugin.configuration['VAR_DISK_USAGE_EXTENDED_DETAILS_ENABLED']:
+            free = total - used
+            total_str = util.format_number(total) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(total, plugin.configuration['UNIT'])
+            used_str = util.format_number(used) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(used, plugin.configuration['UNIT'])
+            free_str = util.format_number(free) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(used, plugin.configuration['UNIT'])
+            percent_used = util.float_to_pct(used/total)
+            percent_free = util.float_to_pct(free/total)
+            if plugin.configuration['OUTPUT_FORMAT'] == 'Used / Total':
+                title_text = f'{used_str} / {total_str}'
+            elif plugin.configuration['OUTPUT_FORMAT'] == '% Used':
+                title_text = f'{percent_used} used'
+            elif plugin.configuration['OUTPUT_FORMAT'] == '% Free':
+                title_text = f'{percent_free} free'
+            plugin.print_menu_title(f'Disk: {plugin.configuration["MOUNTPOINT"]} {title_text}')
+            if plugin.configuration['EXTENDED_DETAILS_ENABLED']:
                 plugin.print_menu_separator()
                 mountpoint_output = OrderedDict()
                 mountpoint_output['mountpoint'] = partition.mountpoint
@@ -101,7 +99,7 @@ def main() -> None:
                 mountpoint_output['options'] = ','.join(partition.opts)
                 plugin.print_ordered_dict(mountpoint_output, justify='left', indent=0)
     except:
-        plugin.print_menu_item('Disk: Not found')
+        plugin.print_menu_title('Disk: Not found')
     plugin.render_footer()
 
 if __name__ == '__main__':

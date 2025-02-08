@@ -7,15 +7,15 @@
 # <xbar.desc>Show the current network throughput for a given interface</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/gdanko-network-NetworkThroughput.2s.py</xbar.abouturl>
-# <xbar.var>string(VAR_NET_THROUGHPUT_INTERFACE=en0): The network interface to measure.</xbar.var>
-# <xbar.var>string(VAR_NET_THROUGHPUT_VERBOSE=false): Show more verbose detail.</xbar.var>
+# <xbar.var>string(INTERFACE=en0): The network interface to measure.</xbar.var>
+# <xbar.var>string(VERBOSE=false): Show more verbose detail.</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_NET_THROUGHPUT_INTERFACE=en0, VAR_NET_THROUGHPUT_VERBOSE=false]</swiftbar.environment>
+# <swiftbar.environment>[INTERFACE=en0, VERBOSE=false]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import images, util
@@ -90,7 +90,7 @@ def get_public_ip() -> Union[str, None]:
  
 def main() -> None:
     plugin = Plugin()
-    plugin.defaults_dict['VAR_NET_THROUGHPUT_VERBOSE'] = {
+    plugin.defaults_dict['VERBOSE'] = {
         'default_value': False,
         'valid_values': [True, False],
         'type': bool,
@@ -100,7 +100,7 @@ def main() -> None:
             'title': 'verbose mode',
         },
     }
-    plugin.defaults_dict['VAR_NET_THROUGHPUT_INTERFACE'] = {
+    plugin.defaults_dict['INTERFACE'] = {
         'default_value': 'en0',
         'valid_values': util.find_valid_network_interfaces(),
         'type': str,
@@ -112,14 +112,14 @@ def main() -> None:
     }
     plugin.setup()
 
-    interface_data = get_interface_data(plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE'])
+    interface_data = get_interface_data(plugin.configuration['INTERFACE'])
     public_ip = get_public_ip()
-    first_sample = get_data(interface=plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE'])
+    first_sample = get_data(interface=plugin.configuration['INTERFACE'])
     time.sleep(1)
-    second_sample = get_data(interface=plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE'])
+    second_sample = get_data(interface=plugin.configuration['INTERFACE'])
 
     network_throughput = IoCounters(
-        interface    = plugin.configuration['VAR_NET_THROUGHPUT_INTERFACE'],
+        interface    = plugin.configuration['INTERFACE'],
         bytes_sent   = second_sample.bytes_sent - first_sample.bytes_sent,
         bytes_recv   = second_sample.bytes_recv - first_sample.bytes_recv,
         packets_sent = second_sample.packets_sent - first_sample.packets_sent,
@@ -140,7 +140,7 @@ def main() -> None:
         interface_output['IPv6 Address'] = interface_data.inet6
     if public_ip:
         interface_output['Public IP'] = public_ip
-    if plugin.configuration['VAR_NET_THROUGHPUT_VERBOSE']:
+    if plugin.configuration['VERBOSE']:
         if network_throughput.errin is not None:
             interface_output['Inbound Errors/sec'] = network_throughput.errin
         if network_throughput.errout is not None:

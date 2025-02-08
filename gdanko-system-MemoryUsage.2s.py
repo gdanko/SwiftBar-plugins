@@ -7,18 +7,18 @@
 # <xbar.desc>Show system memery usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-MemoryUsage.2s.py</xbar.abouturl>
-# <xbar.var>string(VAR_MEM_USAGE_EXTENDED_DETAILS_ENABLED=true): Show extended information about the installed memory</xbar.var>
-# <xbar.var>string(VAR_MEM_USAGE_CLICK_TO_KILL=false): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
-# <xbar.var>string(VAR_MEM_USAGE_KILL_SIGNAL=SIGQUIT): The BSD kill signal to use when killing a process</xbar.var>
-# <xbar.var>string(VAR_MEM_USAGE_MAX_CONSUMERS=30): Maximum number of offenders to display</xbar.var>
-# <xbar.var>string(VAR_MEM_USAGE_UNIT=auto): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
+# <xbar.var>string(EXTENDED_DETAILS_ENABLED=true): Show extended information about the installed memory</xbar.var>
+# <xbar.var>string(CLICK_TO_KILL=false): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
+# <xbar.var>string(KILL_SIGNAL=SIGQUIT): The BSD kill signal to use when killing a process</xbar.var>
+# <xbar.var>string(MAX_CONSUMERS=30): Maximum number of offenders to display</xbar.var>
+# <xbar.var>string(UNIT=auto): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_MEM_USAGE_EXTENDED_DETAILS_ENABLED=true, VAR_MEM_USAGE_CLICK_TO_KILL=false, VAR_MEM_USAGE_KILL_SIGNAL=SIGQUIT, VAR_MEM_USAGE_MAX_CONSUMERS=30]</swiftbar.environment, VAR_MEM_USAGE_UNIT=auto>
+# <swiftbar.environment>[EXTENDED_DETAILS_ENABLED=true, CLICK_TO_KILL=false, KILL_SIGNAL=SIGQUIT, MAX_CONSUMERS=30]</swiftbar.environment, UNIT=auto>
 
 from collections import namedtuple, OrderedDict
 from swiftbar import images, util
@@ -126,8 +126,8 @@ def get_top_memory_usage() -> List[Dict[str, Any]]:
     return sorted(memory_info, key=lambda item: item['bytes'], reverse=True)
 
 def main() -> None:
-    plugin = Plugin(no_brew=True)
-    plugin.defaults_dict['VAR_MEM_USAGE_EXTENDED_DETAILS_ENABLED'] = {
+    plugin = Plugin(disable_brew=True)
+    plugin.defaults_dict['EXTENDED_DETAILS_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
         'type': bool,
@@ -137,7 +137,7 @@ def main() -> None:
             'title': 'extended memory details',
         },
     }
-    plugin.defaults_dict['VAR_MEM_USAGE_TOP_CONSUMERS_ENABLED'] = {
+    plugin.defaults_dict['TOP_CONSUMERS_ENABLED'] = {
         'default_value': True,
         'valid_values': [True, False],
         'type': bool,
@@ -147,7 +147,7 @@ def main() -> None:
             'title': 'the "Top Memory Consumers" menu',
         },
     }
-    plugin.defaults_dict['VAR_MEM_USAGE_CLICK_TO_KILL'] = {
+    plugin.defaults_dict['CLICK_TO_KILL'] = {
         'default_value': True,
         'valid_values': [True, False],
         'type': bool,
@@ -157,7 +157,7 @@ def main() -> None:
             'title': '"Click to Kill" functionality',
         },
     }
-    plugin.defaults_dict['VAR_MEM_USAGE_KILL_SIGNAL'] = {
+    plugin.defaults_dict['KILL_SIGNAL'] = {
         'default_value': 'SIGQUIT',
         'valid_values': list(util.get_signal_map().keys()),
         'type': str,
@@ -167,7 +167,7 @@ def main() -> None:
             'title': 'Kill Signal',
         },
     }
-    plugin.defaults_dict['VAR_MEM_USAGE_MAX_CONSUMERS'] = {
+    plugin.defaults_dict['MAX_CONSUMERS'] = {
         'default_value': 30,
         'minmax': namedtuple('minmax', ['min', 'max'])(10, 100),
         'type': int,
@@ -178,7 +178,7 @@ def main() -> None:
             'increment': 10,
         },
     }
-    plugin.defaults_dict['VAR_MEM_USAGE_UNIT'] = {
+    plugin.defaults_dict['UNIT'] = {
         'default_value': 'auto',
         'valid_values': util.valid_storage_units(),
         'type': str,
@@ -190,38 +190,38 @@ def main() -> None:
     }
     plugin.setup()
 
-    if not plugin.configuration['VAR_MEM_USAGE_TOP_CONSUMERS_ENABLED']:
-        del plugin.configuration['VAR_MEM_USAGE_CLICK_TO_KILL']
-        del plugin.configuration['VAR_MEM_USAGE_KILL_SIGNAL']
-        del plugin.configuration['VAR_MEM_USAGE_MAX_CONSUMERS'] 
+    if not plugin.configuration['TOP_CONSUMERS_ENABLED']:
+        del plugin.configuration['CLICK_TO_KILL']
+        del plugin.configuration['KILL_SIGNAL']
+        del plugin.configuration['MAX_CONSUMERS'] 
     
     command_length = 125
     memory_type, memory_brand, err = get_memory_details()
     mem = virtual_memory()
     if mem:
-        used = util.format_number(mem.used) if plugin.configuration['VAR_MEM_USAGE_UNIT'] == 'auto' else util.byte_converter(mem.used, plugin.configuration['VAR_MEM_USAGE_UNIT'])
-        total = util.format_number(mem.total) if plugin.configuration['VAR_MEM_USAGE_UNIT'] == 'auto' else util.byte_converter(mem.total, plugin.configuration['VAR_MEM_USAGE_UNIT'])
+        used = util.format_number(mem.used) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(mem.used, plugin.configuration['UNIT'])
+        total = util.format_number(mem.total) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(mem.total, plugin.configuration['UNIT'])
         plugin.print_menu_title(f'Memory: {used} / {total}')
-        if plugin.configuration['VAR_MEM_USAGE_EXTENDED_DETAILS_ENABLED']:
+        if plugin.configuration['EXTENDED_DETAILS_ENABLED']:
             memory_output = OrderedDict()
             if not err:
                 memory_output['Memory'] = f'{memory_brand} {memory_type}'
-            memory_output['Total'] = util.format_number(mem.total) if plugin.configuration['VAR_MEM_USAGE_UNIT'] == 'auto' else util.byte_converter(mem.total, plugin.configuration['VAR_MEM_USAGE_UNIT'])
-            memory_output['Available'] = util.format_number(mem.available) if plugin.configuration['VAR_MEM_USAGE_UNIT'] == 'auto' else util.byte_converter(mem.available, plugin.configuration['VAR_MEM_USAGE_UNIT'])
-            memory_output['Used'] = util.format_number(mem.used) if plugin.configuration['VAR_MEM_USAGE_UNIT'] == 'auto' else util.byte_converter(mem.used, plugin.configuration['VAR_MEM_USAGE_UNIT'])
-            memory_output['Free'] = util.format_number(mem.free) if plugin.configuration['VAR_MEM_USAGE_UNIT'] == 'auto' else util.byte_converter(mem.free, plugin.configuration['VAR_MEM_USAGE_UNIT'])
-            memory_output['Active'] = util.format_number(mem.active) if plugin.configuration['VAR_MEM_USAGE_UNIT'] == 'auto' else util.byte_converter(mem.active, plugin.configuration['VAR_MEM_USAGE_UNIT'])
-            memory_output['Inactive'] = util.format_number(mem.inactive) if plugin.configuration['VAR_MEM_USAGE_UNIT'] == 'auto' else util.byte_converter(mem.inactive, plugin.configuration['VAR_MEM_USAGE_UNIT'])
-            memory_output['Wired'] = util.format_number(mem.wired) if plugin.configuration['VAR_MEM_USAGE_UNIT'] == 'auto' else util.byte_converter(mem.wired, plugin.configuration['VAR_MEM_USAGE_UNIT'])
-            memory_output['Speculative'] = util.format_number(mem.speculative) if plugin.configuration['VAR_MEM_USAGE_UNIT'] == 'auto' else util.byte_converter(mem.speculative, plugin.configuration['VAR_MEM_USAGE_UNIT'])
+            memory_output['Total'] = util.format_number(mem.total) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(mem.total, plugin.configuration['UNIT'])
+            memory_output['Available'] = util.format_number(mem.available) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(mem.available, plugin.configuration['UNIT'])
+            memory_output['Used'] = util.format_number(mem.used) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(mem.used, plugin.configuration['UNIT'])
+            memory_output['Free'] = util.format_number(mem.free) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(mem.free, plugin.configuration['UNIT'])
+            memory_output['Active'] = util.format_number(mem.active) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(mem.active, plugin.configuration['UNIT'])
+            memory_output['Inactive'] = util.format_number(mem.inactive) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(mem.inactive, plugin.configuration['UNIT'])
+            memory_output['Wired'] = util.format_number(mem.wired) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(mem.wired, plugin.configuration['UNIT'])
+            memory_output['Speculative'] = util.format_number(mem.speculative) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(mem.speculative, plugin.configuration['UNIT'])
             plugin.print_ordered_dict(memory_output, justify='left')
 
-        if plugin.configuration['VAR_MEM_USAGE_TOP_CONSUMERS_ENABLED']:
+        if plugin.configuration['TOP_CONSUMERS_ENABLED']:
             top_memory_consumers = get_top_memory_usage()
             if len(top_memory_consumers) > 0:
                 plugin.print_menu_separator()
-                if len(top_memory_consumers) > plugin.configuration['VAR_MEM_USAGE_MAX_CONSUMERS']:
-                    top_memory_consumers = top_memory_consumers[0:plugin.configuration['VAR_MEM_USAGE_MAX_CONSUMERS']]
+                if len(top_memory_consumers) > plugin.configuration['MAX_CONSUMERS']:
+                    top_memory_consumers = top_memory_consumers[0:plugin.configuration['MAX_CONSUMERS']]
                 plugin.print_menu_item(
                     f'Top {len(top_memory_consumers)} Memory Consumers',
                 )
@@ -233,8 +233,8 @@ def main() -> None:
                     user = consumer['user']
                     consumer_total += bytes
                     padding_width = 12
-                    icon = util.get_process_icon(user, plugin.configuration['VAR_MEM_USAGE_CLICK_TO_KILL'])
-                    cmd = ['kill', f'-{util.get_signal_map()[plugin.configuration["VAR_MEM_USAGE_KILL_SIGNAL"]]}', pid] if plugin.configuration["VAR_MEM_USAGE_CLICK_TO_KILL"] else []
+                    icon = util.get_process_icon(user, plugin.configuration['CLICK_TO_KILL'])
+                    cmd = ['kill', f'-{util.get_signal_map()[plugin.configuration["KILL_SIGNAL"]]}', pid] if plugin.configuration["CLICK_TO_KILL"] else []
                     plugin.print_menu_item(
                         f'--{icon}{util.format_number(bytes).rjust(padding_width)} - {command}',
                         cmd=cmd,

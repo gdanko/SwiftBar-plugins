@@ -7,14 +7,14 @@
 # <xbar.desc>Show system swap usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-SwapUsage.2s.py</xbar.abouturl>
-# <xbar.var>string(VAR_SWAP_USAGE_UNIT=auto): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
+# <xbar.var>string(UNIT=auto): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_SWAP_USAGE_UNIT=auto]</swiftbar.environment>
+# <swiftbar.environment>[UNIT=auto]</swiftbar.environment>
 
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
@@ -39,7 +39,7 @@ def get_swap_usage() -> Union[SwapUsage, None]:
 
 def main() -> None:
     plugin = Plugin()
-    plugin.defaults_dict['VAR_SWAP_USAGE_UNIT'] = {
+    plugin.defaults_dict['UNIT'] = {
         'default_value': 'auto',
         'valid_values': util.valid_storage_units(),
         'type': str,
@@ -53,8 +53,8 @@ def main() -> None:
 
     swap = get_swap_usage()
     if swap:
-        used = util.format_number(swap.used) if plugin.configuration['VAR_SWAP_USAGE_UNIT'] == 'auto' else util.byte_converter(swap.used, plugin.configuration['VAR_SWAP_USAGE_UNIT'])
-        total = util.format_number(swap.total) if plugin.configuration['VAR_SWAP_USAGE_UNIT'] == 'auto' else util.byte_converter(swap.total, plugin.configuration['VAR_SWAP_USAGE_UNIT'])
+        used = util.format_number(swap.used) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(swap.used, plugin.configuration['UNIT'])
+        total = util.format_number(swap.total) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(swap.total, plugin.configuration['UNIT'])
         plugin.print_menu_title(f'Swap: {used} / {total}')
     else:
         plugin.print_menu_title('Swap: Failed')

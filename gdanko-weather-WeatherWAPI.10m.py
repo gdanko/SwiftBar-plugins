@@ -7,17 +7,17 @@
 # <xbar.desc>Display the weather using weatherapi.com</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-weather-WeatherWAPI.10m.py</xbar.abouturl>
-# <xbar.var>string(VAR_WEATHER_WAPI_API_KEY=): The OpenWeatherMap API key</xbar.var>
-# <xbar.var>string(VAR_WEATHER_WAPI_LOCATION="Los Angeles, CA, US"): The location to use</xbar.var>
-# <xbar.var>string(VAR_WEATHER_WAPI_SHOW_FORECAST=true): Show the forecast in the drop down menut</xbar.var>
-# <xbar.var>string(VAR_WEATHER_WAPI_UNITS=F): The unit to use: (C)elsius or (F)ahrenheit</xbar.var>
+# <xbar.var>string(API_KEY=): The OpenWeatherMap API key</xbar.var>
+# <xbar.var>string(LOCATION="Los Angeles, CA, US"): The location to use</xbar.var>
+# <xbar.var>string(SHOW_FORECAST=true): Show the forecast in the drop down menut</xbar.var>
+# <xbar.var>string(UNITS=F): The unit to use: (C)elsius or (F)ahrenheit</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_WEATHER_WAPI_API_KEY=, VAR_WEATHER_WAPI_LOCATION="Los Angeles, CA, US", VAR_WEATHER_WAPI_SHOW_FORECAST=true, VAR_WEATHER_WAPI_UNITS=F]</swiftbar.environment>
+# <swiftbar.environment>[API_KEY=, LOCATION="Los Angeles, CA, US", SHOW_FORECAST=true, UNITS=F]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar.plugin import Plugin
@@ -56,15 +56,15 @@ def pluralize(count: int=0, word: str=None) -> str:
 
 def main() -> None:
     plugin = Plugin()
-    plugin.defaults_dict['VAR_WEATHER_WAPI_LOCATION'] = {
+    plugin.defaults_dict['LOCATION'] = {
         'default_value': None,
         'type': str,
     }
-    plugin.defaults_dict['VAR_WEATHER_WAPI_API_KEY'] = {
+    plugin.defaults_dict['API_KEY'] = {
         'default_value': None,
         'type': str,
     }
-    plugin.defaults_dict['VAR_WEATHER_WAPI_SHOW_FORECAST'] = {
+    plugin.defaults_dict['SHOW_FORECAST'] = {
         'default_value': True,
         'valid_values': [True, False],
         'type': bool,
@@ -74,7 +74,7 @@ def main() -> None:
             'title': 'the "Forecast" menu',
         },
     }
-    plugin.defaults_dict['VAR_WEATHER_WAPI_UNIT'] = {
+    plugin.defaults_dict['UNIT'] = {
         'default_value': 'F',
         'valid_values': util.valid_weather_units(),
         'type': str,
@@ -87,8 +87,8 @@ def main() -> None:
     plugin.setup()
 
     location = None
-    if plugin.configuration['VAR_WEATHER_WAPI_LOCATION']:
-        location = plugin.configuration['VAR_WEATHER_WAPI_LOCATION']
+    if plugin.configuration['LOCATION']:
+        location = plugin.configuration['LOCATION']
     else:
         geodata = util.geolocate_me()
         if geodata:
@@ -98,13 +98,13 @@ def main() -> None:
 
     alert_format = '%a, %B %-d, %Y %H:%M:%S'
     forecast_format = '%a, %B %-d, %Y'
-    if plugin.configuration['VAR_WEATHER_WAPI_API_KEY'] == '':
+    if plugin.configuration['API_KEY'] == '':
         plugin.error_messages.append('Missing API key')
     else:
         response, weather_data, err = request.swiftbar_request(
             host='api.weatherapi.com',
             path='/v1/current.json',
-            query={'key': plugin.configuration['VAR_WEATHER_WAPI_API_KEY'], 'q': location, 'aqi': 'yes'},
+            query={'key': plugin.configuration['API_KEY'], 'q': location, 'aqi': 'yes'},
             return_type = 'json',
             encode_query=True,
         )
@@ -118,7 +118,7 @@ def main() -> None:
         response, forecast_data, err = request.swiftbar_request(
             host='api.weatherapi.com',
             path='/v1/forecast.json',
-            query={'key': plugin.configuration['VAR_WEATHER_WAPI_API_KEY'], 'q': location, 'days': 8, 'aqi': 'yes', 'alerts': 'yes'},
+            query={'key': plugin.configuration['API_KEY'], 'q': location, 'days': 8, 'aqi': 'yes', 'alerts': 'yes'},
             return_type = 'json',
             encode_query=True,
         )
@@ -135,29 +135,29 @@ def main() -> None:
 
         # low_temp = today["day"]["mintemp_f"] if unit == 'F' else today["day"]["mintemp_c"]
         # high_temp = today["day"]["maxtemp_f"] if unit == 'F' else today["day"]["maxtemp_c"]
-        current_temp = weather_data["current"]["temp_f"] if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else weather_data["current"]["temp_c"]
-        feels_like = weather_data["current"]["feelslike_f"] if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else weather_data["current"]["feelslike_c"]
-        precipitation = f'{round(weather_data["current"]["precip_in"])} in' if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else f'{round(weather_data["current"]["precip_in"])} mm'
-        visibility = f'{float(weather_data["current"]["vis_miles"])} miles' if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else f'{float(weather_data["current"]["vis_km"])} km'
-        wind_speed = f'{round(weather_data["current"]["wind_mph"])} mph' if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else f'{round(weather_data["current"]["wind_kph"])} kph'
-        wind_chill = weather_data["current"]["windchill_f"] if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else weather_data["current"]["windchill_c"]
-        heat_index = weather_data["current"]["heatindex_f"] if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else weather_data["current"]["heatindex_c"]
-        dew_point = weather_data["current"]["dewpoint_f"] if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else weather_data["current"]["dewpoint_c"]
-        pressure = f'{round(weather_data["current"]["pressure_in"])} in' if plugin.configuration['VAR_WEATHER_WAPI_UNIT'] == 'F' else f'{round(weather_data["current"]["pressure_mb"])} mb'
+        current_temp = weather_data["current"]["temp_f"] if plugin.configuration['UNIT'] == 'F' else weather_data["current"]["temp_c"]
+        feels_like = weather_data["current"]["feelslike_f"] if plugin.configuration['UNIT'] == 'F' else weather_data["current"]["feelslike_c"]
+        precipitation = f'{round(weather_data["current"]["precip_in"])} in' if plugin.configuration['UNIT'] == 'F' else f'{round(weather_data["current"]["precip_in"])} mm'
+        visibility = f'{float(weather_data["current"]["vis_miles"])} miles' if plugin.configuration['UNIT'] == 'F' else f'{float(weather_data["current"]["vis_km"])} km'
+        wind_speed = f'{round(weather_data["current"]["wind_mph"])} mph' if plugin.configuration['UNIT'] == 'F' else f'{round(weather_data["current"]["wind_kph"])} kph'
+        wind_chill = weather_data["current"]["windchill_f"] if plugin.configuration['UNIT'] == 'F' else weather_data["current"]["windchill_c"]
+        heat_index = weather_data["current"]["heatindex_f"] if plugin.configuration['UNIT'] == 'F' else weather_data["current"]["heatindex_c"]
+        dew_point = weather_data["current"]["dewpoint_f"] if plugin.configuration['UNIT'] == 'F' else weather_data["current"]["dewpoint_c"]
+        pressure = f'{round(weather_data["current"]["pressure_in"])} in' if plugin.configuration['UNIT'] == 'F' else f'{round(weather_data["current"]["pressure_mb"])} mb'
 
-        plugin.print_menu_title(f'{location} {round(current_temp)}°{plugin.configuration["VAR_WEATHER_WAPI_UNIT"]}')
+        plugin.print_menu_title(f'{location} {round(current_temp)}°{plugin.configuration["UNIT"]}')
         current = OrderedDict()
         # current['Low / High'] = f'{round(low_temp)}°{unit} / {round(high_temp)}°{unit}'
-        current['Feels Like'] = f'{round(feels_like)}°{plugin.configuration["VAR_WEATHER_WAPI_UNIT"]}'
+        current['Feels Like'] = f'{round(feels_like)}°{plugin.configuration["UNIT"]}'
         current['Pressure'] = pressure
         current['Visibility'] = visibility
         current['Condition'] = f'{weather_data["current"]["condition"]["text"].title()}'
-        current['Dew Point'] = f'{round(dew_point)}°{plugin.configuration["VAR_WEATHER_WAPI_UNIT"]}'
+        current['Dew Point'] = f'{round(dew_point)}°{plugin.configuration["UNIT"]}'
         current['Humidity'] = f'{round(weather_data["current"]["humidity"])}%'
         current['Precipitation'] = precipitation
         current['Wind'] = f'{weather_data["current"]["wind_dir"]} {wind_speed}'
-        current['Wind Chill'] = f'{round(wind_chill)}°{plugin.configuration["VAR_WEATHER_WAPI_UNIT"]}'
-        current['Heat Index'] = f'{round(heat_index)}°{plugin.configuration["VAR_WEATHER_WAPI_UNIT"]}'
+        current['Wind Chill'] = f'{round(wind_chill)}°{plugin.configuration["UNIT"]}'
+        current['Heat Index'] = f'{round(heat_index)}°{plugin.configuration["UNIT"]}'
         current['UV Index'] = f'{get_uv_index(weather_data["current"]["uv"])} - {weather_data["current"]["uv"]}'
         # current['Sunrise'] = f'{today["astro"]["sunrise"]}'
         # current['Sunset'] = f'{today["astro"]["sunset"]}'
@@ -182,21 +182,21 @@ def main() -> None:
                             alert[k] = v
                         plugin.print_ordered_dict(alert, justify='left')
         
-        if plugin.configuration['VAR_WEATHER_WAPI_SHOW_FORECAST']:
+        if plugin.configuration['SHOW_FORECAST']:
             plugin.print_menu_item(f'{len(forecast)} Day Forecast')
             for daily in forecast:
-                daily_low = daily['day']['mintemp_f'] if plugin.configuration["VAR_WEATHER_WAPI_UNIT"] == 'F' else daily['day']['mintemp_c']
-                daily_high = daily['day']['maxtemp_f'] if plugin.configuration["VAR_WEATHER_WAPI_UNIT"] == 'F' else daily['day']['maxtemp_c']
-                daily_average = daily['day']['avgtemp_f'] if plugin.configuration["VAR_WEATHER_WAPI_UNIT"] == 'F' else daily['day']['avgtemp_c']
+                daily_low = daily['day']['mintemp_f'] if plugin.configuration["UNIT"] == 'F' else daily['day']['mintemp_c']
+                daily_high = daily['day']['maxtemp_f'] if plugin.configuration["UNIT"] == 'F' else daily['day']['maxtemp_c']
+                daily_average = daily['day']['avgtemp_f'] if plugin.configuration["UNIT"] == 'F' else daily['day']['avgtemp_c']
                 daily_will_it_rain = 'Yes' if daily['day']['daily_will_it_rain'] == 1 else 'No'
                 daily_will_it_snow = 'Yes' if daily['day']['daily_will_it_snow'] == 1 else 'No'
-                total_precipitation = f'{round(daily["day"]["totalprecip_in"])} in' if plugin.configuration["VAR_WEATHER_WAPI_UNIT"] == 'F' else f'{round(daily["day"]["totalprecip_mm"])} mm'
-                avg_visibility = f'{float(daily["day"]["avgvis_miles"])} miles' if plugin.configuration["VAR_WEATHER_WAPI_UNIT"] == 'F' else f'{float(daily["day"]["avgvis_km"])} km'
+                total_precipitation = f'{round(daily["day"]["totalprecip_in"])} in' if plugin.configuration["UNIT"] == 'F' else f'{round(daily["day"]["totalprecip_mm"])} mm'
+                avg_visibility = f'{float(daily["day"]["avgvis_miles"])} miles' if plugin.configuration["UNIT"] == 'F' else f'{float(daily["day"]["avgvis_km"])} km'
 
                 plugin.print_menu_item(f'--{util.prettify_timestamp(daily["date"], forecast_format)}')
                 daily_section = OrderedDict()
-                daily_section['Low / High'] = f'{round(daily_low)}°{plugin.configuration["VAR_WEATHER_WAPI_UNIT"]} / {round(daily_high)}°{plugin.configuration["VAR_WEATHER_WAPI_UNIT"]}'
-                daily_section['Average Temperature'] = f'{round(daily_average)}°{plugin.configuration["VAR_WEATHER_WAPI_UNIT"]}'
+                daily_section['Low / High'] = f'{round(daily_low)}°{plugin.configuration["UNIT"]} / {round(daily_high)}°{plugin.configuration["UNIT"]}'
+                daily_section['Average Temperature'] = f'{round(daily_average)}°{plugin.configuration["UNIT"]}'
                 daily_section['Average Visibility'] = avg_visibility
                 daily_section['Condition'] = f'{daily["day"]["condition"]["text"].title()}'
                 daily_section['Average Humidity'] = f'{round(daily["day"]["avghumidity"])}%'

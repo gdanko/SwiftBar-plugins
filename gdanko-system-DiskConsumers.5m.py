@@ -7,14 +7,14 @@
 # <xbar.desc>Show files and directories using the most disk space for a given path</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-DiskConsumers.5m.py</xbar.abouturl>
-# <xbar.var>string(VAR_DISK_CONSUMERS_PATHS=/): A comma-delimited list of paths</xbar.var>
+# <xbar.var>string(PATHS=/): A comma-delimited list of paths</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_DISK_CONSUMERS_PATHS=/]</swiftbar.environment>
+# <swiftbar.environment>[PATHS=/]</swiftbar.environment>
 
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
@@ -42,16 +42,16 @@ def get_consumers(path: str=None) -> List[Dict[str, Any]]:
 
 def main() -> None:
     start_time = util.unix_time_in_ms()
-    plugin = Plugin(no_brew=True)
-    plugin.defaults_dict['VAR_DISK_CONSUMERS_PATHS'] = {
+    plugin = Plugin(disable_brew=True)
+    plugin.defaults_dict['PATHS'] = {
         'default_value': '~',
         'type': str,
     }
     plugin.setup()
 
     plugin.print_menu_title('Disk Consumption')
-    if len(re.split(r'\s*,\s*', plugin.configuration['VAR_DISK_CONSUMERS_PATHS'])) > 0:
-        for path in re.split(r'\s*,\s*', plugin.configuration['VAR_DISK_CONSUMERS_PATHS']):
+    if len(re.split(r'\s*,\s*', plugin.configuration['PATHS'])) > 0:
+        for path in re.split(r'\s*,\s*', plugin.configuration['PATHS']):
             plugin.print_menu_item(os.path.expanduser(path))
             total = 0
             consumers = get_consumers(path)

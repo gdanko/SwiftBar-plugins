@@ -15,20 +15,17 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[]</swiftbar.environment>
 
-from dataclasses import dataclass
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
-from typing import Dict, Union
+from typing import Dict, List, NamedTuple, Union
 import json
 
-@dataclass
-class Package:
-    def __init__(self, name: str, current_version: str, installed_versions: list, **_: object):
-        self.name = name
-        self.current_version = current_version
-        self.installed_version = installed_versions[0]
+class Package(NamedTuple):
+    CurrentVersion: str
+    InstalledVersions: List[str]
+    Name: str
 
-def get_brew_data() -> Union[None, str, Dict[str, list[Package]]]:
+def get_brew_data() -> Union[None, str, Dict[str, List[Package]]]:
     if not util.binary_exists('brew'):
         return None, 'Homebrew isn\'t installed'
 
@@ -49,15 +46,33 @@ def get_brew_data() -> Union[None, str, Dict[str, list[Package]]]:
         return None, f'Failed to execute "{command}"'
     
     try:
+        formulae: List[Package] = []
+        casks: List[Package] = []
         data = json.loads(stdout)
-        formulae = [Package(**obj) for obj in data['formulae'] if obj['name'] in manually_installed]
-        casks = [Package(**obj) for obj in data['casks']]
+        for obj in data['formulae']:
+            if obj['name'] in manually_installed:
+                formulae.append(
+                    Package(
+                        Name=obj['name'],
+                        CurrentVersion=obj['current_version'],
+                        InstalledVersions=obj['installed_versions'],
+                    )
+                )
+        for obj in data['casks']:
+            casks.append(
+                Package(
+                    Name=obj['name'],
+                    CurrentVersion=obj['current_version'],
+                    InstalledVersions=obj['installed_versions'],
+                )
+            )
+
         if type(formulae) == list and type(casks) == list:
             return {'Formulae': formulae, 'Casks': casks}, None
         else:
             return None, 'Invalid data returned from brew'
-    except:
-        return None, f'Failed to parse JSON output from "{command}"'
+    except Exception as e:
+        return None, f'Failed to parse JSON output from "{command}": {e}'
 
 def main() -> None:
     plugin = Plugin()
@@ -80,13 +95,13 @@ def main() -> None:
             )
         for key, formulae in data.items():
             if len(formulae) > 0:
-                longest_name_length = max(len(formula.name) for formula in formulae)
+                longest_name_length = max(len(formula.Name) for formula in formulae)
                 plugin.print_menu_separator()
                 plugin.print_menu_item(key)
                 for formula in formulae:
                     plugin.print_menu_item(
-                        f'Update {formula.name:<{longest_name_length}}    {formula.installed_version.rjust(7)} > {formula.current_version}',
-                        cmd=['brew', 'upgrade', formula.name],
+                        f'Update {formula.Name:<{longest_name_length}}    {sorted(formula.InstalledVersions)[-1].rjust(7)} > {formula.CurrentVersion}',
+                        cmd=['brew', 'upgrade', formula.Name],
                         refresh=True,
                         sfimage='shippingbox',
                         terminal=True,
