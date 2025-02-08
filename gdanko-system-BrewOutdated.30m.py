@@ -62,9 +62,7 @@ def get_brew_data() -> Union[None, str, Dict[str, list[Package]]]:
 
 def main() -> None:
     plugin = Plugin()
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     data, err = get_brew_data()
     if err:

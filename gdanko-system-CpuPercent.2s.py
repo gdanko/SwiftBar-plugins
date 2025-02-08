@@ -178,10 +178,7 @@ def main() -> None:
             'increment': 10,
         },
     }
-
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     if not plugin.configuration['VAR_CPU_USAGE_TOP_CONSUMERS_ENABLED']:
         del plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL']

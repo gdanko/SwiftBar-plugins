@@ -81,10 +81,7 @@ def main() -> None:
             'title': 'the "Events" menu',
         },
     }
-
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     plugin_output = []
     info_dict = {}

@@ -49,10 +49,7 @@ def main() -> None:
         'type': str,
         'split_values': True,
     }
-    
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     plugin.print_menu_title('Disk Consumption')
     if len(re.split(r'\s*,\s*', plugin.configuration['VAR_DISK_CONSUMERS_PATHS'])) > 0:

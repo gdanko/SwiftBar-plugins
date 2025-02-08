@@ -83,10 +83,7 @@ def main() -> None:
             'title': 'Unit',
         },
     }
-
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     partition = next((p for p in partitions if p.mountpoint == plugin.configuration['VAR_DISK_USAGE_MOUNTPOINT']), None)
     try:

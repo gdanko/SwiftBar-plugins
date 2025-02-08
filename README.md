@@ -268,17 +268,6 @@ First let's look at the code for a simple plugin that pulls information about sy
 def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
-    plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['DEBUG_ENABLED'] = {
-        'default_value': False,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': False,
-            'flag': '--debug',
-            'title': 'the "Debugging" menu',
-        },
-    }
     plugin.defaults_dict['VAR_SWAP_USAGE_UNIT'] = {
         'default_value': 'auto',
         'valid_values': util.valid_storage_units(),
@@ -289,10 +278,7 @@ def main() -> None:
             'title': 'Unit',
         },
     }
-
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     swap = get_swap_usage()
     if swap:
@@ -308,10 +294,11 @@ def main() -> None:
 Now we'll explain what is happening.
 * First we set the `PATH`. Some system tools like `/bin/df` have homebrew equivalents. In cases like this, we want to exclude `/opt/homebrew/bin` from the path because the output of homebrew's `df` may vary, which will break some regexes.
 * Now we're create an instance of the `Plugin()` class.
-* We now define `plugin.defaults_dict` and define all of its variables. If you have not read the section about this dictionary, please do so now.
-* We call `plugin.read_config()` to sanitize and populate `plugin.configuation` from the `.vars.json` file if it exists. If the file does not exist, one is created from the defaults. We call it here to get the values of any booleans so that if the plugin is executed with a flag like `--debug`, we can now compare the existing setting with the new setting and make the change to the `.vars.json` file as needed.
-* We call `plugin.generate_args()` to generate the `argparse.Namespace` object from `plugin.defaults_dict` and parse the command line arguments.
-* Now we call `plugin.update_json_from_args()`. This function parses the `plugin.parser` and gathers the arguments sent to the script. For each argument that was passed, it compares the passed value with the existing value stored in `plugin.configuration`. If we find an instance where a change was made, we pass the variable name, e.g., `VAR_SWAP_USAGE_DEBUG_ENABLED` and the new value to `plugin.update_setting()`. This function reads the `.vars.json` file to a dictionary, updates the changed setting, and rewrites the file. After rewriting the file, `plugin.read_config()` is called to repopulate `plugin.configuration`.
+* We can now add additional variables to `plugin.defaults_dict`. If you have not read the section about this dictionary, please do so now.
+* After addin variable definitions, we make a call to `plugin.setup()`. This function deos the following:
+    * Calls `plugin.read_config()` to sanitize and populate `plugin.configuation` from the `.vars.json` file if it exists. If the file does not exist, one is created from the defaults. We call it here to get the values of any booleans so that if the plugin is executed with a flag like `--debug`, we can now compare the existing setting with the new setting and make the change to the `.vars.json` file as needed.
+    * Calls `plugin.generate_args()` to generate the `argparse.Namespace` object from `plugin.defaults_dict` and parse the command line arguments.
+    * Calls `plugin.update_json_from_args()`. This function parses the `plugin.parser` and gathers the arguments sent to the script. For each argument that was passed, it compares the passed value with the existing value stored in `plugin.configuration`. If we find an instance where a change was made, we pass the variable name, e.g., `VAR_SWAP_USAGE_DEBUG_ENABLED` and the new value to `plugin.update_setting()`. This function reads the `.vars.json` file to a dictionary, updates the changed setting, and rewrites the file. After rewriting the file, `plugin.read_config()` is called to repopulate `plugin.configuration`.
 * Once all of that stuff is done, we call `get_swap_usage()` to gather the data. If the data is retrieved successfully we render the output happily, otherwise we display an error.
 * The last call is to `plugin.render_footer()`. This function does three things:
     * It renders the "Debugging" menu if debugging is enabled.

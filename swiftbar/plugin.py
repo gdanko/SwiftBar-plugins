@@ -53,6 +53,8 @@ class Plugin:
         self.plugin_basename = os.path.basename(self.plugin_name)
         self.vars_file = os.path.join(self.config_dir, self.plugin_basename) + '.vars.json'
 
+
+
     def _set_path(self):
         """
         Determine and set the path, accounting for the no_brew flag.
@@ -92,6 +94,11 @@ class Plugin:
                 os.makedirs(self.config_dir)
             except:
                 pass
+
+    def setup(self):
+        self.read_config()
+        self.generate_args()
+        self.update_json_from_args()
 
     def write_config(self, contents: dict=None) -> None:
         # Let's make sure this is not duplicated

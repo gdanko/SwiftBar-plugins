@@ -60,9 +60,7 @@ def get_duration_tuple() -> Union[int, Duration, None]:
 
 def main() -> None:
     plugin = Plugin()
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     boot_time, duration_tuple = get_duration_tuple()
     if duration_tuple:

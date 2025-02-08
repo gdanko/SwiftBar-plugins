@@ -66,9 +66,7 @@ def find_software_updates() -> Union[list[SystemUpdate], str, None]:
 
 def main() -> None:
     plugin = Plugin()
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     updates, err = find_software_updates()
     if err:

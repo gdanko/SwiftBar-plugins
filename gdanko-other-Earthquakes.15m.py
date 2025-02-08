@@ -31,7 +31,7 @@ def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0)
     geodata = util.geolocate_me()
     if not geodata:
         return None, {}, 'Failed to geolocate'
-    
+   
     location = [
         geodata.City,
         geodata.Region,
@@ -107,10 +107,7 @@ def main() -> None:
             'title': 'Unit',
         },
     }
-
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     time_format = '%a, %B %-d, %Y %H:%M:%S'
     location, quake_data, err = get_quake_data(

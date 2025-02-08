@@ -84,10 +84,7 @@ def main() -> None:
             'title': 'Unit',
         },
     }
-
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     location = None
     if plugin.configuration['VAR_WEATHER_WAPI_LOCATION']:

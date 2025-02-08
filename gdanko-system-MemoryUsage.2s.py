@@ -188,10 +188,7 @@ def main() -> None:
             'title': 'Unit',
         },
     }
-
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     if not plugin.configuration['VAR_MEM_USAGE_TOP_CONSUMERS_ENABLED']:
         del plugin.configuration['VAR_MEM_USAGE_CLICK_TO_KILL']
