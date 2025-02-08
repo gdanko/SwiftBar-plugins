@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>CPU Percent</xbar.title>
-# <xbar.version>v0.5.2</xbar.version>
+# <xbar.version>v0.5.3</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display CPU % for user, system, and idle</xbar.desc>
@@ -139,6 +139,26 @@ def main() -> None:
             'title': 'the "Debugging" menu',
         },
     }
+    plugin.defaults_dict['VAR_CPU_USAGE_EXTENDED_DETAILS_ENABLED'] = {
+        'default_value': True,
+        'valid_values': [True, False],
+        'type': bool,
+        'setting_configuration': {
+            'default': False,
+            'flag': '--extended-details',
+            'title': 'extended memory details',
+        },
+    }
+    plugin.defaults_dict['VAR_CPU_USAGE_TOP_CONSUMERS_ENABLED'] = {
+        'default_value': True,
+        'valid_values': [True, False],
+        'type': bool,
+        'setting_configuration': {
+            'default': False,
+            'flag': '--top-consumers',
+            'title': 'the "Top CPU Consumers" menu',
+        },
+    }
     plugin.defaults_dict['VAR_CPU_USAGE_CLICK_TO_KILL'] = {
         'default_value': True,
         'valid_values': [True, False],
@@ -176,6 +196,11 @@ def main() -> None:
     plugin.generate_args()
     plugin.update_json_from_args()
 
+    if not plugin.configuration['VAR_CPU_USAGE_TOP_CONSUMERS_ENABLED']:
+        del plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL']
+        del plugin.configuration['VAR_CPU_USAGE_KILL_SIGNAL']
+        del plugin.configuration['VAR_CPU_USAGE_MAX_CONSUMERS'] 
+
     required = {'psutil'}
     installed = {pkg.key for pkg in pkg_resources.working_set}
     missing = required - installed
@@ -195,47 +220,51 @@ def main() -> None:
         combined_cpu_pct.append(combine_stats(individual_cpu_pct, cpu_type))
 
         plugin.print_menu_title(f'CPU: user {util.pad_float(combined_cpu_pct[0].user)}%, sys {util.pad_float(combined_cpu_pct[0].system)}%, idle {util.pad_float(combined_cpu_pct[0].idle)}%')
-        if cpu_type is not None:
-            processor = cpu_type
-            if cpu_family:
-                processor = processor + f' ({cpu_family})'
-            if max_cpu_freq:
-                processor = processor + f' @ {util.pad_float(max_cpu_freq / 1000)} GHz'
-            plugin.print_menu_item(f'Processor: {processor}')
-            
-        for cpu in individual_cpu_pct:
-            plugin.print_menu_item(f'Core {str(cpu.cpu)}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
+        if plugin.configuration['VAR_CPU_USAGE_EXTENDED_DETAILS_ENABLED']:
+            if cpu_type is not None:
+                processor = cpu_type
+                if cpu_family:
+                    processor = processor + f' ({cpu_family})'
+                if max_cpu_freq:
+                    processor = processor + f' @ {util.pad_float(max_cpu_freq / 1000)} GHz'
+                plugin.print_menu_item(f'Processor: {processor}')
+                
+            for cpu in individual_cpu_pct:
+                plugin.print_menu_item(f'Core {str(cpu.cpu)}: user {cpu.user}%, sys {cpu.system}%, idle {cpu.idle}%')
 
-        top_cpu_consumers = get_top_cpu_usage()
-        if len(top_cpu_consumers) > 0:
-            if len(top_cpu_consumers) > plugin.configuration['VAR_CPU_USAGE_MAX_CONSUMERS']:
-                top_cpu_consumers = top_cpu_consumers[0:plugin.configuration['VAR_CPU_USAGE_MAX_CONSUMERS']]
-            plugin.print_menu_item(
-                f'Top {len(top_cpu_consumers)} CPU Consumers',
-            )
-            for consumer in top_cpu_consumers:
-                command = consumer['command']
-                cpu_usage = consumer['cpu_usage']
-                pid = consumer['pid']
-                user = consumer['user']
-                padding_width = 6
-                icon = util.get_process_icon(user, plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL'])
-                cpu_usage = f'{str(cpu_usage)}%'
-                cmd = ['kill', f'-{util.get_signal_map()[plugin.configuration["VAR_CPU_USAGE_KILL_SIGNAL"]]}', pid] if plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL'] else []
+        if 'VAR_CPU_USAGE_TOP_CONSUMERS_ENABLED' in plugin.configuration and plugin.configuration['VAR_CPU_USAGE_TOP_CONSUMERS_ENABLED']:
+            top_cpu_consumers = get_top_cpu_usage()
+            if len(top_cpu_consumers) > 0:
+                plugin.print_menu_separator()
+                if len(top_cpu_consumers) > plugin.configuration['VAR_CPU_USAGE_MAX_CONSUMERS']:
+                    top_cpu_consumers = top_cpu_consumers[0:plugin.configuration['VAR_CPU_USAGE_MAX_CONSUMERS']]
                 plugin.print_menu_item(
-                    f'--{icon}{cpu_usage.rjust(padding_width)} - {command}',
-                    cmd=cmd,
-                    emojize=True,
-                    length=command_length,
-                    symbolize=False,
-                    terminal=False,
-                    trim=False,
+                    f'Top {len(top_cpu_consumers)} CPU Consumers',
                 )
+                for consumer in top_cpu_consumers:
+                    command = consumer['command']
+                    cpu_usage = consumer['cpu_usage']
+                    pid = consumer['pid']
+                    user = consumer['user']
+                    padding_width = 6
+                    icon = util.get_process_icon(user, plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL'])
+                    cpu_usage = f'{str(cpu_usage)}%'
+                    cmd = ['kill', f'-{util.get_signal_map()[plugin.configuration["VAR_CPU_USAGE_KILL_SIGNAL"]]}', pid] if plugin.configuration['VAR_CPU_USAGE_CLICK_TO_KILL'] else []
+                    plugin.print_menu_item(
+                        f'--{icon}{cpu_usage.rjust(padding_width)} - {command}',
+                        cmd=cmd,
+                        emojize=True,
+                        length=command_length,
+                        symbolize=False,
+                        terminal=False,
+                        trim=False,
+                    )
     else:
         plugin.print_menu_title('CPU: Error')
         plugin.print_menu_separator()
         plugin.print_menu_item(f'Please install the following packages via pip: {", ".join(missing)}')
 
+    plugin.print_menu_separator()
     if plugin.defaults_dict:
         plugin.display_settings_menu()
     if plugin.configuration['VAR_CPU_USAGE_DEBUG_ENABLED']:
