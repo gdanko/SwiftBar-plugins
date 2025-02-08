@@ -15,7 +15,6 @@ import time
 class GeoData(NamedTuple):
     City: str
     Country: str
-    Hostname: str
     IP: str
     Latitude: str
     Longitude: str
@@ -118,7 +117,6 @@ def brew_package_installed(package: str=None) -> bool:
 
 def geolocate_me() -> Union[Dict, None]:
     headers = {'User-Agent': 'curl/8.7.1'}
-
     response, data, error = request.swiftbar_request(host='ifconfig.io', headers=headers)
     if response.status == 200 and data:
         address = data.strip()
@@ -134,7 +132,6 @@ def geolocate_me() -> Union[Dict, None]:
         return GeoData(
             City=geodata['city'],
             Country=geodata['country'],
-            Hostname=geodata['hostname'],
             IP=geodata['ip'],
             Latitude=lat,
             Longitude=lon,
