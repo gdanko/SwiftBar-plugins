@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Disk Usage</xbar.title>
-# <xbar.version>v0.5.1</xbar.version>
+# <xbar.version>v0.5.2</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show disk usage in the format used/total</xbar.desc>
@@ -65,6 +65,16 @@ def main() -> None:
             'title': 'the "Debugging" menu',
         },
     }
+    plugin.defaults_dict['VAR_DISK_USAGE_EXTENDED_DETAILS_ENABLED'] = {
+        'default_value': True,
+        'valid_values': [True, False],
+        'type': bool,
+        'setting_configuration': {
+            'default': False,
+            'flag': '--extended-details',
+            'title': 'extended mountpoint details',
+        },
+    }
     plugin.defaults_dict['VAR_DISK_USAGE_MOUNTPOINT'] = {
         'default_value': '/',
         'valid_values': valid_mountpoints,
@@ -97,15 +107,17 @@ def main() -> None:
             total = util.format_number(total) if plugin.configuration['VAR_DISK_USAGE_UNIT'] == 'auto' else util.byte_converter(total, plugin.configuration['VAR_DISK_USAGE_UNIT'])
             used = util.format_number(used) if plugin.configuration['VAR_DISK_USAGE_UNIT'] == 'auto' else util.byte_converter(used, plugin.configuration['VAR_DISK_USAGE_UNIT'])
             plugin.print_menu_title(f'Disk: "{plugin.configuration["VAR_DISK_USAGE_MOUNTPOINT"]}" {used} / {total}')
-            plugin.print_menu_item(plugin.configuration['VAR_DISK_USAGE_MOUNTPOINT'])
-            mountpoint_output = OrderedDict()
-            mountpoint_output['mountpoint'] = partition.mountpoint
-            mountpoint_output['device'] = partition.device
-            mountpoint_output['type'] = partition.fstype
-            mountpoint_output['options'] = ','.join(partition.opts)
-            plugin.print_ordered_dict(mountpoint_output, justify='left', indent=2)
+            if plugin.configuration['VAR_DISK_USAGE_EXTENDED_DETAILS_ENABLED']:
+                plugin.print_menu_separator()
+                mountpoint_output = OrderedDict()
+                mountpoint_output['mountpoint'] = partition.mountpoint
+                mountpoint_output['device'] = partition.device
+                mountpoint_output['type'] = partition.fstype
+                mountpoint_output['options'] = ','.join(partition.opts)
+                plugin.print_ordered_dict(mountpoint_output, justify='left', indent=0)
     except:
         plugin.print_menu_item('Disk: Not found')
+
     plugin.print_menu_separator()
     if plugin.defaults_dict:
         plugin.display_settings_menu()
