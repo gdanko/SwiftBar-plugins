@@ -299,44 +299,45 @@ class Plugin:
         """
         self.print_menu_item('Settings')
         for name, data in self.defaults_dict.items():
-            if 'setting_configuration' in data:
-                setting_flag = data['setting_configuration']['flag']
-                setting_title = data['setting_configuration']['title']
-                setting_type = data['type']
-                if setting_type is bool:
-                    if self.configuration[name] == False:
-                        menu_item_text = f'--Enable {setting_title}'
-                    elif self.configuration[name] == True:
-                        menu_item_text = f'--Disable {setting_title}'
-                    self.print_menu_item(
-                        menu_item_text,
-                        cmd=[self.plugin_name, setting_flag],
-                        terminal=False,
-                        refresh=True,
-                    )
-                else:
-                    self.print_menu_item(f'--{setting_title}')
-                    if 'valid_values' in data:
-                        for valid_value in data['valid_values']:
-                            color = 'blue' if valid_value == self.configuration[name] else 'black'
-                            self.print_menu_item(
-                                f'----{valid_value}',
-                                color=color,
-                                cmd=[self.plugin_name, setting_flag, valid_value],
-                                terminal=False,
-                                refresh=True,
+            if name in self.configuration:
+                if 'setting_configuration' in data:
+                    setting_flag = data['setting_configuration']['flag']
+                    setting_title = data['setting_configuration']['title']
+                    setting_type = data['type']
+                    if setting_type is bool:
+                        if self.configuration[name] == False:
+                            menu_item_text = f'--Enable {setting_title}'
+                        elif self.configuration[name] == True:
+                            menu_item_text = f'--Disable {setting_title}'
+                        self.print_menu_item(
+                            menu_item_text,
+                            cmd=[self.plugin_name, setting_flag],
+                            terminal=False,
+                            refresh=True,
                         )
-                    elif 'minmax' in data:
-                        increment = 10
-                        if 'increment' in data['setting_configuration'] and type(data['setting_configuration']['increment']) == int:
-                            increment = data['setting_configuration']['increment']
-                        for number in range(data['minmax'].min, data['minmax'].max + increment):
-                            if number % increment == 0:
-                                color = 'blue' if number == self.configuration[name] else 'black'
+                    else:
+                        self.print_menu_item(f'--{setting_title}')
+                        if 'valid_values' in data:
+                            for valid_value in data['valid_values']:
+                                color = 'blue' if valid_value == self.configuration[name] else 'black'
                                 self.print_menu_item(
-                                    f'----{number}',
-                                    cmd=[self.plugin_name, setting_flag, number],
+                                    f'----{valid_value}',
                                     color=color,
-                                    refresh=True,
+                                    cmd=[self.plugin_name, setting_flag, valid_value],
                                     terminal=False,
-                                )
+                                    refresh=True,
+                            )
+                        elif 'minmax' in data:
+                            increment = 10
+                            if 'increment' in data['setting_configuration'] and type(data['setting_configuration']['increment']) == int:
+                                increment = data['setting_configuration']['increment']
+                            for number in range(data['minmax'].min, data['minmax'].max + increment):
+                                if number % increment == 0:
+                                    color = 'blue' if number == self.configuration[name] else 'black'
+                                    self.print_menu_item(
+                                        f'----{number}',
+                                        cmd=[self.plugin_name, setting_flag, number],
+                                        color=color,
+                                        refresh=True,
+                                        terminal=False,
+                                    )
