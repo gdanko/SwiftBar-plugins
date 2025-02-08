@@ -92,12 +92,9 @@ class Plugin:
             except:
                 pass
 
-    def setup(self):
-        self.read_config()
-        self.generate_args()
-        self.update_json_from_args()
 
-    def write_config(self, contents: dict=None) -> None:
+
+    def _write_config(self, contents: dict=None) -> None:
         # Let's make sure this is not duplicated
         """
         Write the JSON variables file.
@@ -123,7 +120,7 @@ class Plugin:
         with open(self.vars_file, 'w') as fh:
             fh.write(json.dumps(self.configuration, indent=4))
 
-    def read_config(self) -> None:
+    def _read_config(self) -> None:
         """
         Read and validate the defaults_dict.
         """
@@ -157,8 +154,27 @@ class Plugin:
         
         self.debug = self.configuration['DEBUG_ENABLED']
 
+    def _generate_args(self) -> None:
+        """
+        Generate an argparser namespace from self.defaults_dict.
+        """
+        self.parser = argparse.ArgumentParser()
+        for name, data in self.defaults_dict.items():
+            if 'setting_configuration' in data:
+                setting_default = data['setting_configuration']['default']
+                setting_flag = data['setting_configuration']['flag']
+                setting_type = data['type']
+
+                if setting_type == bool:
+                    self.parser.add_argument(setting_flag, help=name, required=False, default=setting_default, action='store_true')
+                else:
+                    self.parser.add_argument(setting_flag, help=name, required=False, default=setting_default, type=setting_type)
+                    
+        self.args = self.parser.parse_args()
+
+
     # def process_input(data: Union[List[int], Dict[str, int]]) -> None:
-    def update_setting(self, key: str=None, value: Any=None) -> None:
+    def _update_setting(self, key: str=None, value: Any=None) -> None:
         """
         Update a given setting for a plugin and rewrite the JSON variables file.
         """
@@ -167,8 +183,29 @@ class Plugin:
                 contents = json.load(fh)
                 if key in contents:
                     contents[key] = value
-                    self.write_config(contents)
-        self.read_config()
+                    self._write_config(contents)
+        self._read_config()
+    
+    def _update_json_from_args(self) -> None:
+        """
+        Parse self.args and look for changes, then update the JSON with the new setting.
+        """
+        for action in self.parser._actions:
+            if type(action) != argparse._HelpAction:
+                if action.default != getattr(self.args, action.dest, None):
+                    if self.defaults_dict[action.help]['type'] is bool:
+                        new_value = True if self.configuration[action.help] == False else False
+                        self._update_setting(action.help, new_value)
+                    else:
+                        self._update_setting(action.help, getattr(self.args, action.dest))
+
+    def setup(self):
+        """
+        Set up the environment and update settings as needed.
+        """
+        self._read_config()
+        self._generate_args()
+        self._update_json_from_args()
 
     def find_longest(self, input: Union[List[str], Dict[str, Any]]=None) ->int:
         """
@@ -179,7 +216,7 @@ class Plugin:
         elif type(input) == dict or type(input) == OrderedDict:
             return max(len(key) for key in input.keys())
 
-    def sanitize_params(self, **params: Params) -> Union[ParamsXbar, ParamsSwiftBar]:
+    def _sanitize_params(self, **params: Params) -> Union[ParamsXbar, ParamsSwiftBar]:
         """
         Create a new params object based on the value of self.invoked_by. Both xbar and SwiftBar have some unique
         parameters and this will allow the work to be handled behind the scenes.
@@ -191,15 +228,24 @@ class Plugin:
             except KeyError as e:
                 pass
         return sanitized
+
+    def _print_update_time(self, *, out: Writer = sys.stdout) -> None:
+        """
+        Print the updated time in human format.
+        """
+        self.print_menu_separator()
+        self.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
+        self.print_menu_separator()
+
     def print_menu_title(self, text: str=None, display_update_time: bool=True, *, out: Writer=sys.stdout, **params: Params) -> None:
         """
         Print the plugin title in the menu bar.
         """
-        params = self.sanitize_params(**params)
+        params = self._sanitize_params(**params)
         params_str = ' '.join(f'{k}={v}' for k, v in params.items())
         print(f'{text} | {params_str}', file=out)
         if display_update_time:
-            self.print_update_time()
+            self._print_update_time()
         else:
             self.print_menu_separator()
 
@@ -223,7 +269,7 @@ class Plugin:
         Generic wrapper to print all non-title menu items.
         """
         # https://github.com/tmzane/swiftbar-plugins
-        params = self.sanitize_params(**params)
+        params = self._sanitize_params(**params)
 
         # Set default font if one isn't configured
         if not 'font' in params:
@@ -249,87 +295,7 @@ class Plugin:
         """
         print('---', file=out)
 
-    def print_update_time(self, *, out: Writer = sys.stdout) -> None:
-        """
-        Print the updated time in human format.
-        """
-        self.print_menu_separator()
-        self.print_menu_item(f'Updated {util.get_timestamp(int(time.time()))}')
-        self.print_menu_separator()
-
-    def generate_args(self) -> None:
-        """
-        Generate an argparser namespace from self.defaults_dict.
-        """
-        self.parser = argparse.ArgumentParser()
-        for name, data in self.defaults_dict.items():
-            if 'setting_configuration' in data:
-                setting_default = data['setting_configuration']['default']
-                setting_flag = data['setting_configuration']['flag']
-                setting_type = data['type']
-
-                if setting_type == bool:
-                    self.parser.add_argument(setting_flag, help=name, required=False, default=setting_default, action='store_true')
-                else:
-                    self.parser.add_argument(setting_flag, help=name, required=False, default=setting_default, type=setting_type)
-                    
-        self.args = self.parser.parse_args()
-
-    def update_json_from_args(self) -> None:
-        """
-        Parse self.args and look for changes, then update the JSON with the new setting.
-        """
-        for action in self.parser._actions:
-            if type(action) != argparse._HelpAction:
-                if action.default != getattr(self.args, action.dest, None):
-                    if self.defaults_dict[action.help]['type'] is bool:
-                        new_value = True if self.configuration[action.help] == False else False
-                        self.update_setting(action.help, new_value)
-                    else:
-                        self.update_setting(action.help, getattr(self.args, action.dest))
-
-    def display_debugging_menu(self):
-        """
-        Create a menu item to display plugin debug information.
-        """
-        pv = sys.version_info
-        os_version = util.get_macos_version()
-        total_mem = util.get_sysctl('hw.memsize')
-
-        self.print_menu_item('Debugging')
-        debug_data = OrderedDict()
-        if os_version:
-            debug_data['OS version'] = os_version
-        if total_mem:
-            debug_data['Memory'] = util.format_number(int(total_mem))
-        debug_data['Debug flag'] = 'Enabled' if self.debug else 'Disabled'
-        debug_data['Brew enabled'] = False if self.disable_brew else True
-        debug_data['Python'] = shutil.which('python3')
-        debug_data['Python version'] = f'{pv.major}.{pv.minor}.{pv.micro}-{pv.releaselevel}'
-        debug_data['Plugins directory'] = os.path.dirname(self.plugin_name)
-        debug_data['Plugin path'] = self.plugin_name
-        debug_data['Invoked by'] = self.invoked_by.lstrip('-')
-        debug_data['Invoked by (full path)'] = self.invoked_by_full.lstrip('-')
-        debug_data[f'{self.invoked_by.lstrip("-")} pid'] = self.invoker_pid
-        if self.invoked_by == 'SwiftBar':
-            debug_data['SwiftBar version'] = f'{os.environ.get("SWIFTBAR_VERSION")} build {os.environ.get("SWIFTBAR_BUILD")}'
-        debug_data['Default font family'] = self.font_family
-        debug_data['Default font size'] = self.font_size
-        debug_data['Configuration directory'] = self.config_dir
-        debug_data['Variables file'] = self.vars_file
-        self.print_ordered_dict(debug_data, justify='left', indent=2)
-        self.print_menu_item('--Variables')
-        variables = OrderedDict()
-        for key, value in self.configuration.items():
-            variables[key] = value
-        self.print_ordered_dict(variables, justify='right', indent=4, delimiter = '=')
-        self.print_menu_item('--Environment Variables')
-        environment_variables = OrderedDict()
-        for key in sorted(os.environ.keys()):
-            environment_variables[key] = os.environ.get(key)
-        self.print_ordered_dict(environment_variables, justify='right', indent=4, delimiter = '=', length=125)
-
-    def display_settings_menu(self):
+    def render_settings_menu(self):
         """
         Generate and display the Settings menu from self.defaults_dict.
         """
@@ -378,10 +344,51 @@ class Plugin:
                                         image=checked,
                                     )
 
+    def render_debugging_menu(self):
+        """
+        Create a menu item to display plugin debug information.
+        """
+        pv = sys.version_info
+        os_version = util.get_macos_version()
+        total_mem = util.get_sysctl('hw.memsize')
+
+        self.print_menu_item('Debugging')
+        debug_data = OrderedDict()
+        if os_version:
+            debug_data['OS version'] = os_version
+        if total_mem:
+            debug_data['Memory'] = util.format_number(int(total_mem))
+        debug_data['Debug flag'] = 'Enabled' if self.debug else 'Disabled'
+        debug_data['Brew enabled'] = False if self.disable_brew else True
+        debug_data['Python'] = shutil.which('python3')
+        debug_data['Python version'] = f'{pv.major}.{pv.minor}.{pv.micro}-{pv.releaselevel}'
+        debug_data['Plugins directory'] = os.path.dirname(self.plugin_name)
+        debug_data['Plugin path'] = self.plugin_name
+        debug_data['Invoked by'] = self.invoked_by.lstrip('-')
+        debug_data['Invoked by (full path)'] = self.invoked_by_full.lstrip('-')
+        debug_data[f'{self.invoked_by.lstrip("-")} pid'] = self.invoker_pid
+        if self.invoked_by == 'SwiftBar':
+            debug_data['SwiftBar version'] = f'{os.environ.get("SWIFTBAR_VERSION")} build {os.environ.get("SWIFTBAR_BUILD")}'
+        debug_data['Default font family'] = self.font_family
+        debug_data['Default font size'] = self.font_size
+        debug_data['Configuration directory'] = self.config_dir
+        debug_data['Variables file'] = self.vars_file
+        self.print_ordered_dict(debug_data, justify='left', indent=2)
+        self.print_menu_item('--Variables')
+        variables = OrderedDict()
+        for key, value in self.configuration.items():
+            variables[key] = value
+        self.print_ordered_dict(variables, justify='right', indent=4, delimiter = '=')
+        self.print_menu_item('--Environment Variables')
+        environment_variables = OrderedDict()
+        for key in sorted(os.environ.keys()):
+            environment_variables[key] = os.environ.get(key)
+        self.print_ordered_dict(environment_variables, justify='right', indent=4, delimiter = '=', length=125)
+
     def render_footer(self):
         self.print_menu_separator()
         if self.defaults_dict:
-            self.display_settings_menu()
+            self.render_settings_menu()
         if self.debug:
-            self.display_debugging_menu()
+            self.render_debugging_menu()
         self.print_menu_item('Refresh', refresh=True)
