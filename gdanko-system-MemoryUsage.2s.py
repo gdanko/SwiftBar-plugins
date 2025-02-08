@@ -162,7 +162,7 @@ def main() -> None:
         'valid_values': list(util.get_signal_map().keys()),
         'type': str,
         'setting_configuration': {
-            'default': False,
+            'default': None,
             'flag': '--signal',
             'title': 'Kill Signal',
         },
@@ -183,7 +183,7 @@ def main() -> None:
         'valid_values': util.valid_storage_units(),
         'type': str,
         'setting_configuration': {
-            'default': False,
+            'default': None,
             'flag': '--unit',
             'title': 'Unit',
         },

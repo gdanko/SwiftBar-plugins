@@ -47,7 +47,6 @@ def main() -> None:
     plugin.defaults_dict['VAR_DISK_CONSUMERS_PATHS'] = {
         'default_value': '~',
         'type': str,
-        'split_values': True,
     }
     plugin.setup()
 

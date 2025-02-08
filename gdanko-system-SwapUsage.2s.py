@@ -45,7 +45,7 @@ def main() -> None:
         'valid_values': util.valid_storage_units(),
         'type': str,
         'setting_configuration': {
-            'default': False,
+            'default': None,
             'flag': '--unit',
             'title': 'Unit',
         },

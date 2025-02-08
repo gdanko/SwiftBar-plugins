@@ -104,7 +104,7 @@ plugin.defaults_dict['VAR_DISK_USAGE_MOUNTPOINT'] = {
     'valid_values': valid_mountpoints,
      'type': str,
     'setting_configuration': {
-        'default': False,
+        'default': None,
         'flag': '--mountpoint',
         'title': 'Mountpoint',
     },
@@ -114,7 +114,7 @@ plugin.defaults_dict['VAR_DISK_USAGE_UNIT'] = {
     'valid_values': util.valid_storage_units(),
     'type': str,
     'setting_configuration': {
-        'default': False,
+        'default': None,
         'flag': '--unit',
         'title': 'Unit',
     },
@@ -266,14 +266,13 @@ Each entry is mapped to one of the xbar-style `<xbar.var></xbar.var>` variable/c
 First let's look at the code for a simple plugin that pulls information about system swap usage
 ```python
 def main() -> None:
-    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
-    plugin = Plugin()
+    plugin = Plugin(no_brew=True)
     plugin.defaults_dict['VAR_SWAP_USAGE_UNIT'] = {
         'default_value': 'auto',
         'valid_values': util.valid_storage_units(),
         'type': str,
         'setting_configuration': {
-            'default': False,
+            'default': None,
             'flag': '--unit',
             'title': 'Unit',
         },
@@ -292,8 +291,7 @@ def main() -> None:
 ```
 
 Now we'll explain what is happening.
-* First we set the `PATH`. Some system tools like `/bin/df` have homebrew equivalents. In cases like this, we want to exclude `/opt/homebrew/bin` from the path because the output of homebrew's `df` may vary, which will break some regexes.
-* Now we're create an instance of the `Plugin()` class.
+* Now we're create an instance of the `Plugin()` class, passing the `no_brew` flag. This flag tells the plugin not to include `${HOMEBREW_PREFIX}/bin` or `${HOMEBREW_PREFIX}/sbin` in the path since we want to use the OS versions of certain binaries.
 * We can now add additional variables to `plugin.defaults_dict`. If you have not read the section about this dictionary, please do so now.
 * After addin variable definitions, we make a call to `plugin.setup()`. This function deos the following:
     * Calls `plugin.read_config()` to sanitize and populate `plugin.configuation` from the `.vars.json` file if it exists. If the file does not exist, one is created from the defaults. We call it here to get the values of any booleans so that if the plugin is executed with a flag like `--debug`, we can now compare the existing setting with the new setting and make the change to the `.vars.json` file as needed.
