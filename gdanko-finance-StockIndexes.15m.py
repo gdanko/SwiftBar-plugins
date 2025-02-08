@@ -20,9 +20,7 @@ from swiftbar.plugin import Plugin
 
 def main() -> None:
     plugin = Plugin()
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     plugin_output = []
     cookie, crumb = yfinance.get_cookie_and_crumb()
@@ -33,10 +31,11 @@ def main() -> None:
             'S&P500': '^GSPC',
         }
         for key, value in symbol_map.items():
-            index_data = yfinance.get_chart(cookie=cookie, crumb=crumb, symbol=value)
+            index_data = yfinance.get_chart(cookie=cookie, crumb=crumb, ticker=value)
             if index_data:
-                price = index_data['regularMarketPrice']
-                last = index_data['previousClose']
+                meta = index_data['chart']['result'][0]['meta']
+                price = meta['regularMarketPrice']
+                last = meta['chartPreviousClose']
 
                 if price > last:
                     updown = u'\u2191'
