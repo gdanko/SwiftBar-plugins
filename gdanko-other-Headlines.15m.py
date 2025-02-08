@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Headlines</xbar.title>
-# <xbar.version>v0.1.0</xbar.version>
+# <xbar.version>v0.1.1</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show headlines from the Guardian UK, requires free Guardian UK API Key</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-other-Headlines.15m.py</xbar.abouturl>
-# <xbar.var>string(VAR_HEADLINES_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_HEADLINES_LIMIT=20): The maximum headlines to display</xbar.var>
 # <xbar.var>string(VAR_HEADLINES_API_KEY=): The required Guardian UK API key</xbar.var>
 # <xbar.var>string(VAR_HEADLINES_SECTION=world): The section to view</xbar.var>
@@ -17,13 +17,12 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_HEADLINES_DEBUG_ENABLED=false, VAR_HEADLINES_LIMIT=20, VAR_HEADLINES_API_KEY=, VAR_HEADLINES_SECTION=world]</swiftbar.environment>
+# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_HEADLINES_LIMIT=20, VAR_HEADLINES_API_KEY=, VAR_HEADLINES_SECTION=world]</swiftbar.environment>
 
 from collections import namedtuple, OrderedDict
 from swiftbar import images, request, util
 from swiftbar.plugin import Plugin
 from typing import Any, List
-import os
 
 def get_valid_sections(api_key: str=None) -> List[str]:
     sections = []
@@ -41,10 +40,9 @@ def get_valid_sections(api_key: str=None) -> List[str]:
     return sections
 
 def main() -> None:
-    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_HEADLINES_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
         'type': bool,
@@ -128,12 +126,7 @@ def main() -> None:
                 )
         else:
             plugin.print_menu_title(f'Headlines: {len(data["response"]["results"])}')
-    plugin.print_menu_separator()
-    if plugin.defaults_dict:
-        plugin.display_settings_menu()
-    if plugin.configuration['VAR_HEADLINES_DEBUG_ENABLED']:
-            plugin.display_debugging_menu()
-    plugin.print_menu_item('Refresh News Articles', refresh=True)
+    plugin.render_footer()
     
 if __name__ == '__main__':
     main()

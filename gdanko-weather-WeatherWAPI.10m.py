@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Weather WeatherAPI</xbar.title>
-# <xbar.version>v0.5.1</xbar.version>
+# <xbar.version>v0.5.2</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the weather using weatherapi.com</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-weather-WeatherWAPI.10m.py</xbar.abouturl>
+# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_API_KEY=): The OpenWeatherMap API key</xbar.var>
-# <xbar.var>string(VAR_WEATHER_WAPI_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_LOCATION="Los Angeles, CA, US"): The location to use</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_SHOW_FORECAST=true): Show the forecast in the drop down menut</xbar.var>
 # <xbar.var>string(VAR_WEATHER_WAPI_UNITS=F): The unit to use: (C)elsius or (F)ahrenheit</xbar.var>
@@ -18,13 +18,12 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[AR_WEATHER_WAPI_API_KEY=, VAR_WEATHER_WAPI_DEBUG_ENABLED=false, VAR_WEATHER_WAPI_LOCATION="Los Angeles, CA, US", VAR_WEATHER_WAPI_SHOW_FORECAST=true, VAR_WEATHER_WAPI_UNITS=F]</swiftbar.environment>
+# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_WEATHER_WAPI_API_KEY=, VAR_WEATHER_WAPI_LOCATION="Los Angeles, CA, US", VAR_WEATHER_WAPI_SHOW_FORECAST=true, VAR_WEATHER_WAPI_UNITS=F]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar.plugin import Plugin
 from swiftbar import images, request, util
 from typing import Dict
-import os
 import re
 
 def get_uv_index(uv_index: float=0.0) -> str:
@@ -57,10 +56,9 @@ def pluralize(count: int=0, word: str=None) -> str:
     return f'{word}s'
 
 def main() -> None:
-    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_WEATHER_WAPI_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
         'type': bool,
@@ -234,12 +232,7 @@ def main() -> None:
         plugin.print_menu_title('Failed to fetch the weather')
         for error_message in plugin.error_messages:
             plugin.print_menu_item(error_message)
-    plugin.print_menu_separator()
-    if plugin.defaults_dict:
-        plugin.display_settings_menu()
-    if plugin.configuration['VAR_WEATHER_WAPI_DEBUG_ENABLED']:
-        plugin.display_debugging_menu()
-    plugin.print_menu_item('Refresh weather data', refresh=True)
+    plugin.render_footer()
 
 if __name__ == '__main__':
     main()

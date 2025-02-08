@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 
 # <xbar.title>BrewOutdated</xbar.title>
-# <xbar.version>v0.3.1</xbar.version>
+# <xbar.version>v0.3.2</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the number upgradeable Homebrew packages</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-BrewOutdated.30m.py</xbar.abouturl>
-# <xbar.var>string(VAR_BREW_OUTDATED_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_BREW_OUTDATED_DEBUG_ENABLED=false]</swiftbar.environment>
+# <swiftbar.environment>[DEBUG_ENABLED=false]</swiftbar.environment>
 
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -22,8 +22,6 @@ from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Dict, Union
 import json
-import os
-import shutil
 
 @dataclass
 class Package:
@@ -33,7 +31,7 @@ class Package:
         self.installed_version = installed_versions[0]
 
 def get_brew_data() -> Union[None, str, Dict[str, list[Package]]]:
-    if not shutil.which('brew'):
+    if not util.binary_exists('brew'):
         return None, 'Homebrew isn\'t installed'
 
     command = 'brew update'
@@ -64,10 +62,9 @@ def get_brew_data() -> Union[None, str, Dict[str, list[Package]]]:
         return None, f'Failed to parse JSON output from "{command}"'
 
 def main() -> None:
-    os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_BREW_OUTDATED_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
         'type': bool,
@@ -110,12 +107,7 @@ def main() -> None:
                         sfimage='shippingbox',
                         terminal=True,
                     )
-        plugin.print_menu_separator()
-        if plugin.defaults_dict:
-            plugin.display_settings_menu()
-        if plugin.configuration['VAR_BREW_OUTDATED_DEBUG_ENABLED']:
-            plugin.display_debugging_menu()
-        plugin.print_menu_item('Refresh', refresh=True)
+    plugin.render_footer()
 
 if __name__ == '__main__':
     main()

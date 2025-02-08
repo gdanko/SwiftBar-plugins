@@ -269,30 +269,30 @@ def main() -> None:
     os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_SWAP_USAGE_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
+        'type': bool,
         'setting_configuration': {
             'default': False,
             'flag': '--debug',
             'title': 'the "Debugging" menu',
-            'type': bool,
         },
     }
     plugin.defaults_dict['VAR_SWAP_USAGE_UNIT'] = {
         'default_value': 'auto',
         'valid_values': util.valid_storage_units(),
+        'type': str,
         'setting_configuration': {
             'default': False,
             'flag': '--unit',
             'title': 'Unit',
-            'type': str,
         },
     }
+
     plugin.read_config()
     plugin.generate_args()
     plugin.update_json_from_args()
-    plugin.read_config()
 
     swap = get_swap_usage()
     if swap:
@@ -302,11 +302,7 @@ def main() -> None:
     else:
         plugin.print_menu_title('Swap: Failed')
         plugin.print_menu_item('Failed to gather swap information')
-    if plugin.defaults_dict:
-        plugin.display_settings_menu()
-    if plugin.configuration['VAR_SWAP_USAGE_DEBUG_ENABLED']:
-        plugin.display_debugging_menu()
-    plugin.print_menu_item('Refresh', refresh=True)
+    plugin.render_footer()
 ```
 
 Now we'll explain what is happening.
@@ -317,6 +313,7 @@ Now we'll explain what is happening.
 * We call `plugin.generate_args()` to generate the `argparse.Namespace` object from `plugin.defaults_dict` and parse the command line arguments.
 * Now we call `plugin.update_json_from_args()`. This function parses the `plugin.parser` and gathers the arguments sent to the script. For each argument that was passed, it compares the passed value with the existing value stored in `plugin.configuration`. If we find an instance where a change was made, we pass the variable name, e.g., `VAR_SWAP_USAGE_DEBUG_ENABLED` and the new value to `plugin.update_setting()`. This function reads the `.vars.json` file to a dictionary, updates the changed setting, and rewrites the file. After rewriting the file, `plugin.read_config()` is called to repopulate `plugin.configuration`.
 * Once all of that stuff is done, we call `get_swap_usage()` to gather the data. If the data is retrieved successfully we render the output happily, otherwise we display an error.
-* If `plugin.defaults_dict` exists, we call `plugin.display_settings_menu()` to render and display the `Settings` menu item.
-* If `plugin.configuration['VAR_SWAP_USAGE_DEBUG_ENABLED']` is `True`, we call `plugin.display_debugging_menu()` to render and display the `Debugging` menu item.
-* Finally, a `Refresh` menu item is displayed.
+* The last call is to `plugin.render_footer()`. This function does three things:
+    * It renders the "Debugging" menu if debugging is enabled.
+    * It renders the "Settings" menu if `plugin.defaults_dict` exists.
+    * It displays a "Refresh" menu item.

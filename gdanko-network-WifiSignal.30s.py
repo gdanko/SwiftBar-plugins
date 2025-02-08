@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 # <xbar.title>WiFi Signal</xbar.title>
-# <xbar.version>v0.5.1</xbar.version>
+# <xbar.version>v0.5.2</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the current WiFi signal strength</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/gdanko-network-WifiSignal.30s.py</xbar.abouturl>
-# <xbar.var>string(VAR_WIFI_STATUS_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_WIFI_STATUS_INTERFACE=en0): The network interface to measure.</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
@@ -15,14 +15,13 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_WIFI_STATUS_DEBUG_ENABLED=false, VAR_WIFI_STATUS_INTERFACE=en0]</swiftbar.environment>
+# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_WIFI_STATUS_INTERFACE=en0]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Any, Dict
 import json
-import os
 import re
 
 def get_profiler_data(stdout: str=None) -> Dict[str, Any]:
@@ -33,10 +32,9 @@ def get_profiler_data(stdout: str=None) -> Dict[str, Any]:
         return None, f'Failed to parse the JSON from system_profiler: {e}'
 
 def main() -> None:
-    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_WIFI_STATUS_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
         'type': bool,
@@ -138,12 +136,7 @@ def main() -> None:
         plugin.print_menu_title('WiFi status: N/A')
         for error_message in plugin.error_messages:
             plugin.print_menu_item(error_message)
-    plugin.print_menu_separator()
-    if plugin.defaults_dict:
-        plugin.display_settings_menu()
-    if plugin.configuration['VAR_WIFI_STATUS_DEBUG_ENABLED']:
-        plugin.display_debugging_menu()
-    plugin.print_menu_item('Refresh WiFi Data', refresh=True)
+    plugin.render_footer()
 
 if __name__ == '__main__':
     main()

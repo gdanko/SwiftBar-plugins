@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Earthquakes</xbar.title>
-# <xbar.version>v0.3.3</xbar.version>
+# <xbar.version>v0.3.4</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show information about earthquakes nearby</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-other-Earthquakes.15m.py</xbar.abouturl>
-# <xbar.var>string(VAR_EARTHQUAKES_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_EARTHQUAKES_LIMIT=20): The maximum number of quakes to display</xbar.var>
 # <xbar.var>string(VAR_EARTHQUAKES_MIN_MAGNITUDE=0): The minimum magnitude for quakes</xbar.var>
 # <xbar.var>string(VAR_EARTHQUAKES_RADIUS_MILES=50): Radius in miles</xbar.var>
@@ -18,7 +18,7 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_EARTHQUAKES_DEBUG_ENABLED=false, VAR_EARTHQUAKES_LIMIT=20, VAR_EARTHQUAKES_MIN_MAGNITUDE=0, VAR_EARTHQUAKES_RADIUS_MILES=50, VAR_EARTHQUAKES_RADIUS_UNIT=m]</swiftbar.environment>
+# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_EARTHQUAKES_LIMIT=20, VAR_EARTHQUAKES_MIN_MAGNITUDE=0, VAR_EARTHQUAKES_RADIUS_MILES=50, VAR_EARTHQUAKES_RADIUS_UNIT=m]</swiftbar.environment>
 
 from collections import namedtuple, OrderedDict
 from swiftbar import images, request, util
@@ -27,7 +27,6 @@ from typing import Any, Dict
 import datetime
 import re
 import time
-import os
 
 def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0) -> Dict[str, Any]:
     geodata = util.geolocate_me()
@@ -65,10 +64,9 @@ def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0)
     return ', '.join(location) if len(location) >= 3 else None, data, None
 
 def main() -> None:
-    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_EARTHQUAKES_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
         'type': bool,
@@ -165,12 +163,7 @@ def main() -> None:
     elif err:
         plugin.print_menu_title('Earthquakes: Error')
         plugin.print_menu_item(err)
-    plugin.print_menu_separator()
-    if plugin.defaults_dict:
-        plugin.display_settings_menu()
-    if plugin.configuration['VAR_EARTHQUAKES_DEBUG_ENABLED']:
-            plugin.display_debugging_menu()
-    plugin.print_menu_item('Refresh', refresh=True)
+    plugin.render_footer()
     
 if __name__ == '__main__':
     main()

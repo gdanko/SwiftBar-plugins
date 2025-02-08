@@ -1,26 +1,25 @@
 #!/usr/bin/env python3
 
 # <xbar.title>System Updates</xbar.title>
-# <xbar.version>v0.5.1</xbar.version>
+# <xbar.version>v0.5.2</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display the number of available system updates</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-SystemUpdates.15m.py</xbar.abouturl>
-# <xbar.var>string(VAR_SYSTEM_UPDATES_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_SYSTEM_UPDATES_DEBUG_ENABLED=false]</swiftbar.environment>
+# <swiftbar.environment>[DEBUG_ENABLED=false]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import NamedTuple, Tuple, Union
-import os
 import re
 
 class SystemUpdate(NamedTuple):
@@ -67,10 +66,9 @@ def find_software_updates() -> Union[list[SystemUpdate], str, None]:
         return updates, stderr
 
 def main() -> None:
-    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_SYSTEM_UPDATES_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
         'type': bool,
@@ -102,12 +100,7 @@ def main() -> None:
                     terminal=True,
                     trim=False,
                 )
-    plugin.print_menu_separator()
-    if plugin.defaults_dict:
-        plugin.display_settings_menu()
-    if plugin.configuration['VAR_SYSTEM_UPDATES_DEBUG_ENABLED']:
-        plugin.display_debugging_menu()
-    plugin.print_menu_item('Refresh system update data', refresh=True)
+    plugin.render_footer()
     
 if __name__ == '__main__':
     main()

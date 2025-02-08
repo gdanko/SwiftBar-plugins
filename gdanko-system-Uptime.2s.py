@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Uptime</xbar.title>
-# <xbar.version>v0.5.1</xbar.version>
+# <xbar.version>v0.5.2</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show system uptime</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-Uptime.2s.py</xbar.abouturl>
-# <xbar.var>string(VAR_SYSTEM_UPTIME_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_SYSTEM_UPTIME_DEBUG_ENABLED=false]</swiftbar.environment>
+# <swiftbar.environment>[DEBUG_ENABLED=false]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import images, util
@@ -62,7 +62,7 @@ def get_duration_tuple() -> Union[int, Duration, None]:
 def main() -> None:
     plugin = Plugin()
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_SYSTEM_UPTIME_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
         'type': bool,
@@ -88,10 +88,7 @@ def main() -> None:
     else:
         plugin.print_menu_item('Uptime: N/A')
         plugin.print_menu_item('Failed to determine boot time')
-    plugin.print_menu_separator()
-    if plugin.defaults_dict:
-        plugin.display_settings_menu()
-    if plugin.configuration['VAR_SYSTEM_UPTIME_DEBUG_ENABLED']:
-        plugin.display_debugging_menu()
+    plugin.render_footer()
+
 if __name__ == '__main__':
     main()

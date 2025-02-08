@@ -15,7 +15,10 @@ class Writer(typing.Protocol):
     def write(self, _: str, /) -> int: ...
 
 class Plugin:
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
+        self.no_brew = kwargs.get('no_brew', False)
+        self._set_path()
+
         self.config_dir = os.path.join(Path.home(), '.config', 'SwiftBar')
         self.invoked_by = None
         self.invoked_by_full = None
@@ -26,6 +29,7 @@ class Plugin:
         self.parser = None
         self.args = None
         self.defaults_dict = None
+        self.debug = False
 
         self.font = 'AndaleMono'
         self.size = 13
@@ -37,6 +41,16 @@ class Plugin:
         self.plugin_name = os.path.abspath(sys.argv[0])
         self.plugin_basename = os.path.basename(self.plugin_name)
         self.vars_file = os.path.join(self.config_dir, self.plugin_basename) + '.vars.json'
+
+    def _set_path(self):
+        if self.no_brew:
+            os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
+        else:
+            if os.path.exists('/opt/homebrew/bin') and os.path.isdir('/opt/homebrew/bin'):
+                if os.path.exists('/opt/homebrew/bin/brew') and os.path.isdir('/opt/homebrew/bin/brew'):
+                    os.environ['PATH'] = '/opt/homebrew/bin:/opt/homebrew/sbin:/bin:/sbin:/usr/bin:/usr/sbin'
+                else:
+                    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
 
     def _get_config_dir(self) -> None:
         """
@@ -122,6 +136,8 @@ class Plugin:
         for key, value in self.configuration.items():
             value = 'true' if value == True else 'false'
             os.environ[key] = value
+        
+        self.debug = self.configuration['DEBUG_ENABLED']
 
     # def process_input(data: Union[List[int], Dict[str, int]]) -> None:
     def update_setting(self, key: str=None, value: Any=None) -> None:
@@ -268,6 +284,8 @@ class Plugin:
             debug_data['OS version'] = os_version
         if total_mem:
             debug_data['Memory'] = util.format_number(int(total_mem))
+        debug_data['Debug flag'] = 'Enabled' if self.debug else 'Disabled'
+        debug_data['Brew enabled'] = False if self.no_brew else True
         debug_data['Python'] = shutil.which('python3')
         debug_data['Python version'] = f'{pv.major}.{pv.minor}.{pv.micro}-{pv.releaselevel}'
         debug_data['Plugins directory'] = os.path.dirname(self.plugin_name)
@@ -341,3 +359,11 @@ class Plugin:
                                         refresh=True,
                                         terminal=False,
                                     )
+
+    def render_footer(self):
+        self.print_menu_separator()
+        if self.defaults_dict:
+            self.display_settings_menu()
+        if self.debug:
+            self.display_debugging_menu()
+        self.print_menu_item('Refresh', refresh=True)

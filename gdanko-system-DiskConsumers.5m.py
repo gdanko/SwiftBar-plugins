@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Disk Consumers</xbar.title>
-# <xbar.version>v0.5.1</xbar.version>
+# <xbar.version>v0.5.2</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show files and directories using the most disk space for a given path</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-DiskConsumers.5m.py</xbar.abouturl>
-# <xbar.var>string(VAR_DISK_CONSUMERS_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_DISK_CONSUMERS_PATHS=/): A comma-delimited list of paths</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
@@ -15,7 +15,7 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_DISK_CONSUMERS_DEBUG_ENABLED=false, VAR_DISK_CONSUMERS_PATHS=/]</swiftbar.environment>
+# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_DISK_CONSUMERS_PATHS=/]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import images, util
@@ -44,10 +44,9 @@ def get_consumers(path: str=None) -> List[Dict[str, Any]]:
 
 def main() -> None:
     start_time = util.unix_time_in_ms()
-    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
-    plugin = Plugin()
+    plugin = Plugin(no_brew=True)
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_DISK_CONSUMERS_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
         'type': bool,
@@ -92,12 +91,7 @@ def main() -> None:
         plugin.print_menu_item('N/A')
     end_time = util.unix_time_in_ms()
     plugin.print_menu_item(f'Data fetched at {util.get_timestamp(int(time.time()))} in {end_time - start_time}ms')
-    plugin.print_menu_separator()
-    plugin.print_menu_item('Refresh data', refresh=True)
-    if plugin.defaults_dict:
-        plugin.display_settings_menu()
-    if plugin.configuration['VAR_DISK_CONSUMERS_DEBUG_ENABLED']:
-        plugin.display_debugging_menu()
+    plugin.render_footer()
 
 if __name__ == '__main__':
     main()

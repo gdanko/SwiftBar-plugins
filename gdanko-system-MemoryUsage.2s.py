@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Memory Usage</xbar.title>
-# <xbar.version>v0.5.2</xbar.version>
+# <xbar.version>v0.5.3</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show system memery usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-MemoryUsage.2s.py</xbar.abouturl>
+# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(VAR_MEM_USAGE_EXTENDED_DETAILS_ENABLED=true): Show extended information about the installed memory</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_CLICK_TO_KILL=false): Will clicking a member of the top offender list attempt to kill it?</xbar.var>
-# <xbar.var>string(VAR_MEM_USAGE_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_KILL_SIGNAL=SIGQUIT): The BSD kill signal to use when killing a process</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_MAX_CONSUMERS=30): Maximum number of offenders to display</xbar.var>
 # <xbar.var>string(VAR_MEM_USAGE_UNIT=auto): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
@@ -18,14 +19,13 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_MEM_USAGE_CLICK_TO_KILL=false, VAR_MEM_USAGE_DEBUG_ENABLED=false, VAR_MEM_USAGE_KILL_SIGNAL=SIGQUIT, VAR_MEM_USAGE_MAX_CONSUMERS=30]</swiftbar.environment, VAR_MEM_USAGE_UNIT=auto>
+# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_MEM_USAGE_EXTENDED_DETAILS_ENABLED=true, VAR_MEM_USAGE_CLICK_TO_KILL=false, VAR_MEM_USAGE_KILL_SIGNAL=SIGQUIT, VAR_MEM_USAGE_MAX_CONSUMERS=30]</swiftbar.environment, VAR_MEM_USAGE_UNIT=auto>
 
 from collections import namedtuple, OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Any, Dict, List, NamedTuple, Tuple, Union
 import json
-import os
 import re
 
 class SystemMemory(NamedTuple):
@@ -127,10 +127,9 @@ def get_top_memory_usage() -> List[Dict[str, Any]]:
     return sorted(memory_info, key=lambda item: item['bytes'], reverse=True)
 
 def main() -> None:
-    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
-    plugin = Plugin()
+    plugin = Plugin(no_brew=True)
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_MEM_USAGE_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
         'type': bool,
@@ -266,12 +265,7 @@ def main() -> None:
         plugin.print_menu_item('Memory: Unknown')
         plugin.print_menu_separator()
         plugin.print_menu_item('Failed to parse vm_stat')
-    plugin.print_menu_separator()
-    if plugin.defaults_dict:
-        plugin.display_settings_menu()
-    if plugin.configuration['VAR_MEM_USAGE_DEBUG_ENABLED']:
-        plugin.display_debugging_menu()
-    plugin.print_menu_item('Refresh', refresh=True)
+    plugin.render_footer()
 
 if __name__ == '__main__':
     main()

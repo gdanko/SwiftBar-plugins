@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Swap Usage</xbar.title>
-# <xbar.version>v0.5.1</xbar.version>
+# <xbar.version>v0.5.2</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show system swap usage in the format used/total</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-SwapUsage.2s.py</xbar.abouturl>
-# <xbar.var>string(VAR_SWAP_USAGE_DEBUG_ENABLED=false): Show debugging menu</xbar.var>
+# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 # <xbar.var>string(VAR_SWAP_USAGE_UNIT=auto): The unit to use. [K, Ki, M, Mi, G, Gi, T, Ti, P, Pi, E, Ei, auto]</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
@@ -15,13 +15,12 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_SWAP_USAGE_DEBUG_ENABLED=false, VAR_SWAP_USAGE_UNIT=auto]</swiftbar.environment>
+# <swiftbar.environment>[DEBUG_ENABLED=false, VAR_SWAP_USAGE_UNIT=auto]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import NamedTuple, Union
-import os
 import re
 
 class SwapUsage(NamedTuple):
@@ -41,10 +40,9 @@ def get_swap_usage() -> Union[SwapUsage, None]:
     return None
 
 def main() -> None:
-    os.environ['PATH'] = '/bin:/sbin:/usr/bin:/usr/sbin'
     plugin = Plugin()
     plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['VAR_SWAP_USAGE_DEBUG_ENABLED'] = {
+    plugin.defaults_dict['DEBUG_ENABLED'] = {
         'default_value': False,
         'valid_values': [True, False],
         'type': bool,
@@ -77,11 +75,7 @@ def main() -> None:
     else:
         plugin.print_menu_title('Swap: Failed')
         plugin.print_menu_item('Failed to gather swap information')
-    if plugin.defaults_dict:
-        plugin.display_settings_menu()
-    if plugin.configuration['VAR_SWAP_USAGE_DEBUG_ENABLED']:
-        plugin.display_debugging_menu()
-    plugin.print_menu_item('Refresh', refresh=True)
+    plugin.render_footer()
 
 if __name__ == '__main__':
     main()
