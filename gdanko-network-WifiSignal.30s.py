@@ -7,6 +7,7 @@
 # <xbar.desc>Display the current WiFi signal strength</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/master/gdanko-network-WifiSignal.30s.py</xbar.abouturl>
+# <xbar.var>string(VAR_WIFI_STATUS_EXTENDED_DETAILS_ENABLED=true): Show extended information about the WiFi connection.</xbar.var>
 # <xbar.var>string(VAR_WIFI_STATUS_INTERFACE=en0): The network interface to measure.</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
@@ -14,7 +15,7 @@
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[VAR_WIFI_STATUS_INTERFACE=en0]</swiftbar.environment>
+# <swiftbar.environment>[VAR_WIFI_STATUS_EXTENDED_DETAILS_ENABLED=true, VAR_WIFI_STATUS_INTERFACE=en0]</swiftbar.environment>
 
 from collections import OrderedDict
 from swiftbar import images, util
@@ -32,6 +33,16 @@ def get_profiler_data(stdout: str=None) -> Dict[str, Any]:
 
 def main() -> None:
     plugin = Plugin()
+    plugin.defaults_dict['VAR_WIFI_STATUS_EXTENDED_DETAILS_ENABLED'] = {
+        'default_value': True,
+        'valid_values': [True, False],
+        'type': bool,
+        'setting_configuration': {
+            'default': False,
+            'flag': '--extended-details',
+            'title': 'extended WiFi details',
+        },
+    }
     plugin.defaults_dict['VAR_WIFI_STATUS_INTERFACE'] = {
         'default_value': 'en0',
         'valid_values': util.find_valid_wifi_interfaces(),
@@ -43,12 +54,9 @@ def main() -> None:
         },
     }
 
-    plugin.read_config()
-    plugin.generate_args()
-    plugin.update_json_from_args()
+    plugin.setup()
 
     my_interface = None
-    signal_icon = None
     rating = 'Unknown'
     returncode, stdout, _ = util.execute_command('system_profiler SPAirPortDataType -json detailLevel basic')
     if returncode == 0 and stdout:
@@ -119,7 +127,8 @@ def main() -> None:
 
     if plugin.success:
         plugin.print_menu_title(f'WiFI: {ssid} - {rating}')
-        plugin.print_ordered_dict(wifi_output, justify='left')
+        if plugin.configuration['VAR_WIFI_STATUS_EXTENDED_DETAILS_ENABLED']:
+            plugin.print_ordered_dict(wifi_output, justify='left')
     else:
         plugin.print_menu_title('WiFi status: N/A')
         for error_message in plugin.error_messages:
