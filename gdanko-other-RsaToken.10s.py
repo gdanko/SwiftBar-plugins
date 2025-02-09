@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 
 # <xbar.title>RsaToken</xbar.title>
-# <xbar.version>v0.2.0</xbar.version>
+# <xbar.version>v0.3.0</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>fetches current rsa token, and allows you to copy your pin from keychain to your paste buffer</xbar.desc>
 # <xbar.dependencies>python</xbar.dependencies>
 # <xbar.abouturl>https://github.com/gdanko/xbar-plugins/blob/main/gdanko-system-RsaToken.10s.py</xbar.abouturl>
-# <xbar.var>string(DEBUG_ENABLED=false): Show debugging menu</xbar.var>
 
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
-# <swiftbar.environment>[DEBUG_ENABLED=false]</swiftbar.environment>
+# <swiftbar.environment>[]</swiftbar.environment>
 
 # Credit to Marcus D'Camp for the original, which was a shell script.
 # Requirements:
@@ -34,23 +33,23 @@
 
 # arm64 aarch
 
-from collections import OrderedDict
 from swiftbar import images, util
 from swiftbar.plugin import Plugin
 from typing import Dict, List, Union
-import argparse
-import os
 import shutil
 
-def configure() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', help='Toggle viewing the debug section', required=False, default=False, action='store_true')
-    parser.add_argument('--snad', help='Copy AD password to the clipboard', required=False, default=False, action='store_true')
-    parser.add_argument('--ldap', help='Copy LDAP password to the clipboard', required=False, default=False, action='store_true')
-    parser.add_argument('--token', help='Copy {pin}{token} to the clipboard', required=False, default=False, action='store_true')
-    parser.add_argument('--next', help='Refesh the token and copy it to the clipboard', required=False, default=False, action='store_true')
-    args = parser.parse_args()
-    return args   
+def process_actions(plugin: Plugin=None):
+    for _, data in plugin.defaults_dict.items():
+        if 'action_configuration' in data:
+            setting_flag = data['action_configuration']['flag']
+            setting_title = data['action_configuration']['title']
+            plugin.print_menu_item(
+                setting_title,
+                cmd=[plugin.plugin_name, setting_flag],
+                terminal=False,
+                refresh=True,
+            )
+            plugin.print_menu_separator()
 
 def setup() -> str:
     brew = shutil.which('brew')
@@ -91,19 +90,51 @@ def pbcopy(text: str=None) -> None:
     
 def main() -> None:
     plugin = Plugin()
-    plugin.defaults_dict = OrderedDict()
-    plugin.defaults_dict['DEBUG_ENABLED'] = {
+    plugin.defaults_dict['COPY_TOKEN'] = {
         'default_value': False,
         'valid_values': [True, False],
+        'type': bool,
+        'action_configuration': {
+            'default': False,
+            'flag': '--token',
+            'title': 'Copy PIN + token',
+        },
     }
+    plugin.defaults_dict['NEXT_TOKEN'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'type': bool,
+        'action_configuration': {
+            'default': False,
+            'flag': '--next',
+            'title': 'Cycle token'
+        },
+    }
+    plugin.defaults_dict['COPY_SNAD'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'type': bool,
+        'action_configuration': {
+            'default': False,
+            'flag': '--snad',
+            'title': 'Copy AD password',
+        },
+    }
+    plugin.defaults_dict['COPY_LDAP'] = {
+        'default_value': False,
+        'valid_values': [True, False],
+        'type': bool,
+        'action_configuration': {
+            'default': False,
+            'flag': '--ldap',
+            'title': 'Copy LDAP password',
+        },
+    }
+    plugin.setup()
 
-    plugin.read_config()
-    args = configure()
-    if args.debug:
-        plugin.update_setting('DEBUG_ENABLED', True if plugin.configuration['DEBUG_ENABLED'] == False else False)
+    plugin.print_menu_title('RSA Token')
+    process_actions(plugin=plugin)
 
-    plugin.read_config()
-    debug_enabled = plugin.configuration['DEBUG_ENABLED']
     error = setup()
     if error:
         plugin.print_menu_title('RSA Token Error')
@@ -116,56 +147,15 @@ def main() -> None:
             for error in errors:
                 plugin.print_menu_item(error)
         else:
-            if args.token:
+            if plugin.args.token:
                 pbcopy(f'{output["rsatoken-pin"]}{output["token"]}')
-            elif args.snad:
+            elif plugin.args.snad:
                 pbcopy(output['snad'])
-            elif args.ldap:
+            elif plugin.args.ldap:
                 pbcopy(output['snc.bssh.ldap_pass'])
-            elif args.next:
+            elif plugin.args.next:
                 refresh_token()
-
-            plugin.print_menu_title('RSA Token')
-            plugin.print_menu_item(output['token'])
-            plugin.print_menu_separator()
-            plugin.print_menu_item(
-                'Copy PIN + token',
-                cmd=[plugin.plugin_name, '--token'],
-                terminal=False,
-                refresh=True,
-            )
-            plugin.print_menu_separator()
-            plugin.print_menu_item(
-                'Cycle token',
-                cmd=[plugin.plugin_name, '--refresh'],
-                terminal=False,
-                refresh=True,
-            )
-            plugin.print_menu_separator()
-            plugin.print_menu_item(
-                'Copy AD password',
-                cmd=[plugin.plugin_name, '--snad'],
-                terminal=False,
-                refresh=True,
-            )
-            plugin.print_menu_separator()
-            plugin.print_menu_item(
-                'Copy LDAP password',
-                cmd=[plugin.plugin_name, '--ldap'],
-                terminal=False,
-                refresh=True,
-            )
-            plugin.print_menu_separator()
-            plugin.print_menu_item('Settings')
-            plugin.print_menu_item(
-                f'{"--Disable" if debug_enabled else "--Enable"} "Debugging" menu',
-                cmd=[plugin.plugin_name, '--debug'],
-                terminal=False,
-                refresh=True,
-            )
-            if debug_enabled:
-                plugin.display_debugging_menu()
-            plugin.print_menu_item('Refresh', refresh=True)
+    plugin.render_footer()
 
 if __name__ == '__main__':
     main()
