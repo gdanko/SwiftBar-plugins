@@ -182,8 +182,8 @@ You can define a few things when you instantiate an instance of the class:
 * `plugin.print_update_time()` - This method prints the last date and time the plugin was updated. It's used by `plugin.print_menu_title()`.
 * `plugin._update_setting()` - This method is invoked by `plugin._update_json_from_args()`. When the user changes a setting, the plugin is invoked with a unique flag, which tells `Plugin()` that the setting needs to be updated in the `.var.json` file.
 * `plugin.find_longest` - This method accepts either a list or a dictionary. It returns the length of the longest member of the list, or in the case of a dictionary, the length of the longest dictionary key. It's used to properly pad lists of strings for proper formatting.
-* `plugin.render_settings_menu()` - This method is invoked by `plugin.render_footer()` and renders the contents of the `Settings` menu.
-* `plugin.render_debugging_menu()` - This method is invoked by `plugin.render_footer()` and renders the contents of the `Debugging` menu.
+* `plugin._render_settings_menu()` - This method is invoked by `plugin.render_footer()` and renders the contents of the `Settings` menu.
+* `plugin._render_debugging_menu()` - This method is invoked by `plugin.render_footer()` and renders the contents of the `Debugging` menu.
 
 ## Plugins
 * [Finance](#finance)
