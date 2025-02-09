@@ -21,7 +21,7 @@
 
 from collections import OrderedDict
 from swiftbar.plugin import Plugin
-from swiftbar import images, util
+from swiftbar import util
 import shutil
 
 def main() -> None:
