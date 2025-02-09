@@ -15,9 +15,9 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[]</swiftbar.environment>
 
-from swiftbar import images, util
+from swiftbar import util
 from swiftbar.plugin import Plugin
-from typing import NamedTuple, Tuple, Union
+from typing import List, NamedTuple, Tuple, Union
 import re
 
 class SystemUpdate(NamedTuple):
@@ -47,8 +47,8 @@ def generate_update_data(entry: Tuple=None) -> SystemUpdate:
         action=(attributes['action'].title() if 'action' in attributes else 'N/A'),
     )
 
-def find_software_updates() -> Union[list[SystemUpdate], str, None]:
-    updates = []
+def find_software_updates() -> Tuple[Union[List[SystemUpdate]], Union[str, None]]:
+    updates: List[SystemUpdate] = []
     returncode, stdout, stderr = util.execute_command('softwareupdate --list')
     if returncode == 0 and stdout:
         pattern = r'\* Label:\s*(.*)\n\s*(.*)'

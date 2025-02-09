@@ -15,7 +15,7 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[]</swiftbar.environment>
 
-from swiftbar import images, util
+from swiftbar import util
 from swiftbar.plugin import Plugin
 from typing import NamedTuple, Union
 import datetime
