@@ -15,9 +15,9 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[]</swiftbar.environment>
 
-from swiftbar import images, util
+from swiftbar import util
 from swiftbar.plugin import Plugin
-from typing import Dict, List, NamedTuple, Union
+from typing import Dict, List, NamedTuple, Tuple, Union
 import json
 
 class Package(NamedTuple):
@@ -25,7 +25,7 @@ class Package(NamedTuple):
     InstalledVersions: List[str]
     Name: str
 
-def get_brew_data() -> Union[None, str, Dict[str, List[Package]]]:
+def get_brew_data() -> Tuple[Union[Dict[str, List[Package]], None], Union[str, None]]:
     if not util.binary_exists('brew'):
         return None, 'Homebrew isn\'t installed'
 
