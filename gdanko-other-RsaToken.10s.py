@@ -143,7 +143,6 @@ def main() -> None:
         output, errors = get_data()
         if len(errors) > 0:
             plugin.print_menu_title('RSA Token Error')
-            plugin.print_menu_separator()
             for error in errors:
                 plugin.print_menu_item(error)
         else:
