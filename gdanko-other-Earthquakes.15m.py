@@ -20,14 +20,14 @@
 # <swiftbar.environment>[LIMIT=20, MINIMUM_MAGNITUDE=0, MAXIMUM_RADIUS=50, RADIUS_UNIT=m]</swiftbar.environment>
 
 from collections import namedtuple, OrderedDict
-from swiftbar import images, request, util
+from swiftbar import request, util
 from swiftbar.plugin import Plugin
-from typing import Any, Dict
+from typing import Any, Dict, Tuple, Union
 import datetime
 import re
 import time
 
-def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0) -> Dict[str, Any]:
+def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0) -> Tuple[Union[str, None], Dict[str, Any], Union[str, None]]:
     geodata = util.geolocate_me()
     if not geodata:
         return None, {}, 'Failed to geolocate'
@@ -59,7 +59,7 @@ def get_quake_data(radius: int=0, magnitude: int=0, unit: str='m', limit: int=0)
         'offset': 1,
         'orderby': 'time',
     }
-    response, data, _ = request.swiftbar_request(host=host, path=path, query=query, return_type='json', encode_query=True)
+    _, data, _ = request.swiftbar_request(host=host, path=path, query=query, return_type='json', encode_query=True)
     return ', '.join(location) if len(location) >= 3 else None, data, None
 
 def main() -> None:
