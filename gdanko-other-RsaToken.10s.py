@@ -33,12 +33,12 @@
 
 # arm64 aarch
 
-from swiftbar import images, util
+from swiftbar import util
 from swiftbar.plugin import Plugin
-from typing import Any, Dict, List, Union
+from typing import Dict, List, Tuple, Union
 import shutil
 
-def process_actions(plugin: Plugin=None):
+def process_actions(plugin: Plugin=None) -> None:
     for _, data in plugin.defaults_dict.items():
         if 'action_configuration' in data:
             setting_flag = data['action_configuration']['flag']
@@ -51,21 +51,21 @@ def process_actions(plugin: Plugin=None):
             )
             plugin.print_menu_separator()
 
-def refresh_token() -> Union[str, None]:
+def refresh_token() -> Tuple[Union[str, None], Union[str, None]]:
     _, stdout, stderr = util.execute_command('security find-generic-password -w -s rsatoken | stoken --stdin')
     if stderr:
         return None, stderr
     return stdout, None
 
-def get_item(key: str=None) -> Union[str, None]:
+def get_item(key: str=None) -> Tuple[Union[str, None], Union[str, None]]:
     _, stdout, stderr = util.execute_command(f'security find-generic-password -w -s {key}')
     if stderr:
         return None, stderr
     return stdout, None
 
-def get_data():
-    errors = []
+def get_data() -> Tuple[Dict[str, str], List[str]]:
     output = {}
+    errors = []
 
     brew = shutil.which('brew')
     if not brew:
