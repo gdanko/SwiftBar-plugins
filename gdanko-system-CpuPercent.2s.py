@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>CPU Percent</xbar.title>
-# <xbar.version>v0.5.4</xbar.version>
+# <xbar.version>v0.5.5</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Display CPU % for user, system, and idle</xbar.desc>
@@ -20,7 +20,7 @@
 # <swiftbar.environment>[EXTENDED_DETAILS_ENABLED=true, CLICK_TO_KILL=false, KILL_SIGNAL=SIGQUIT, MAX_CONSUMERS=30]</swiftbar.environment>
 
 from collections import namedtuple
-from swiftbar import images, util
+from swiftbar import util
 from swiftbar.plugin import Plugin
 from typing import Any, Dict, List, NamedTuple
 import pkg_resources
@@ -39,6 +39,12 @@ class CpuTimes(NamedTuple):
     # steal: float
     # guest: float
     # guestnice: float
+
+class CpuConsumer(NamedTuple):
+    Command: str
+    CpuUsage: float
+    Pid: int
+    User: str
 
 def get_cpu_family_strings() -> Dict[int, str]:
     # We get this information from /Library/Developer/CommandLineTools/SDKs/MacOSX<version>.sdk/usr/include/mach/machine.h
@@ -107,8 +113,8 @@ def combine_stats(cpu_time_stats: List=None, cpu_type: str=None) -> CpuTimes:
         user=(user / len(cpu_time_stats)),
     )
 
-def get_top_cpu_usage() -> List[Dict[str, Any]]:
-    cpu_info = []
+def get_top_cpu_usage() -> List[CpuConsumer]:
+    cpu_info: List[CpuConsumer] = []
     command = f'ps -axm -o %cpu,pid,user,comm | tail -n+2'
     returncode, stdout, _ = util.execute_command(command)
     if returncode == 0:
@@ -117,12 +123,12 @@ def get_top_cpu_usage() -> List[Dict[str, Any]]:
             match = re.search(r'^\s*(\d+\.\d+)\s+(\d+)\s+([A-Za-z0-9\-\.\_]+)\s+(.*)$', line)
             if match:
                 cpu_usage = float(match.group(1))
-                pid = match.group(2)
+                pid = int(match.group(2))
                 user = match.group(3)
                 command_name = match.group(4)
                 if cpu_usage > 0.0:
-                    cpu_info.append({'command': command_name, 'cpu_usage': float(cpu_usage), 'pid': pid, 'user': user})
-    return sorted(cpu_info, key=lambda item: float(item['cpu_usage']), reverse=True)
+                    cpu_info.append(CpuConsumer(Command=command_name, CpuUsage=cpu_usage, Pid=pid, User=user))
+    return sorted(cpu_info, key=lambda item: float(item.CpuUsage), reverse=True)
 
 def main() -> None:
     plugin = Plugin(disable_brew=True)
@@ -133,57 +139,57 @@ def main() -> None:
         'setting_configuration': {
             'default': False,
             'flag': '--extended-details',
-            'title': 'extended memory details',
+            'title': 'extended CPU details',
         },
     }
-    plugin.defaults_dict['TOP_CONSUMERS_ENABLED'] = {
-        'default_value': True,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': False,
-            'flag': '--top-consumers',
-            'title': 'the "Top CPU Consumers" menu',
-        },
-    }
-    plugin.defaults_dict['CLICK_TO_KILL'] = {
-        'default_value': True,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': False,
-            'flag': '--click-to-kill',
-            'title': '"Click to Kill" functionality',
-        },
-    }
-    plugin.defaults_dict['KILL_SIGNAL'] = {
-        'default_value': 'SIGQUIT',
-        'valid_values': list(util.get_signal_map().keys()),
-        'type': str,
-        'setting_configuration': {
-            'default': None,
-            'flag': '--signal',
-            'increment': 10,
-            'title': 'Kill Signal',
-        },
-    }
-    plugin.defaults_dict['MAX_CONSUMERS'] = {
-        'default_value': 30,
-        'minmax': namedtuple('minmax', ['min', 'max'])(10, 100),
-        'type': int,
-        'setting_configuration': {
-            'default': False,
-            'flag': '--max-consumers',
-            'title': 'Maximum Number of Consumers',
-            'increment': 10,
-        },
-    }
+    # plugin.defaults_dict['TOP_CONSUMERS_ENABLED'] = {
+    #     'default_value': True,
+    #     'valid_values': [True, False],
+    #     'type': bool,
+    #     'setting_configuration': {
+    #         'default': False,
+    #         'flag': '--top-consumers',
+    #         'title': 'the "Top CPU Consumers" menu',
+    #     },
+    # }
+    # plugin.defaults_dict['CLICK_TO_KILL'] = {
+    #     'default_value': True,
+    #     'valid_values': [True, False],
+    #     'type': bool,
+    #     'setting_configuration': {
+    #         'default': False,
+    #         'flag': '--click-to-kill',
+    #         'title': '"Click to Kill" functionality',
+    #     },
+    # }
+    # plugin.defaults_dict['KILL_SIGNAL'] = {
+    #     'default_value': 'SIGQUIT',
+    #     'valid_values': list(util.get_signal_map().keys()),
+    #     'type': str,
+    #     'setting_configuration': {
+    #         'default': None,
+    #         'flag': '--signal',
+    #         'increment': 10,
+    #         'title': 'Kill Signal',
+    #     },
+    # }
+    # plugin.defaults_dict['MAX_CONSUMERS'] = {
+    #     'default_value': 30,
+    #     'minmax': namedtuple('minmax', ['min', 'max'])(10, 100),
+    #     'type': int,
+    #     'setting_configuration': {
+    #         'default': False,
+    #         'flag': '--max-consumers',
+    #         'title': 'Maximum Number of Consumers',
+    #         'increment': 10,
+    #     },
+    # }
     plugin.setup()
 
-    if not plugin.configuration['TOP_CONSUMERS_ENABLED']:
-        del plugin.configuration['CLICK_TO_KILL']
-        del plugin.configuration['KILL_SIGNAL']
-        del plugin.configuration['MAX_CONSUMERS'] 
+    # if not plugin.configuration['TOP_CONSUMERS_ENABLED']:
+    #     del plugin.configuration['CLICK_TO_KILL']
+    #     del plugin.configuration['KILL_SIGNAL']
+    #     del plugin.configuration['MAX_CONSUMERS'] 
 
     required = {'psutil'}
     installed = {pkg.key for pkg in pkg_resources.working_set}
@@ -226,16 +232,12 @@ def main() -> None:
                     f'Top {len(top_cpu_consumers)} CPU Consumers',
                 )
                 for consumer in top_cpu_consumers:
-                    command = consumer['command']
-                    cpu_usage = consumer['cpu_usage']
-                    pid = consumer['pid']
-                    user = consumer['user']
                     padding_width = 6
-                    icon = util.get_process_icon(user, plugin.configuration['CLICK_TO_KILL'])
-                    cpu_usage = f'{str(cpu_usage)}%'
-                    cmd = ['kill', f'-{util.get_signal_map()[plugin.configuration["KILL_SIGNAL"]]}', pid] if plugin.configuration['CLICK_TO_KILL'] else []
+                    icon = util.get_process_icon(consumer.User, plugin.configuration['CLICK_TO_KILL'])
+                    cpu_usage = f'{str(consumer.CpuUsage)}%'
+                    cmd = ['kill', f'-{util.get_signal_map()[plugin.configuration["KILL_SIGNAL"]]}', consumer.Pid] if plugin.configuration['CLICK_TO_KILL'] else []
                     plugin.print_menu_item(
-                        f'--{icon}{cpu_usage.rjust(padding_width)} - {command}',
+                        f'--{icon}{cpu_usage.rjust(padding_width)} - {consumer.Command}',
                         cmd=cmd,
                         emojize=True,
                         length=command_length,

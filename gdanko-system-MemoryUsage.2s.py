@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # <xbar.title>Memory Usage</xbar.title>
-# <xbar.version>v0.5.3</xbar.version>
+# <xbar.version>v0.5.4</xbar.version>
 # <xbar.author>Gary Danko</xbar.author>
 # <xbar.author.github>gdanko</xbar.author.github>
 # <xbar.desc>Show system memery usage in the format used/total</xbar.desc>
@@ -21,7 +21,7 @@
 # <swiftbar.environment>[EXTENDED_DETAILS_ENABLED=true, CLICK_TO_KILL=false, KILL_SIGNAL=SIGQUIT, MAX_CONSUMERS=30]</swiftbar.environment, UNIT=auto>
 
 from collections import namedtuple, OrderedDict
-from swiftbar import images, util
+from swiftbar import util
 from swiftbar.plugin import Plugin
 from typing import Any, Dict, List, NamedTuple, Tuple, Union
 import json
@@ -37,6 +37,12 @@ class SystemMemory(NamedTuple):
     inactive: int
     wired: int
     speculative: int
+
+class MemoryConsumer(NamedTuple):
+    Command: str
+    Bytes: int
+    Pid: int
+    User: str
 
 def get_memory_pressure_value(pagesize: int=0, pattern: str=None, string: str=None) -> Union[int, None]:
     match = re.search(pattern, string)
@@ -107,8 +113,8 @@ def virtual_memory() -> SystemMemory:
         speculative=memory_pressure_output['speculative'],
     )
 
-def get_top_memory_usage() -> List[Dict[str, Any]]:
-    memory_info = []
+def get_top_memory_usage() -> List[MemoryConsumer]:
+    memory_info: List[MemoryConsumer] = []
     command = f'ps -axm -o rss,pid,user,comm | tail -n+2'
     returncode, stdout, _ = util.execute_command(command)
     if returncode ==  0:
@@ -121,9 +127,8 @@ def get_top_memory_usage() -> List[Dict[str, Any]]:
                 user = match.group(3)
                 command_name = match.group(4)
                 if bytes > 0:
-                    memory_info.append({'command': command_name, 'bytes': bytes, 'pid': pid, 'user': user})
-
-    return sorted(memory_info, key=lambda item: item['bytes'], reverse=True)
+                    memory_info.append(MemoryConsumer(Command=command_name, Bytes=bytes, Pid=pid, User=user))
+    return sorted(memory_info, key=lambda item: item.Bytes, reverse=True)
 
 def main() -> None:
     plugin = Plugin(disable_brew=True)
@@ -137,47 +142,47 @@ def main() -> None:
             'title': 'extended memory details',
         },
     }
-    plugin.defaults_dict['TOP_CONSUMERS_ENABLED'] = {
-        'default_value': True,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': False,
-            'flag': '--top-consumers',
-            'title': 'the "Top Memory Consumers" menu',
-        },
-    }
-    plugin.defaults_dict['CLICK_TO_KILL'] = {
-        'default_value': True,
-        'valid_values': [True, False],
-        'type': bool,
-        'setting_configuration': {
-            'default': False,
-            'flag': '--click-to-kill',
-            'title': '"Click to Kill" functionality',
-        },
-    }
-    plugin.defaults_dict['KILL_SIGNAL'] = {
-        'default_value': 'SIGQUIT',
-        'valid_values': list(util.get_signal_map().keys()),
-        'type': str,
-        'setting_configuration': {
-            'default': None,
-            'flag': '--signal',
-            'title': 'Kill Signal',
-        },
-    }
-    plugin.defaults_dict['MAX_CONSUMERS'] = {
-        'default_value': 30,
-        'minmax': namedtuple('minmax', ['min', 'max'])(10, 100),
-        'type': int,
-        'setting_configuration': {
-            'default': False,
-            'flag': '--max-consumers',
-            'title': 'Maximum Number of Consumers',
-            'increment': 10,
-        },
-    }
+    # plugin.defaults_dict['TOP_CONSUMERS_ENABLED'] = {
+    #     'default_value': True,
+    #     'valid_values': [True, False],
+    #     'type': bool,
+    #     'setting_configuration': {
+    #         'default': False,
+    #         'flag': '--top-consumers',
+    #         'title': 'the "Top Memory Consumers" menu',
+    #     },
+    # }
+    # plugin.defaults_dict['CLICK_TO_KILL'] = {
+    #     'default_value': True,
+    #     'valid_values': [True, False],
+    #     'type': bool,
+    #     'setting_configuration': {
+    #         'default': False,
+    #         'flag': '--click-to-kill',
+    #         'title': '"Click to Kill" functionality',
+    #     },
+    # }
+    # plugin.defaults_dict['KILL_SIGNAL'] = {
+    #     'default_value': 'SIGQUIT',
+    #     'valid_values': list(util.get_signal_map().keys()),
+    #     'type': str,
+    #     'setting_configuration': {
+    #         'default': None,
+    #         'flag': '--signal',
+    #         'title': 'Kill Signal',
+    #     },
+    # }
+    # plugin.defaults_dict['MAX_CONSUMERS'] = {
+    #     'default_value': 30,
+    #     'minmax': namedtuple('minmax', ['min', 'max'])(10, 100),
+    #     'type': int,
+    #     'setting_configuration': {
+    #         'default': False,
+    #         'flag': '--max-consumers',
+    #         'title': 'Maximum Number of Consumers',
+    #         'increment': 10,
+    #     },
+    # }
     plugin.defaults_dict['UNIT'] = {
         'default_value': 'auto',
         'valid_values': util.valid_storage_units(),
@@ -190,10 +195,10 @@ def main() -> None:
     }
     plugin.setup()
 
-    if not plugin.configuration['TOP_CONSUMERS_ENABLED']:
-        del plugin.configuration['CLICK_TO_KILL']
-        del plugin.configuration['KILL_SIGNAL']
-        del plugin.configuration['MAX_CONSUMERS'] 
+    # if not plugin.configuration['TOP_CONSUMERS_ENABLED']:
+    #     del plugin.configuration['CLICK_TO_KILL']
+    #     del plugin.configuration['KILL_SIGNAL']
+    #     del plugin.configuration['MAX_CONSUMERS'] 
     
     command_length = 125
     memory_type, memory_brand, err = get_memory_details()
@@ -216,7 +221,7 @@ def main() -> None:
             memory_output['Speculative'] = util.format_number(mem.speculative) if plugin.configuration['UNIT'] == 'auto' else util.byte_converter(mem.speculative, plugin.configuration['UNIT'])
             plugin.print_ordered_dict(memory_output, justify='left')
 
-        if plugin.configuration['TOP_CONSUMERS_ENABLED']:
+        if 'TOP_CONSUMERS_ENABLED' in plugin.configuration and plugin.configuration['TOP_CONSUMERS_ENABLED']:
             top_memory_consumers = get_top_memory_usage()
             if len(top_memory_consumers) > 0:
                 plugin.print_menu_separator()
@@ -227,16 +232,12 @@ def main() -> None:
                 )
                 consumer_total = 0
                 for consumer in top_memory_consumers:
-                    command = consumer['command']
-                    bytes = consumer['bytes']
-                    pid = consumer['pid']
-                    user = consumer['user']
-                    consumer_total += bytes
+                    consumer_total += consumer.Bytes
                     padding_width = 12
-                    icon = util.get_process_icon(user, plugin.configuration['CLICK_TO_KILL'])
-                    cmd = ['kill', f'-{util.get_signal_map()[plugin.configuration["KILL_SIGNAL"]]}', pid] if plugin.configuration["CLICK_TO_KILL"] else []
+                    icon = util.get_process_icon(consumer.User, plugin.configuration['CLICK_TO_KILL'])
+                    cmd = ['kill', f'-{util.get_signal_map()[plugin.configuration["KILL_SIGNAL"]]}', consumer.Pid] if plugin.configuration["CLICK_TO_KILL"] else []
                     plugin.print_menu_item(
-                        f'--{icon}{util.format_number(bytes).rjust(padding_width)} - {command}',
+                        f'--{icon}{util.format_number(consumer.Bytes).rjust(padding_width)} - {consumer.Command}',
                         cmd=cmd,
                         emojize=True,
                         length=command_length,
