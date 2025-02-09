@@ -21,7 +21,7 @@
 
 from collections import OrderedDict
 from swiftbar.plugin import Plugin
-from swiftbar import images, request, util
+from swiftbar import request, util
 from typing import Dict
 import re
 
