@@ -328,7 +328,7 @@ class Plugin:
                         self.print_menu_item(f'--{setting_title}')
                         if 'valid_values' in data:
                             for valid_value in data['valid_values']:
-                                checked = images.checmark_icon() if valid_value == self.configuration[name] else ''
+                                checked = images.checmark_icon() if valid_value == self.configuration[name] else 'None'
                                 self.print_menu_item(
                                     f'----{valid_value}',
                                     cmd=[self.plugin_name, setting_flag, valid_value],
@@ -342,7 +342,7 @@ class Plugin:
                                 increment = data['setting_configuration']['increment']
                             for number in range(data['minmax'].min, data['minmax'].max + increment):
                                 if number % increment == 0:
-                                    checked = images.checmark_icon() if number == self.configuration[name] else ''
+                                    checked = images.checmark_icon() if number == self.configuration[name] else 'None'
                                     self.print_menu_item(
                                         f'----{number}',
                                         cmd=[self.plugin_name, setting_flag, number],
