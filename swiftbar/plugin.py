@@ -92,8 +92,6 @@ class Plugin:
             except:
                 pass
 
-
-
     def _write_config(self, contents: dict=None) -> None:
         # Let's make sure this is not duplicated
         """
@@ -120,7 +118,7 @@ class Plugin:
         with open(self.vars_file, 'w') as fh:
             fh.write(json.dumps(self.configuration, indent=4))
 
-    def _read_config(self) -> None:
+    def read_config(self) -> None:
         """
         Read and validate the defaults_dict.
         """
@@ -154,7 +152,7 @@ class Plugin:
         
         self.debug = self.configuration['DEBUG_ENABLED']
 
-    def _generate_args(self) -> None:
+    def generate_args(self) -> None:
         """
         Generate an argparser namespace from self.defaults_dict.
         """
@@ -163,6 +161,15 @@ class Plugin:
             if 'setting_configuration' in data:
                 setting_default = data['setting_configuration']['default']
                 setting_flag = data['setting_configuration']['flag']
+                setting_type = data['type']
+
+                if setting_type == bool:
+                    self.parser.add_argument(setting_flag, help=name, required=False, default=setting_default, action='store_true')
+                else:
+                    self.parser.add_argument(setting_flag, help=name, required=False, default=setting_default, type=setting_type)
+            elif 'action_configuration' in data:
+                setting_default = data['action_configuration']['default']
+                setting_flag = data['action_configuration']['flag']
                 setting_type = data['type']
 
                 if setting_type == bool:
@@ -186,7 +193,7 @@ class Plugin:
                     self._write_config(contents)
         self._read_config()
     
-    def _update_json_from_args(self) -> None:
+    def update_json_from_args(self) -> None:
         """
         Parse self.args and look for changes, then update the JSON with the new setting.
         """
@@ -203,9 +210,9 @@ class Plugin:
         """
         Set up the environment and update settings as needed.
         """
-        self._read_config()
-        self._generate_args()
-        self._update_json_from_args()
+        self.read_config()
+        self.generate_args()
+        self.update_json_from_args()
 
     def find_longest(self, input: Union[List[str], Dict[str, Any]]=None) ->int:
         """
@@ -295,7 +302,7 @@ class Plugin:
         """
         print('---', file=out)
 
-    def render_settings_menu(self):
+    def _render_settings_menu(self):
         """
         Generate and display the Settings menu from self.defaults_dict.
         """
@@ -344,7 +351,7 @@ class Plugin:
                                         image=checked,
                                     )
 
-    def render_debugging_menu(self):
+    def _render_debugging_menu(self):
         """
         Create a menu item to display plugin debug information.
         """
@@ -388,7 +395,7 @@ class Plugin:
     def render_footer(self):
         self.print_menu_separator()
         if self.defaults_dict:
-            self.render_settings_menu()
+            self._render_settings_menu()
         if self.debug:
-            self.render_debugging_menu()
+            self._render_debugging_menu()
         self.print_menu_item('Refresh', refresh=True)
