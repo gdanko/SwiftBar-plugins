@@ -16,15 +16,19 @@
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 # <swiftbar.environment>[PATHS=/]</swiftbar.environment>
 
-from swiftbar import images, util
+from swiftbar import util
 from swiftbar.plugin import Plugin
-from typing import Any, Dict, List
+from typing import List, NamedTuple
 import os
 import re
 import time
 
-def get_consumers(path: str=None) -> List[Dict[str, Any]]:
-    consumers = []
+class DiskConsumer(NamedTuple):
+    Path: str
+    Bytes: int
+
+def get_consumers(path: str=None) -> List[DiskConsumer]:
+    consumers: List[DiskConsumer] = []
     command = f'find {path} -depth 1 -exec du -sk {{}} \;'
     _, stdout, _ = util.execute_command(command)
     if stdout:
@@ -36,9 +40,9 @@ def get_consumers(path: str=None) -> List[Dict[str, Any]]:
                 path = match.group(2)
                 if os.path.basename(path) not in ['.', '..']:
                     if bytes > 0:
-                        consumers.append({'path': path.strip(), 'bytes': bytes})
+                        consumers.append(DiskConsumer(Path=path.strip(), Bytes=bytes))
 
-    return sorted(consumers, key=lambda item: item['bytes'], reverse=True)
+    return sorted(consumers, key=lambda item: item.Bytes, reverse=True)
 
 def main() -> None:
     start_time = util.unix_time_in_ms()
@@ -56,14 +60,12 @@ def main() -> None:
             total = 0
             consumers = get_consumers(path)
             for consumer in consumers:
-                bytes = consumer["bytes"]
-                path = consumer["path"]
-                total += bytes
+                total += consumer.Bytes
                 padding_width = 12
-                icon = ':file_folder:' if os.path.isdir(path) else ':page_facing_up:'
+                icon = ':file_folder:' if os.path.isdir(consumer.Path) else ':page_facing_up:'
                 plugin.print_menu_item(
-                    f'--{icon}' + f'{util.format_number(bytes).rjust(padding_width)} - {path}',
-                    cmd=['open', f'"{path}"'],
+                    f'--{icon}' + f'{util.format_number(consumer.Bytes).rjust(padding_width)} - {consumer.Path}',
+                    cmd=['open', f'"{consumer.Path}"'],
                     emojize=True,
                     symbolize=False,
                     terminal=False,
