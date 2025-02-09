@@ -18,13 +18,13 @@
 # <swiftbar.environment>[EXTENDED_DETAILS_ENABLED=true, INTERFACE=en0]</swiftbar.environment>
 
 from collections import OrderedDict
-from swiftbar import images, util
+from swiftbar import util
 from swiftbar.plugin import Plugin
-from typing import Any, Dict
+from typing import Any, Dict, Tuple, Union
 import json
 import re
 
-def get_profiler_data(stdout: str=None) -> Dict[str, Any]:
+def get_profiler_data(stdout: str=None) -> Tuple[Union[Dict[str, Any], None], Union[str, None]]:
     try:
         profiler_data = json.loads(stdout)
         return profiler_data, None
