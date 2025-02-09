@@ -18,7 +18,7 @@
 # <swiftbar.environment>[INTERFACE=en0, VERBOSE=false]</swiftbar.environment>
 
 from collections import OrderedDict
-from swiftbar import images, util
+from swiftbar import util
 from swiftbar.plugin import Plugin
 from typing import NamedTuple, Union
 import re
