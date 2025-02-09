@@ -14,7 +14,7 @@
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideSwiftBar>false</swiftbar.hideSwiftBar>
 
-from swiftbar import images, util, yfinance
+from swiftbar import util, yfinance
 from swiftbar.plugin import Plugin
 
 def main() -> None:
