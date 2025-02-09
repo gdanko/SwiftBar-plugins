@@ -22,7 +22,7 @@
 # <swiftbar.environment>[STOCK_SYMBOLS=AAPL, COMPANY_INFO_ENABLED=true, COMPANY_OFFICERS_DNABLED=true, KEY_STATS_ENABLED=true, RATIOS_AND_PROFIABILITY_ENABLED=true, EVENTS_ENABLED=true]</swiftbar.environment>
 
 from collections import OrderedDict
-from swiftbar import images, util, yfinance
+from swiftbar import util, yfinance
 from swiftbar.plugin import Plugin
 import re
 
