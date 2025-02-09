@@ -118,7 +118,7 @@ class Plugin:
         with open(self.vars_file, 'w') as fh:
             fh.write(json.dumps(self.configuration, indent=4))
 
-    def read_config(self) -> None:
+    def _read_config(self) -> None:
         """
         Read and validate the defaults_dict.
         """
@@ -152,7 +152,7 @@ class Plugin:
         
         self.debug = self.configuration['DEBUG_ENABLED']
 
-    def generate_args(self) -> None:
+    def _generate_args(self) -> None:
         """
         Generate an argparser namespace from self.defaults_dict.
         """
@@ -193,7 +193,7 @@ class Plugin:
                     self._write_config(contents)
         self._read_config()
     
-    def update_json_from_args(self) -> None:
+    def _update_json_from_args(self) -> None:
         """
         Parse self.args and look for changes, then update the JSON with the new setting.
         """
@@ -210,9 +210,9 @@ class Plugin:
         """
         Set up the environment and update settings as needed.
         """
-        self.read_config()
-        self.generate_args()
-        self.update_json_from_args()
+        self._read_config()
+        self._generate_args()
+        self._update_json_from_args()
 
     def find_longest(self, input: Union[List[str], Dict[str, Any]]=None) ->int:
         """
