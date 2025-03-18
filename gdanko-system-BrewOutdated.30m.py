@@ -100,7 +100,7 @@ def main() -> None:
                 plugin.print_menu_item(key)
                 for formula in formulae:
                     plugin.print_menu_item(
-                        f'Update {formula.Name:<{longest_name_length}}    {sorted(formula.InstalledVersions)[-1].rjust(7)} > {formula.CurrentVersion}',
+                        f'Update {formula.Name:<{longest_name_length}}    {min(formula.InstalledVersions).rjust(7)} > {formula.CurrentVersion}',
                         cmd=['brew', 'upgrade', formula.Name],
                         refresh=True,
                         sfimage='shippingbox',
